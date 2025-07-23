@@ -134,8 +134,8 @@ export const upload = {
                 logger.info(requestPrompt.systemprompt);
 
                 const response = await axios.post(`${backendApiUrl}/summarize?model=${model}}`, {
-                  systemprompt: requestPrompt.systemprompt,
-                  userprompt: requestPrompt.userprompt
+                  "systemprompt": requestPrompt.systemprompt,
+                  "userprompt": requestPrompt.userprompt
                 });
 
                 const summaries = response.data.summarizerresult.map((summary) => {
