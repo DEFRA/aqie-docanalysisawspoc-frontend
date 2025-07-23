@@ -1,10 +1,9 @@
 import inert from '@hapi/inert'
-
-import { home } from './home/index.js'
-import { upload } from './upload/index.js'
-import { about } from './about/index.js'
 import { health } from './health/index.js'
+import { upload } from './upload/index.js'
+import { home } from './home/index.js'
 import { serveStaticFiles } from './common/helpers/serve-static-files.js'
+import { login } from './login/index.js'
 
 export const router = {
   plugin: {
@@ -12,13 +11,10 @@ export const router = {
     async register(server) {
       await server.register([inert])
 
-      // Health-check route. Used by platform to check if service is running, do not remove!
       await server.register([health])
+      
+      await server.register([login, upload])
 
-      // Application specific routes, add your own routes here
-      await server.register([home, about, upload])
-
-      // Static assets
       await server.register([serveStaticFiles])
     }
   }

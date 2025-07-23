@@ -1,14 +1,14 @@
 export function buildNavigation(request) {
   return [
     {
-      text: 'Home',
-      href: '/',
-      current: request?.path === '/'
+      text: 'Policy Summarizer',
+      href: '/upload',
+      current: request?.path === '/upload'
     },
     {
-      text: 'About',
-      href: '/about',
-      current: request?.path === '/about'
+      text: 'Logout',
+      href: '/logout',
+      current: false
     }
   ]
 }

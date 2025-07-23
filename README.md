@@ -1,8 +1,8 @@
-# aqie-docanalysisawspoc-frontend
+# aqie-docanalysispoc-frontend
 
-[![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=DEFRA_aqie-docanalysisawspoc-frontend&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=DEFRA_aqie-docanalysisawspoc-frontend)
-[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=DEFRA_aqie-docanalysisawspoc-frontend&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=DEFRA_aqie-docanalysisawspoc-frontend)
-[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=DEFRA_aqie-docanalysisawspoc-frontend&metric=coverage)](https://sonarcloud.io/summary/new_code?id=DEFRA_aqie-docanalysisawspoc-frontend)
+[![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=DEFRA_aqie-docanalysispoc-frontend&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=DEFRA_aqie-docanalysispoc-frontend)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=DEFRA_aqie-docanalysispoc-frontend&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=DEFRA_aqie-docanalysispoc-frontend)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=DEFRA_aqie-docanalysispoc-frontend&metric=coverage)](https://sonarcloud.io/summary/new_code?id=DEFRA_aqie-docanalysispoc-frontend)
 
 Core delivery platform Node.js Frontend Template.
 
@@ -37,7 +37,7 @@ easier to use the Node Version Manager [nvm](https://github.com/creationix/nvm)
 To use the correct version of Node.js for this application, via nvm:
 
 ```bash
-cd aqie-docanalysisawspoc-frontend
+cd aqie-docanalysispoc-frontend
 nvm use
 ```
 
@@ -144,18 +144,18 @@ git config --global core.autocrlf false
 
 > [!TIP]
 > For Apple Silicon users, you may need to add `--platform linux/amd64` to the `docker run` command to ensure
-> compatibility fEx: `docker build --platform=linux/arm64 --no-cache --tag aqie-docanalysisawspoc-frontend`
+> compatibility fEx: `docker build --platform=linux/arm64 --no-cache --tag aqie-docanalysispoc-frontend`
 
 Build:
 
 ```bash
-docker build --target development --no-cache --tag aqie-docanalysisawspoc-frontend:development .
+docker build --target development --no-cache --tag aqie-docanalysispoc-frontend:development .
 ```
 
 Run:
 
 ```bash
-docker run -p 3000:3000 aqie-docanalysisawspoc-frontend:development
+docker run -p 3000:3000 aqie-docanalysispoc-frontend:development
 ```
 
 ### Production image
@@ -163,13 +163,13 @@ docker run -p 3000:3000 aqie-docanalysisawspoc-frontend:development
 Build:
 
 ```bash
-docker build --no-cache --tag aqie-docanalysisawspoc-frontend .
+docker build --no-cache --tag aqie-docanalysispoc-frontend .
 ```
 
 Run:
 
 ```bash
-docker run -p 3000:3000 aqie-docanalysisawspoc-frontend
+docker run -p 3000:3000 aqie-docanalysispoc-frontend
 ```
 
 ### Docker Compose

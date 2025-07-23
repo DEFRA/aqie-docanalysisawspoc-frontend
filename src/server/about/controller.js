@@ -9,7 +9,7 @@ export const aboutController = {
       heading: 'About',
       breadcrumbs: [
         {
-          text: 'Home',
+          text: 'Upload',
           href: '/'
         },
         {

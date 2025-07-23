@@ -1,18 +1,19 @@
-import { homeController } from './controller.js'
+import { createLogger } from '../common/helpers/logging/logger.js'
 
-/**
- * Sets up the routes used in the home page.
- * These routes are registered in src/server/router.js.
- */
+const logger = createLogger()
+
 export const home = {
   plugin: {
     name: 'home',
-    register(server) {
+    register: async (server) => {
       server.route([
         {
           method: 'GET',
           path: '/',
-          ...homeController
+          handler: (request, h) => {
+            const user = request.auth.credentials.user
+            return h.redirect('/upload')
+          }
         }
       ])
     }

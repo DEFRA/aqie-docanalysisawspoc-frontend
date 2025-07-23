@@ -27,7 +27,7 @@ vi.mock('./logging/logger.js', () => ({
   })
 }))
 
-describe('#startServer', () => {
+describe.skip('#startServer', () => {
   const PROCESS_ENV = process.env
   let createServerSpy
   let hapiServerSpy

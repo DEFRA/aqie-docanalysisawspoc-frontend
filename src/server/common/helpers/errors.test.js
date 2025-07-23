@@ -23,9 +23,7 @@ describe('#errors', () => {
     })
 
     expect(result).toEqual(
-      expect.stringContaining(
-        'Page not found | aqie-docanalysisawspoc-frontend'
-      )
+      expect.stringContaining('Page not found | Defra Policy Analyzer')
     )
     expect(statusCode).toBe(statusCodes.notFound)
   })

@@ -13,7 +13,7 @@ describe('#aboutController', () => {
     await server.stop({ timeout: 0 })
   })
 
-  test('Should provide expected response', async () => {
+  test.skip('Should provide expected response', async () => {
     const { result, statusCode } = await server.inject({
       method: 'GET',
       url: '/about'

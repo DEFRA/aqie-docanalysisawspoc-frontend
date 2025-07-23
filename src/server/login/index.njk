@@ -1,0 +1,44 @@
+{% extends 'layouts/page.njk' %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+{% from "govuk/components/input/macro.njk" import govukInput %}
+{% from "govuk/components/error-summary/macro.njk" import govukErrorSummary %}
+
+{% block pageTitle %}
+  Sign in
+{% endblock %}
+
+{% block content %}
+<div class="govuk-grid-row">
+  <div class="govuk-grid-column-full">
+    {% if errors %}
+      <div class="govuk-grid-row">
+        <div class="govuk-grid-column-full">
+          {{ govukErrorSummary(errors) }}
+        </div>
+      </div>
+    {% endif %}
+    <h1 class="govuk-heading-m">
+      Sign in - To upload documents
+    </h1>
+    <p class="govuk-body-m">
+      You should only continue if you have been invited to.
+    </p>
+    <form action='/' method="post">
+      {{ govukInput({
+        label: {
+          text: "Password",
+          classes: "govuk-label"
+        },
+        classes: "govuk-!-width-one-third",
+        id: "password",
+        name: "password",
+        type: "password",
+        errorMessage: errorMessage
+      }) }}
+      {{ govukButton({
+        text: "Continue"
+      }) }}
+    </form>
+  </div>
+</div>
+{% endblock %}

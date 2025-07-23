@@ -158,6 +158,13 @@ export const config = convict({
         format: Boolean,
         default: isProduction,
         env: 'SESSION_COOKIE_SECURE'
+      },
+      docPassword: {
+        doc: 'password for poc',
+        format: '*',
+        default: 'password',
+        sensitive: true,
+        env: 'POC_PASSWORD'
       }
     }
   },
@@ -184,7 +191,7 @@ export const config = convict({
     keyPrefix: {
       doc: 'Redis cache key prefix name used to isolate the cached results across multiple clients',
       format: String,
-      default: 'aqie-docanalysisawspoc-frontend:',
+      default: 'aqie-docanalysispoc-frontend:',
       env: 'REDIS_KEY_PREFIX'
     },
     useSingleInstanceCache: {
@@ -219,6 +226,25 @@ export const config = convict({
       default: 'x-cdp-request-id',
       env: 'TRACING_HEADER'
     }
+  },
+  aiOpenApiKey: {
+    doc: 'AI Open API Azure key',
+    format: '*',
+    sensitive: true,
+    default: '',
+    env: 'OPEN_AI_KEY'
+  },
+  aiOpenApiUrl: {
+    doc: 'AI Open API Azure url',
+    format: String,
+    default: 'https://tradeplatform-ai.openai.azure.com/',
+    env: 'AI_OPEN_API_URL'
+  },
+  backendApiUrl: {
+    doc: 'Backend service url',
+    format: String,
+    default: `https://aqie-docanalysispoc-backend.${process.env.ENVIRONMENT}.cdp-int.defra.cloud`,
+    env: 'BACKEND_API_URL'
   }
 })
 

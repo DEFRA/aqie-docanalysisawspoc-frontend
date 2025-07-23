@@ -1,0 +1,45 @@
+.markdown-content {
+  margin-top: 2em;
+  padding: 1em;
+  border: 1px solid #b1b4b6;
+  border-radius: 4px;
+  background-color: #f8f8f8;
+}
+
+.markdown-content table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1em 0;
+}
+
+.markdown-content th,
+.markdown-content td {
+  padding: 0.5em;
+  border: 1px solid #b1b4b6;
+}
+
+.markdown-content pre {
+  background-color: #f3f2f1;
+  padding: 1em;
+  border-radius: 4px;
+  overflow-x: auto;
+}
+
+.markdown-content code {
+  font-family: monospace;
+  background-color: #f3f2f1;
+  padding: 0.2em 0.4em;
+  border-radius: 3px;
+}
+
+.markdown-content img {
+  max-width: 100%;
+  height: auto;
+}
+
+.markdown-content blockquote {
+  border-left: 4px solid #b1b4b6;
+  padding-left: 1em;
+  margin-left: 0;
+  color: #505a5f;
+}
