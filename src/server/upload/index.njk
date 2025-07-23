@@ -1,0 +1,30 @@
+{% extends 'layouts/page.njk' %}
+
+{% block content %}
+  {# {{ appHeading({
+    text: heading,
+    caption: "Core delivery platform Node.js Frontend Template."
+  }) }} #}
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <div class="govuk-body" data-testid="app-page-body">
+         <h1 class="govuk-heading-l govuk-!-margin-bottom-6">Upload a Document to Generate AI-Powered Insights</h1>
+         {% from "govuk/components/file-upload/macro.njk" import govukFileUpload %}
+
+{{ govukFileUpload({
+  id: "file-upload-1",
+  name: "fileUpload1",
+  label: {
+    text: "Select PDF file"
+  }
+}) }}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+ {{ govukButton({
+    text: "Summarize"
+  }) }}
+      </div>
+    </div>
+  </div>
+
+{% endblock %}

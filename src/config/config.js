@@ -44,7 +44,7 @@ export const config = convict({
   serviceName: {
     doc: 'Applications Service Name',
     format: String,
-    default: 'aqie-docanalysisawspoc-frontend'
+    default: 'Business case interrogation'
   },
   root: {
     doc: 'Project root',

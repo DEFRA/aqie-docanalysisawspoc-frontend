@@ -9,13 +9,13 @@
     "node": ">=22.16.0"
   },
   "scripts": {
-    "build:frontend": "NODE_ENV=production webpack",
+    "build:frontend": " webpack",
     "dev": "run-p frontend:watch server:watch",
     "dev:debug": "run-p frontend:watch server:debug",
     "docker:dev": "npm run dev",
     "format": "prettier --write \"src/**/*.js\" \"**/*.{js,cjs,md,json,config.js,test.js}\"",
     "format:check": "prettier --check \"src/**/*.js\" \"**/*.{js,cjs,md,json,config.js,test.js}\"",
-    "frontend:watch": "NODE_ENV=development webpack --watch",
+    "frontend:watch": " webpack --watch",
     "git:pre-commit-hook": "npm run format:check && npm run lint && npm test",
     "postinstall": "npm run setup:husky",
     "lint": "run-s lint:js lint:scss",
