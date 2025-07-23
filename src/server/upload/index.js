@@ -133,9 +133,13 @@ export const upload = {
                 logger.info(`Backend api url: ${backendApiUrl}`);
                 logger.info(requestPrompt.systemprompt);
 
-                const response = await axios.post(`${backendApiUrl}/summarize?model=${model}}`, {
+                const response = await axios.post(`${backendApiUrl}/summarize?model=${model}`, {
                   "systemprompt": requestPrompt.systemprompt,
                   "userprompt": requestPrompt.userprompt
+                }, {
+                  headers: {
+                    'Content-Type': 'text/plain'
+                  }
                 });
 
                 const summaries = response.data.summarizerresult.map((summary) => {
