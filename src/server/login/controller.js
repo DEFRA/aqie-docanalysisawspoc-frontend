@@ -15,7 +15,7 @@ const loginController = {
         pageTitle: 'Login Page - GOV.UK',
         heading: 'Login Page',
         page: 'upload',
-        serviceName: 'Defra Policy Summarisation (POC)',
+        serviceName: 'Business case interrogation',
         isAuthenticated: request.auth.isAuthenticated,
         errors: errors?.errors,
         errorMessage: errorMessage?.errorMessage
