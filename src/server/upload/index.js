@@ -142,7 +142,7 @@ export const upload = {
                   }
                 });
 
-                const summaries = response.data.summarizerresult.map((summary) => {
+                const summaries = response.data.summarizeresult.map((summary) => {
                   return summary.text
                 }).join('\n\n');
 
