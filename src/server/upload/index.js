@@ -131,49 +131,94 @@ export const upload = {
                                 3. Local Context and Alignment (Strategic Case): Critically Evaluate with conservative posture for Defra UK, Does the proposal demonstrate a deep understanding of the local context (political, economic, social, legal)? Does it align with the development priorities and strategies of the recipient country?
                                 4. Risk and Sustainability (Management Case): Critically Evaluate with conservative posture for Defra UK, Are the unique risks associated with operating in the recipient country (e.g., political instability, currency fluctuations, local capacity) adequately identified and managed? Is the intervention designed to be sustainable after the ODA funding ceases?`;
 
-                const redPrompt = `You are a Red Team reviewer evaluating the Strategic Case section of a business case document. Your task is to assess the document against the following criteria and assign a RAG (Red, Amber, Green) rating for each.
-                                  For each criterion:
-                                  •	Extract relevant evidence from the document.
-                                  •	Provide a short-written justification.
-                                  •	Assign a RAG rating:
-                                  o	🔴 Red – Not addressed or major gaps.
-                                  o	🟠 Amber – Partially addressed or unclear.
-                                  o	🟢 Green – Fully addressed and clear.
-                                  At the end, provide:
-                                  •	An overall RAG rating for the Strategic Case in Tabular Format
-                                  •	A summary paragraph highlighting key strengths, weaknesses, and any missing elements.
-                                  Strategic Context
-                                  1.	Does the proposal align with the Defra Group Outcome Delivery Plan / Outcome Framework?
-                                  2.	Has a Sustainability Impact Assessment been completed and included as an annex?
-                                  Case for Change
-                                  3.	Is the current system or policy being replaced clearly described, including future arrangements?
-                                  4.	Is the rationale for replacement or change clearly explained?
-                                  Investment Objectives
-                                  5.	Are the investment objectives clearly stated?
-                                  6.	Is there evidence that funding options (especially private finance) have been considered?
-                                  SMART Objectives
-                                  7.	Is there a clear Golden Thread linking the project to strategic objectives and policies?
-                                  8.	Are SMART objectives clearly defined in terms of outcomes and outputs?
-                                  Benefits Management Framework
-                                  9.	Are high-level benefits and dis-benefits clearly articulated?
-                                  10.	Do the benefits align with strategic objectives and are they mapped visually?
-                                  11.	Is there a benefits map or equivalent artefact in the annex?
-                                  Place-Based Considerations
-                                  12.	If applicable, are objectives tailored to specific areas or types of areas?
-                                  Strategic Risks
-                                  13.	Are key strategic risks clearly identified?
-                                  14.	Are constraints and dependencies explained?
-                                  15.	Are security implications (e.g. CNI, cyber, personnel) considered?
-                                  16.	Is compliance with Defra information security policies addressed?
-                                  Regularity and AO Tests
-                                  17.	Are legal powers (vires) in place or being arranged?
-                                  18.	Are regularity conclusions supported by Strategic Case analysis?
-                                  19.	Are propriety conclusions supported by Strategic Case analysis?
-                                  Wider Business Case Alignment
-                                  20.	Is stakeholder sentiment (staff, partners, public) considered?
-                                  21.	Are assumptions and figures consistent with other business case sections?
-                                  Overall Strategic Assessment
-                                  22.	Is there a clear and compelling case for change?`
+                const redPrompt = `You are a Red Team reviewer evaluating a business case document. 
+                                You will now evaluate six sections of a business case. For each section:
+                                1. Evaluate all listed questions.
+                                2. Provide a RAG (Red, Amber, Green) rating per question.
+                                3. Show the output in Tabular format
+                                Strategic Case Questions
+                                1.	Has a Sustainability Impact Assessment been completed and included?
+                                2.	Is the current system or policy being replaced clearly described?
+                                3.	Is the rationale for change clearly explained?
+                                4.	Are investment objectives clearly stated?
+                                5.	Is there evidence of funding options, including private finance?
+                                6.	Are SMART objectives clearly defined?
+                                7.	Do benefits align with strategic objectives and are they mapped?
+                                8.	Are place-based objectives considered?
+                                9.	Are strategic risks and constraints clearly identified?
+                                10.	Are security implications considered?
+                                11.	Is compliance with Defra information security policies addressed?
+                                12.	Is stakeholder sentiment considered?
+                                13.	Is there a clear case for change?
+                                Economic Case Questions
+                                1.	Are spending objectives and key outcomes specified?
+                                2.	Has a wide range of options (including BAU) been appraised?
+                                3.	Are options described with pros/cons and conclusions?
+                                4.	Is a preferred option identified with scope and delivery details?
+                                5.	Are costs, benefits, and wider impacts assessed?
+                                6.	Is optimism bias and cost of risk considered?
+                                7.	Are costs/benefits adjusted for inflation and discounted?
+                                8.	Are assumptions clear, evidenced, and consistent?
+                                9.	Is previous evaluation evidence used?
+                                10.	Have key assumptions been sensitivity tested?
+                                11.	Is the preferred option credible and best value for money?
+                                12.	Has Defra's Value for Money Framework been applied?
+                                13.	Is a Value for Money category reported?
+                                14.	Are gains/losses to societal groups assessed?
+                                15.	Are benefit valuation assumptions recorded and used?
+                                16.	Is the estimated value of each benefit identified?
+                                17.	Does the preferred option provide best overall value for money?
+                                Commercial Case Questions
+                                1.	Is the scope of requirement (value/volume) clearly defined?
+                                2.	Is there an overview of the procurement strategy?
+                                3.	Is market engagement completed or planned?
+                                4.	Does the strategy demonstrate risk transfer and payment linkage?
+                                5.	Are mitigations sufficient to protect Defra/government?
+                                6.	Are top 3-5 commercial risks and mitigations identified?
+                                7.	Has the Counter Fraud Hub been contacted for FRA?
+                                8.	Has DgC resource been identified and engaged?
+                                9.	Will the procurement method deliver the preferred option to quality and schedule?
+                                Financial Case Questions
+                                1.	Are all relevant costs and income identified across years?
+                                2.	Do costs include inflation uplifts and efficiency savings?
+                                3.	Is there evidence of stakeholder and authority support?
+                                4.	Are funding and costs analysed by budget type?
+                                5.	Are budget classifications justified?
+                                6.	Are actions identified to address funding gaps?
+                                7.	Are cost/income/funding assumptions clear and realistic?
+                                8.	Do cost assumptions align with resourcing plans?
+                                9.	Are risks to assumptions stated with mitigations?
+                                10.	Are balance sheet and accounting impacts identified?
+                                11.	Has complex accounting treatment been assessed?
+                                12.	Are tax implications assessed?
+                                13.	Is there a clear affordability conclusion?
+                                14.	Are costs and funding sources sufficiently developed?
+                                Management Case Questions
+                                1.	Are governance, control, and reporting lines clearly defined?
+                                2.	If another public body is affected, is joint governance agreed? 
+                                3.	Are internal/external participants clearly identified?
+                                4.	Are expert advisers involved?
+                                5.	Is stakeholder engagement identified and explained?
+                                6.	Has stakeholder analysis been conducted?
+                                7.	Is there a communications plan?
+                                8.	Is there a Change Management plan?
+                                9.	Are risks, assumptions, dependencies managed?
+                                10.	Are risks allocated appropriately?
+                                11.	Is there a contingency plan for service continuity?
+                                12.	Is there an initial project vision?
+                                13.	Are UK Green Financing and Sustainable Goals referenced?
+                                14.	Are there any gaps in detail or rationale?
+                    
+                                IT Specialist Questions
+                                1.	Are governance and reporting arrangements clearly defined?
+                                2.	Has the DDTS strategy been incorporated into the Strategic Case?
+                                3.	Has the User Need been identified and tested?
+                                4.	Have DDTS Sustainability Guidelines been followed?
+                                5.	Have Accessibility Guidelines been built into the digital service?
+                                6.	Are digital and technology options and costs included in the Financial Case?
+                                7.	Is spend control from DTSA PAB in place for current and next phase?
+                                8.	Has the team undergone Alpha Assessment and planned Beta/Live Assessments?
+                                9.	Does the project have the right IT components for successful delivery?`
 
                 let requestPrompt = {
                   "systemprompt": analysisType === 'green' ? greenPrompt : redPrompt,
