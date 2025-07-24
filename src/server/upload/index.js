@@ -141,6 +141,7 @@ export const upload = {
                                 1. Evaluate all listed questions.
                                 2. Provide a RAG (Red, Amber, Green) rating per question.
                                 3. Show the output in Tabular format
+
                                 Strategic Case Questions
                                 1.	Has a Sustainability Impact Assessment been completed and included?
                                 2.	Is the current system or policy being replaced clearly described?
@@ -150,11 +151,8 @@ export const upload = {
                                 6.	Are SMART objectives clearly defined?
                                 7.	Do benefits align with strategic objectives and are they mapped?
                                 8.	Are place-based objectives considered?
-                                9.	Are strategic risks and constraints clearly identified?
-                                10.	Are security implications considered?
-                                11.	Is compliance with Defra information security policies addressed?
-                                12.	Is stakeholder sentiment considered?
-                                13.	Is there a clear case for change?
+                                19.	Is there a clear case for change?
+
                                 Economic Case Questions
                                 1.	Are spending objectives and key outcomes specified?
                                 2.	Has a wide range of options (including BAU) been appraised?
@@ -164,15 +162,8 @@ export const upload = {
                                 6.	Is optimism bias and cost of risk considered?
                                 7.	Are costs/benefits adjusted for inflation and discounted?
                                 8.	Are assumptions clear, evidenced, and consistent?
-                                9.	Is previous evaluation evidence used?
-                                10.	Have key assumptions been sensitivity tested?
-                                11.	Is the preferred option credible and best value for money?
-                                12.	Has Defra's Value for Money Framework been applied?
-                                13.	Is a Value for Money category reported?
-                                14.	Are gains/losses to societal groups assessed?
-                                15.	Are benefit valuation assumptions recorded and used?
-                                16.	Is the estimated value of each benefit identified?
-                                17.	Does the preferred option provide best overall value for money?
+                                9.	Does the preferred option provide best overall value for money?
+
                                 Commercial Case Questions
                                 1.	Is the scope of requirement (value/volume) clearly defined?
                                 2.	Is there an overview of the procurement strategy?
@@ -183,6 +174,7 @@ export const upload = {
                                 7.	Has the Counter Fraud Hub been contacted for FRA?
                                 8.	Has DgC resource been identified and engaged?
                                 9.	Will the procurement method deliver the preferred option to quality and schedule?
+
                                 Financial Case Questions
                                 1.	Are all relevant costs and income identified across years?
                                 2.	Do costs include inflation uplifts and efficiency savings?
@@ -191,13 +183,7 @@ export const upload = {
                                 5.	Are budget classifications justified?
                                 6.	Are actions identified to address funding gaps?
                                 7.	Are cost/income/funding assumptions clear and realistic?
-                                8.	Do cost assumptions align with resourcing plans?
-                                9.	Are risks to assumptions stated with mitigations?
-                                10.	Are balance sheet and accounting impacts identified?
-                                11.	Has complex accounting treatment been assessed?
-                                12.	Are tax implications assessed?
-                                13.	Is there a clear affordability conclusion?
-                                14.	Are costs and funding sources sufficiently developed?
+
                                 Management Case Questions
                                 1.	Are governance, control, and reporting lines clearly defined?
                                 2.	If another public body is affected, is joint governance agreed? 
@@ -206,13 +192,6 @@ export const upload = {
                                 5.	Is stakeholder engagement identified and explained?
                                 6.	Has stakeholder analysis been conducted?
                                 7.	Is there a communications plan?
-                                8.	Is there a Change Management plan?
-                                9.	Are risks, assumptions, dependencies managed?
-                                10.	Are risks allocated appropriately?
-                                11.	Is there a contingency plan for service continuity?
-                                12.	Is there an initial project vision?
-                                13.	Are UK Green Financing and Sustainable Goals referenced?
-                                14.	Are there any gaps in detail or rationale?
                     
                                 IT Specialist Questions
                                 1.	Are governance and reporting arrangements clearly defined?
@@ -221,9 +200,7 @@ export const upload = {
                                 4.	Have DDTS Sustainability Guidelines been followed?
                                 5.	Have Accessibility Guidelines been built into the digital service?
                                 6.	Are digital and technology options and costs included in the Financial Case?
-                                7.	Is spend control from DTSA PAB in place for current and next phase?
-                                8.	Has the team undergone Alpha Assessment and planned Beta/Live Assessments?
-                                9.	Does the project have the right IT components for successful delivery?`
+                                7.	Is spend control from DTSA PAB in place for current and next phase?`
 
                 let requestPrompt = {
                   "systemprompt": analysisType === 'green' ? greenPrompt : redPrompt,
