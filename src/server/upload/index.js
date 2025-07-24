@@ -183,7 +183,7 @@ export const upload = {
                 const response = await axios.post(`${backendApiUrl}/summarize`, {
                   "systemprompt": requestPrompt.systemprompt,
                   "userprompt": requestPrompt.userprompt,
-                  "model": model
+                  "modelid": model
                 }, {
                   headers: {
                     'Content-Type': 'text/plain'
