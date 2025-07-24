@@ -47,7 +47,9 @@ export const upload = {
           handler: async (request, h) => {
             const { payload } = request
             const model = request.query.model || 'model1'
+            const analysisType = payload?.analysisType || 'green'
             const file = payload?.policyPdf
+            logger.info(analysisType);
             if (
               !file ||
               file.hapi.headers['content-type'] !== 'application/pdf'
@@ -57,7 +59,8 @@ export const upload = {
                 user: request.auth.credentials.user,
                 status: 'error',
                 message: 'Please upload a PDF file.',
-                model: model
+                model: model,
+                analysisType: payload?.analysisType || 'green'
               })
             }
             const uploadDir = path.join(process.cwd(), 'uploads')
@@ -80,62 +83,107 @@ export const upload = {
 
                 const backendApiUrl = config.get('backendApiUrl');
 
+                // Define different prompts based on analysis type
+                const greenPrompt = `Evaluate the text based on the Green Book CENTRAL GOVERNMENT GUIDANCE ON APPRAISAL AND EVALUATION given below and
+                            give a RAG report for the following evaluation metric along with a short summary for each criteria in a tabular format
+                                For The Strategic Dimension 
+                                critically Evaluate for DEFRA the Strategic Case of the attached business case based on the principles outlined in HM Treasury's Green Book. Your analysis should cover:
+                                1. Case for Change: Critically Evaluate with conservative posture for Defra UK, Is there a compelling case for change? Does it clearly articulate the rationale for intervention and is it supported by objective evidence?
+                                2. Business as Usual (BAU): Critically Evaluate with conservative posture for Defra UK, Has the BAU scenario been quantitatively defined to provide a clear benchmark for comparison?
+                                3. SMART Objectives: Critically Evaluate with conservative posture for Defra UK, Are the objectives Specific, Measurable, Achievable, Realistic, and Time-limited (SMART)? Do they focus on outcomes rather than outputs?
+                                4. Strategic Fit: Critically Evaluate with conservative posture for Defra UK, How well does this proposal align with wider government policies and the organization's strategic goals?
+                                5. Constraints and Dependencies: Critically Evaluate with conservative posture for Defra UK, Have all significant external constraints (legal, ethical, etc.) and dependencies (e.g., other projects, infrastructure) been identified and addressed? "
+                                For The Economic Dimension 
+                                "Analyze the Economic Case of the business case in accordance with the Green Book's guidance on social value appraisal. Your evaluation must address:
+                                1. Options Appraisal: Critically Evaluate with conservative posture for Defra UK, Was a comprehensive longlist of options considered using the options framework-filter, leading to a viable shortlist for detailed analysis? This should include a 'do-minimum' option.
+                                2. Social Cost-Benefit Analysis (CBA) / Cost-Effectiveness Analysis (CEA): Critically Evaluate with conservative posture for Defra UK, Has the appropriate analysis (CBA or CEA) been used to compare shortlisted options? Are all significant social and environmental costs and benefits (monetized and unmonetized) to UK society included and valued appropriately?
+                                3. Valuation: Critically Evaluate with conservative posture for Defra UK, Are valuations of costs and benefits based on market prices, or where not possible, approved non-market valuation techniques? Are costs and benefits presented in real terms and discounted using the correct Social Time Preference Rate (STPR)?
+                                4. Risk and Optimism Bias: Critically Evaluate with conservative posture for Defra UK, Has optimism bias been explicitly and appropriately applied to costs, benefits, and timelines? Is there a clear risk register and has the cost of risk been properly estimated?
+                                5. Value for Money (VfM): Critically Evaluate with conservative posture for Defra UK, Does the analysis present a clear Net Present Social Value (NPSV) and Benefit-Cost Ratio (BCR) for each option to determine the optimal VfM? Does the VfM judgment appropriately consider unquantifiable benefits and risks? "
+                                For The Commercial Dimension 
+                                "Assess the Commercial Case of the business case as per the Green Book framework. Your evaluation should focus on:
+                                1. Commercial Viability: Critically Evaluate with conservative posture for Defra UK, Is the proposed commercial strategy realistic and credible? Can a viable deal be struck with the market?
+                                2. Procurement Strategy: Critically Evaluate with conservative posture for Defra UK, Does the procurement specification logically follow from the strategic and economic cases? Has sufficient market appetite and capacity been assessed?
+                                3. Risk Allocation: Critically Evaluate with conservative posture for Defra UK, Is there a clear and optimal allocation of risks between the public and private sectors? Is risk borne by the party best able to manage it?
+                                4. Contractual Arrangements: Critically Evaluate with conservative posture for Defra UK, If Public-Private Partnership (PPP) options are considered, have they been robustly compared against a Public Sector Comparator? Is there sufficient contractual flexibility to handle future changes without incurring unacceptable costs? "
+                                For The Financial Dimension 
+                                "Evaluate the Financial Case of the business case using the principles from the Green Book. Your analysis must include:
+                                1. Affordability: Critically Evaluate with conservative posture for Defra UK, Is the proposal affordable within the organization's current and future budget allocations?
+                                2. Public Sector Cost: Critically Evaluate with conservative posture for Defra UK, Does the case accurately present the net financial impact on the public sector over the proposal's lifetime, including all capital and revenue costs?
+                                3. Accounting and Budgeting: Critically Evaluate with conservative posture for Defra UK, Are costs calculated correctly according to National Accounts rules and presented on an accruals basis consistent with departmental budgets? Are financial statements (budget, cash flow, funding) provided and robust?
+                                4. Contingency: Critically Evaluate with conservative posture for Defra UK, Is there a clear and appropriate financial contingency allowance derived from residual optimism bias and quantified risks, and is its purpose (to inform the approving authority's reserves) understood? "
+                                For The Management Dimension 
+                                "Assess the Management Case of the business case based on the Green Book's requirements for successful delivery. Your evaluation should examine:
+                                1. Delivery Plan: Critically Evaluate with conservative posture for Defra UK, Is there a realistic and robust plan for implementation? Are there clear milestones, and is the timeline achievable?
+                                2. Governance and Resources: Critically Evaluate with conservative posture for Defra UK, Is the organizational structure for governance and delivery clearly defined? Are the required resources (personnel, skills) available and properly managed?
+                                3. Risk and Benefit Management: Critically Evaluate with conservative posture for Defra UK, Is there a comprehensive Risk Register with clear ownership and mitigation plans? Is there a Benefits Register to track the realization of expected benefits?
+                                4. Monitoring and Evaluation: Critically Evaluate with conservative posture for Defra UK, Are there proportionate and budgeted plans for monitoring and evaluation before, during, and after implementation to track performance and learn lessons? "
+                                For The IT Dimension 
+                                "Drawing upon the principles of the Green Book's Five Case Model, evaluate the IT-specific aspects of this business case. Your assessment should consider:
+                                1. Strategic Alignment (Strategic Case): Critically Evaluate with conservative posture for Defra UK, How does the proposed IT solution support the SMART objectives and overall business needs? Is there a risk of technological obsolescence, and how is it managed? Is the IT solution dependent on other infrastructure (e.g., connectivity) and is this dependency managed?
+                                2. Value and Cost (Economic/Financial Cases): Critically Evaluate with conservative posture for Defra UK, Are the full whole-life costs of the IT system (including procurement, implementation, maintenance, and eventual replacement) accurately estimated and included in the appraisal? Is there a clear benefit realization plan for the IT investment?
+                                3. Sourcing and Delivery (Commercial/Management Cases): Critically Evaluate with conservative posture for Defra UK, Has the procurement of IT been considered (e.g., build vs. buy, specific frameworks)? Does the management case reflect best practices for IT project delivery, such as Agile methodologies where appropriate?
+                                4. Risk Management (Management Case): Critically Evaluate with conservative posture for Defra UK, Are IT-specific risks (e.g., data security, system integration, user adoption, supplier failure) identified and mitigated in the risk register?"
+                                For The Official Development Assistance (ODA) Dimension 
+                                "Evaluate this business case for its suitability as an Official Development Assistance (ODA) proposal, applying the core principles of the Green Book while adapting for the international development context. Your evaluation should cover:
+                                1. Recipient Country Value (Economic Case): Critically Evaluate with conservative posture for Defra UK, Does the appraisal correctly focus on the social costs and benefits to the recipient country, rather than the UK?
+                                2. Context-Specific STPR (Economic Case): Critically Evaluate with conservative posture for Defra UK, Has an appropriate Social Time Preference Rate (STPR) for the recipient country been used for discounting, acknowledging that the standard UK rate may not be suitable?
+                                3. Local Context and Alignment (Strategic Case): Critically Evaluate with conservative posture for Defra UK, Does the proposal demonstrate a deep understanding of the local context (political, economic, social, legal)? Does it align with the development priorities and strategies of the recipient country?
+                                4. Risk and Sustainability (Management Case): Critically Evaluate with conservative posture for Defra UK, Are the unique risks associated with operating in the recipient country (e.g., political instability, currency fluctuations, local capacity) adequately identified and managed? Is the intervention designed to be sustainable after the ODA funding ceases?`;
+
+                const redPrompt = `You are a Red Team reviewer evaluating the Strategic Case section of a business case document. Your task is to assess the document against the following criteria and assign a RAG (Red, Amber, Green) rating for each.
+                                  For each criterion:
+                                  •	Extract relevant evidence from the document.
+                                  •	Provide a short-written justification.
+                                  •	Assign a RAG rating:
+                                  o	🔴 Red – Not addressed or major gaps.
+                                  o	🟠 Amber – Partially addressed or unclear.
+                                  o	🟢 Green – Fully addressed and clear.
+                                  At the end, provide:
+                                  •	An overall RAG rating for the Strategic Case in Tabular Format
+                                  •	A summary paragraph highlighting key strengths, weaknesses, and any missing elements.
+                                  Strategic Context
+                                  1.	Does the proposal align with the Defra Group Outcome Delivery Plan / Outcome Framework?
+                                  2.	Has a Sustainability Impact Assessment been completed and included as an annex?
+                                  Case for Change
+                                  3.	Is the current system or policy being replaced clearly described, including future arrangements?
+                                  4.	Is the rationale for replacement or change clearly explained?
+                                  Investment Objectives
+                                  5.	Are the investment objectives clearly stated?
+                                  6.	Is there evidence that funding options (especially private finance) have been considered?
+                                  SMART Objectives
+                                  7.	Is there a clear Golden Thread linking the project to strategic objectives and policies?
+                                  8.	Are SMART objectives clearly defined in terms of outcomes and outputs?
+                                  Benefits Management Framework
+                                  9.	Are high-level benefits and dis-benefits clearly articulated?
+                                  10.	Do the benefits align with strategic objectives and are they mapped visually?
+                                  11.	Is there a benefits map or equivalent artefact in the annex?
+                                  Place-Based Considerations
+                                  12.	If applicable, are objectives tailored to specific areas or types of areas?
+                                  Strategic Risks
+                                  13.	Are key strategic risks clearly identified?
+                                  14.	Are constraints and dependencies explained?
+                                  15.	Are security implications (e.g. CNI, cyber, personnel) considered?
+                                  16.	Is compliance with Defra information security policies addressed?
+                                  Regularity and AO Tests
+                                  17.	Are legal powers (vires) in place or being arranged?
+                                  18.	Are regularity conclusions supported by Strategic Case analysis?
+                                  19.	Are propriety conclusions supported by Strategic Case analysis?
+                                  Wider Business Case Alignment
+                                  20.	Is stakeholder sentiment (staff, partners, public) considered?
+                                  21.	Are assumptions and figures consistent with other business case sections?
+                                  Overall Strategic Assessment
+                                  22.	Is there a clear and compelling case for change?`
+
                 let requestPrompt = {
-                  "systemprompt": `Evaluate the text based on the Green Book CENTRAL GOVERNMENT GUIDANCE ON APPRAISAL AND EVALUATION given below and
-                  give a RAG report for the following evaluation metric along with a short summary for each criteria in a tabular format
-                      For The Strategic Dimension 
-                      critically Evaluate for DEFRA the Strategic Case of the attached business case based on the principles outlined in HM Treasury's Green Book. Your analysis should cover:
-                      1. Case for Change: Critically Evaluate with conservative posture for Defra UK, Is there a compelling case for change? Does it clearly articulate the rationale for intervention and is it supported by objective evidence?
-                      2. Business as Usual (BAU): Critically Evaluate with conservative posture for Defra UK, Has the BAU scenario been quantitatively defined to provide a clear benchmark for comparison?
-                      3. SMART Objectives: Critically Evaluate with conservative posture for Defra UK, Are the objectives Specific, Measurable, Achievable, Realistic, and Time-limited (SMART)? Do they focus on outcomes rather than outputs?
-                      4. Strategic Fit: Critically Evaluate with conservative posture for Defra UK, How well does this proposal align with wider government policies and the organization's strategic goals?
-                      5. Constraints and Dependencies: Critically Evaluate with conservative posture for Defra UK, Have all significant external constraints (legal, ethical, etc.) and dependencies (e.g., other projects, infrastructure) been identified and addressed? "
-                      For The Economic Dimension 
-                      "Analyze the Economic Case of the business case in accordance with the Green Book's guidance on social value appraisal. Your evaluation must address:
-                      1. Options Appraisal: Critically Evaluate with conservative posture for Defra UK, Was a comprehensive longlist of options considered using the options framework-filter, leading to a viable shortlist for detailed analysis? This should include a 'do-minimum' option.
-                      2. Social Cost-Benefit Analysis (CBA) / Cost-Effectiveness Analysis (CEA): Critically Evaluate with conservative posture for Defra UK, Has the appropriate analysis (CBA or CEA) been used to compare shortlisted options? Are all significant social and environmental costs and benefits (monetized and unmonetized) to UK society included and valued appropriately?
-                      3. Valuation: Critically Evaluate with conservative posture for Defra UK, Are valuations of costs and benefits based on market prices, or where not possible, approved non-market valuation techniques? Are costs and benefits presented in real terms and discounted using the correct Social Time Preference Rate (STPR)?
-                      4. Risk and Optimism Bias: Critically Evaluate with conservative posture for Defra UK, Has optimism bias been explicitly and appropriately applied to costs, benefits, and timelines? Is there a clear risk register and has the cost of risk been properly estimated?
-                      5. Value for Money (VfM): Critically Evaluate with conservative posture for Defra UK, Does the analysis present a clear Net Present Social Value (NPSV) and Benefit-Cost Ratio (BCR) for each option to determine the optimal VfM? Does the VfM judgment appropriately consider unquantifiable benefits and risks? "
-                      For The Commercial Dimension 
-                      "Assess the Commercial Case of the business case as per the Green Book framework. Your evaluation should focus on:
-                      1. Commercial Viability: Critically Evaluate with conservative posture for Defra UK, Is the proposed commercial strategy realistic and credible? Can a viable deal be struck with the market?
-                      2. Procurement Strategy: Critically Evaluate with conservative posture for Defra UK, Does the procurement specification logically follow from the strategic and economic cases? Has sufficient market appetite and capacity been assessed?
-                      3. Risk Allocation: Critically Evaluate with conservative posture for Defra UK, Is there a clear and optimal allocation of risks between the public and private sectors? Is risk borne by the party best able to manage it?
-                      4. Contractual Arrangements: Critically Evaluate with conservative posture for Defra UK, If Public-Private Partnership (PPP) options are considered, have they been robustly compared against a Public Sector Comparator? Is there sufficient contractual flexibility to handle future changes without incurring unacceptable costs? "
-                      For The Financial Dimension 
-                      "Evaluate the Financial Case of the business case using the principles from the Green Book. Your analysis must include:
-                      1. Affordability: Critically Evaluate with conservative posture for Defra UK, Is the proposal affordable within the organization's current and future budget allocations?
-                      2. Public Sector Cost: Critically Evaluate with conservative posture for Defra UK, Does the case accurately present the net financial impact on the public sector over the proposal's lifetime, including all capital and revenue costs?
-                      3. Accounting and Budgeting: Critically Evaluate with conservative posture for Defra UK, Are costs calculated correctly according to National Accounts rules and presented on an accruals basis consistent with departmental budgets? Are financial statements (budget, cash flow, funding) provided and robust?
-                      4. Contingency: Critically Evaluate with conservative posture for Defra UK, Is there a clear and appropriate financial contingency allowance derived from residual optimism bias and quantified risks, and is its purpose (to inform the approving authority's reserves) understood? "
-                      For The Management Dimension 
-                      "Assess the Management Case of the business case based on the Green Book's requirements for successful delivery. Your evaluation should examine:
-                      1. Delivery Plan: Critically Evaluate with conservative posture for Defra UK, Is there a realistic and robust plan for implementation? Are there clear milestones, and is the timeline achievable?
-                      2. Governance and Resources: Critically Evaluate with conservative posture for Defra UK, Is the organizational structure for governance and delivery clearly defined? Are the required resources (personnel, skills) available and properly managed?
-                      3. Risk and Benefit Management: Critically Evaluate with conservative posture for Defra UK, Is there a comprehensive Risk Register with clear ownership and mitigation plans? Is there a Benefits Register to track the realization of expected benefits?
-                      4. Monitoring and Evaluation: Critically Evaluate with conservative posture for Defra UK, Are there proportionate and budgeted plans for monitoring and evaluation before, during, and after implementation to track performance and learn lessons? "
-                      For The IT Dimension 
-                      "Drawing upon the principles of the Green Book's Five Case Model, evaluate the IT-specific aspects of this business case. Your assessment should consider:
-                      1. Strategic Alignment (Strategic Case): Critically Evaluate with conservative posture for Defra UK, How does the proposed IT solution support the SMART objectives and overall business needs? Is there a risk of technological obsolescence, and how is it managed? Is the IT solution dependent on other infrastructure (e.g., connectivity) and is this dependency managed?
-                      2. Value and Cost (Economic/Financial Cases): Critically Evaluate with conservative posture for Defra UK, Are the full whole-life costs of the IT system (including procurement, implementation, maintenance, and eventual replacement) accurately estimated and included in the appraisal? Is there a clear benefit realization plan for the IT investment?
-                      3. Sourcing and Delivery (Commercial/Management Cases): Critically Evaluate with conservative posture for Defra UK, Has the procurement of IT been considered (e.g., build vs. buy, specific frameworks)? Does the management case reflect best practices for IT project delivery, such as Agile methodologies where appropriate?
-                      4. Risk Management (Management Case): Critically Evaluate with conservative posture for Defra UK, Are IT-specific risks (e.g., data security, system integration, user adoption, supplier failure) identified and mitigated in the risk register?"
-                      For The Official Development Assistance (ODA) Dimension 
-                      "Evaluate this business case for its suitability as an Official Development Assistance (ODA) proposal, applying the core principles of the Green Book while adapting for the international development context. Your evaluation should cover:
-                      1. Recipient Country Value (Economic Case): Critically Evaluate with conservative posture for Defra UK, Does the appraisal correctly focus on the social costs and benefits to the recipient country, rather than the UK?
-                      2. Context-Specific STPR (Economic Case): Critically Evaluate with conservative posture for Defra UK, Has an appropriate Social Time Preference Rate (STPR) for the recipient country been used for discounting, acknowledging that the standard UK rate may not be suitable?
-                      3. Local Context and Alignment (Strategic Case): Critically Evaluate with conservative posture for Defra UK, Does the proposal demonstrate a deep understanding of the local context (political, economic, social, legal)? Does it align with the development priorities and strategies of the recipient country?
-                      4. Risk and Sustainability (Management Case): Critically Evaluate with conservative posture for Defra UK, Are the unique risks associated with operating in the recipient country (e.g., political instability, currency fluctuations, local capacity) adequately identified and managed? Is the intervention designed to be sustainable after the ODA funding ceases?`,
+                  "systemprompt": analysisType === 'green' ? greenPrompt : redPrompt,
                   "userprompt": pdfTextContent
                 }
 
-                logger.info(`Backend api url: ${backendApiUrl}`);
-                logger.info(requestPrompt.systemprompt);
-
-                const response = await axios.post(`${backendApiUrl}/summarize?model=${model}`, {
+                const response = await axios.post(`${backendApiUrl}/summarize`, {
                   "systemprompt": requestPrompt.systemprompt,
-                  "userprompt": requestPrompt.userprompt
+                  "userprompt": requestPrompt.userprompt,
+                  "model": model
                 }, {
                   headers: {
                     'Content-Type': 'text/plain'
@@ -153,7 +201,8 @@ export const upload = {
                   status: 'success',
                   markdownContent: summaries,
                   filename: file.hapi.filename,
-                  model: model
+                  model: model,
+                  analysisType: analysisType
                 })
               } catch (apiError) {
                 logger.error(`Backend API error: ${apiError.message}`)
@@ -171,7 +220,8 @@ export const upload = {
                   status: 'success',
                   markdownContent: 'Unable to generate summary. Using raw document content instead.',
                   filename: file.hapi.filename,
-                  model: model
+                  model: model,
+                  analysisType: analysisType
                 })
               }
             } catch (error) {
@@ -184,7 +234,8 @@ export const upload = {
                 user: request.auth.credentials.user,
                 status: 'error',
                 message: 'Error processing PDF: ' + error.message,
-                model: model
+                model: model,
+                analysisType: analysisType
               })
             }
           }
