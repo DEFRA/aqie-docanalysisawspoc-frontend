@@ -41,7 +41,12 @@ export const upload = {
               parse: true,
               multipart: true,
               maxBytes: 50 * 1024 * 1024, // 50MB limit
-              allow: 'multipart/form-data'
+              allow: 'multipart/form-data',
+              timeout: 5 * 60 * 1000
+            },
+            timeout: {
+              server: 5 * 60 * 1000,
+              socket: 6 * 60 * 1000
             }
           },
           handler: async (request, h) => {
