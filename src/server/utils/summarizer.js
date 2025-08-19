@@ -22,7 +22,7 @@ export async function summarizeText(text) {
       'Summarize the following document in a concise way, highlighting the key points:\n\n{text}'
     )
 
-    // Create a chain for processing 
+    // Create a chain for processing
     const chain = promptTemplate.pipe(model).pipe(new StringOutputParser())
 
     // Execute the chain with the text
