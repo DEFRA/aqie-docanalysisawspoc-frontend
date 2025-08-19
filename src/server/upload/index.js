@@ -91,7 +91,6 @@ export const upload = {
 
               const sizeInKB = (byteSize / 1024).toFixed(2)
 
-              console.log(`Size of PDF text content:`)
               logger.info(`Size of PDF text content:- ${byteSize} bytes`)
               logger.info(`Size of PDF text content:- ${sizeInKB} KB`)
 
