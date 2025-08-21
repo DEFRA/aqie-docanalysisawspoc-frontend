@@ -55,7 +55,7 @@ export async function createServer() {
       encoding: 'none'
     }
   })
-  
+
   await server.register(hapiCookie)
 
   const sessionConfig = config.get('session')
@@ -78,7 +78,7 @@ export async function createServer() {
       }
     }
   })
-  
+
   //register with every route to use correct credentials with cookies
   server.auth.default({ strategy: 'login', mode: 'required' })
 

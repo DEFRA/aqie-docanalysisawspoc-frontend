@@ -12,7 +12,7 @@ export const router = {
       await server.register([inert])
 
       await server.register([health])
-      
+
       await server.register([login, upload])
 
       await server.register([serveStaticFiles])

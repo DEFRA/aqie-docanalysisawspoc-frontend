@@ -6,7 +6,6 @@ import { parsePdfToJson } from '../utils/pdfParser.js'
 import { createLogger } from '../../server/common/helpers/logging/logger.js'
 import { config } from '../../config/config.js'
 import axios from 'axios'
-import { log } from 'console'
 
 const logger = createLogger()
 const pump = util.promisify(pipeline)
@@ -27,7 +26,7 @@ export const upload = {
               isAuthenticated: true,
               user: user,
               status: null,
-              model: model,
+              model: model
             })
           }
         },
@@ -54,7 +53,7 @@ export const upload = {
             const model = request.query.model || 'model1'
             const analysisType = payload?.analysisType || 'green'
             const file = payload?.policyPdf
-            logger.info(analysisType);
+            logger.info(analysisType)
             if (
               !file ||
               file.hapi.headers['content-type'] !== 'application/pdf'
@@ -75,18 +74,28 @@ export const upload = {
             await pump(file, fs.createWriteStream(filepath))
 
             try {
-
               const pdfText = await parsePdfToJson(filepath)
               await fs.unlinkSync(filepath)
 
               // Convert PDF text to a string for the API call
+              //value of pdf file
               const pdfTextContent = pdfText
-                .map(page => page.content)
+                .map((page) => page.content)
                 .join('\n\n')
 
-              try {
+              logger.info(
+                `Size of PDF text content: ${pdfTextContent.length} characters`
+              )
+              const encoder = new TextEncoder()
+              const byteSize = encoder.encode(pdfTextContent).length
 
-                const backendApiUrl = config.get('backendApiUrl');
+              const sizeInKB = (byteSize / 1024).toFixed(2)
+
+              logger.info(`Size of PDF text content:- ${byteSize} bytes`)
+              logger.info(`Size of PDF text content:- ${sizeInKB} KB`)
+
+              try {
+                const backendApiUrl = config.get('backendApiUrl')
 
                 // Define different prompts based on analysis type
                 const greenPrompt = `Evaluate the text based on the Green Book CENTRAL GOVERNMENT GUIDANCE ON APPRAISAL AND EVALUATION given below and
@@ -134,7 +143,7 @@ export const upload = {
                                 1. Recipient Country Value (Economic Case): Critically Evaluate with conservative posture for Defra UK, Does the appraisal correctly focus on the social costs and benefits to the recipient country, rather than the UK?
                                 2. Context-Specific STPR (Economic Case): Critically Evaluate with conservative posture for Defra UK, Has an appropriate Social Time Preference Rate (STPR) for the recipient country been used for discounting, acknowledging that the standard UK rate may not be suitable?
                                 3. Local Context and Alignment (Strategic Case): Critically Evaluate with conservative posture for Defra UK, Does the proposal demonstrate a deep understanding of the local context (political, economic, social, legal)? Does it align with the development priorities and strategies of the recipient country?
-                                4. Risk and Sustainability (Management Case): Critically Evaluate with conservative posture for Defra UK, Are the unique risks associated with operating in the recipient country (e.g., political instability, currency fluctuations, local capacity) adequately identified and managed? Is the intervention designed to be sustainable after the ODA funding ceases?`;
+                                4. Risk and Sustainability (Management Case): Critically Evaluate with conservative posture for Defra UK, Are the unique risks associated with operating in the recipient country (e.g., political instability, currency fluctuations, local capacity) adequately identified and managed? Is the intervention designed to be sustainable after the ODA funding ceases?`
 
                 const redPrompt = `You are a Red Team reviewer evaluating a business case document. 
                                 You will now evaluate six sections of a business case. For each section:
@@ -202,24 +211,31 @@ export const upload = {
                                 6.	Are digital and technology options and costs included in the Financial Case?
                                 7.	Is spend control from DTSA PAB in place for current and next phase?`
 
-                let requestPrompt = {
-                  "systemprompt": analysisType === 'green' ? greenPrompt : redPrompt,
-                  "userprompt": pdfTextContent
+                const requestPrompt = {
+                  systemprompt:
+                    analysisType === 'green' ? greenPrompt : redPrompt,
+                  userprompt: pdfTextContent
                 }
 
-                const response = await axios.post(`${backendApiUrl}/summarize`, {
-                  "systemprompt": requestPrompt.systemprompt,
-                  "userprompt": requestPrompt.userprompt,
-                  "modelid": model
-                }, {
-                  headers: {
-                    'Content-Type': 'text/plain'
+                const response = await axios.post(
+                  `${backendApiUrl}/summarize`,
+                  {
+                    systemprompt: requestPrompt.systemprompt,
+                    userprompt: requestPrompt.userprompt,
+                    modelid: model
+                  },
+                  {
+                    headers: {
+                      'Content-Type': 'text/plain'
+                    }
                   }
-                });
+                )
 
-                const summaries = response.data.summarizeresult.map((summary) => {
-                  return summary.text
-                }).join('\n\n');
+                const summaries = response.data.summarizeresult
+                  .map((summary) => {
+                    return summary.text
+                  })
+                  .join('\n\n')
 
                 // Return the view with both summary and markdown content
                 return h.view('upload/index', {
@@ -237,7 +253,9 @@ export const upload = {
                   logger.error(`Status: ${apiError.status}`)
                 }
                 if (apiError.error) {
-                  logger.error(`Error details: ${JSON.stringify(apiError.error)}`)
+                  logger.error(
+                    `Error details: ${JSON.stringify(apiError.error)}`
+                  )
                 }
 
                 // Return the view with just the markdown content
@@ -245,7 +263,8 @@ export const upload = {
                   isAuthenticated: true,
                   user: request.auth.credentials.user,
                   status: 'success',
-                  markdownContent: 'Unable to generate summary. Using raw document content instead.',
+                  markdownContent:
+                    'Unable to generate summary. Using raw document content instead.',
                   filename: file.hapi.filename,
                   model: model,
                   analysisType: analysisType

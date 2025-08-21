@@ -48,24 +48,24 @@ document.addEventListener('DOMContentLoaded', function () {
     ) {
       // Clear previous markdown content
       if (markdownContent) {
-        markdownContent.style.display = 'none';
-        const markdownRenderer = document.getElementById('markdownRenderer');
+        markdownContent.style.display = 'none'
+        const markdownRenderer = document.getElementById('markdownRenderer')
         if (markdownRenderer) {
-          markdownRenderer.innerHTML = '';
+          markdownRenderer.innerHTML = ''
         }
       }
-      
-      // Show loading message
-      const loadingMessage = document.getElementById('loadingMessage');
-      if (loadingMessage) {
-        loadingMessage.style.display = 'block';
-      }
-      
-      document.body.style.cursor = 'wait';
 
-      const submitButton = uploadForm.querySelector('button[type="submit"]');
+      // Show loading message
+      const loadingMessage = document.getElementById('loadingMessage')
+      if (loadingMessage) {
+        loadingMessage.style.display = 'block'
+      }
+
+      document.body.style.cursor = 'wait'
+
+      const submitButton = uploadForm.querySelector('button[type="submit"]')
       if (submitButton) {
-        submitButton.disabled = true;
+        submitButton.disabled = true
       }
     }
   })
