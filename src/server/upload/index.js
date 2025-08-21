@@ -6,6 +6,7 @@ import { parsePdfToJson } from '../utils/pdfParser.js'
 import { createLogger } from '../../server/common/helpers/logging/logger.js'
 import { config } from '../../config/config.js'
 import axios from 'axios'
+import { PassThrough } from 'stream'
 
 const logger = createLogger()
 const pump = util.promisify(pipeline)
@@ -49,6 +50,7 @@ export const upload = {
             }
           },
           handler: async (request, h) => {
+            const startTime = Date.now() // Start timer
             const { payload } = request
             const model = request.query.model || 'model1'
             const analysisType = payload?.analysisType || 'green'
@@ -71,11 +73,24 @@ export const upload = {
             if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir)
             const filename = `${Date.now()}-${file.hapi.filename}`
             const filepath = path.join(uploadDir, filename)
+            const uploadStart = Date.now()
             await pump(file, fs.createWriteStream(filepath))
 
+            const uploadEnd = Date.now()
+            logger.info(
+              `File upload time: ${(uploadEnd - uploadStart) / 1000} seconds`
+            )
+
             try {
+              const parseStart = Date.now()
+
               const pdfText = await parsePdfToJson(filepath)
               await fs.unlinkSync(filepath)
+
+              const parseEnd = Date.now()
+              logger.info(
+                `PDF parsing time: ${(parseEnd - parseStart) / 1000} seconds`
+              )
 
               // Convert PDF text to a string for the API call
               //value of pdf file
@@ -217,6 +232,8 @@ export const upload = {
                   userprompt: pdfTextContent
                 }
 
+                const backendServiceStart = Date.now()
+
                 const response = await axios.post(
                   `${backendApiUrl}/summarize`,
                   {
@@ -236,6 +253,16 @@ export const upload = {
                     return summary.text
                   })
                   .join('\n\n')
+
+                const backendServiceEnd = Date.now()
+                logger.info(
+                  `Backend Call time taken to receive response: ${(backendServiceEnd - backendServiceStart) / 1000} seconds`
+                )
+
+                const totalTime = (backendServiceEnd - startTime) / 1000
+                logger.info(
+                  `Total processing time: ${totalTime} seconds`
+                )
 
                 // Return the view with both summary and markdown content
                 return h.view('upload/index', {
@@ -283,6 +310,76 @@ export const upload = {
                 model: model,
                 analysisType: analysisType
               })
+            }
+          }
+        },
+        {
+          method: 'GET',
+          path: '/stream-summary',
+          options: {
+            auth: { strategy: 'login', mode: 'required' },
+            handler: async (request, h) => {
+              const { model, analysisType, filename } = request.query
+              const uploadDir = path.join(process.cwd(), 'uploads')
+              const tempStorePath = path.join(uploadDir, `${filename}.txt`)
+
+              if (!fs.existsSync(tempStorePath)) {
+                return h.response('Missing parsed content').code(404)
+              }
+
+              const pdfTextContent = fs.readFileSync(tempStorePath, 'utf-8')
+              const prompt = analysisType === 'green' ? greenPrompt : redPrompt
+
+              const response = h.response()
+              response.code(200)
+              response.type('text/event-stream')
+              response.header('Cache-Control', 'no-cache')
+              response.header('Connection', 'keep-alive')
+
+              const stream = new PassThrough()
+              response.source = stream
+
+              // Send initial message
+              stream.write(`data: Starting analysis...\n\n`)
+
+              try {
+                const backendApiUrl = config.get('backendApiUrl')
+
+                const axiosResponse = await axios({
+                  method: 'post',
+                  url: `${backendApiUrl}/stream-summarize`, // <-- your streaming endpoint
+                  data: {
+                    systemprompt: prompt,
+                    userprompt: pdfTextContent,
+                    modelid: model
+                  },
+                  responseType: 'stream'
+                })
+
+                axiosResponse.data.on('data', (chunk) => {
+                  const text = chunk.toString().trim()
+                  if (text) {
+                    stream.write(`data: ${text}\n\n`)
+                  }
+                })
+
+                axiosResponse.data.on('end', () => {
+                  stream.write(`event: end\ndata: done\n\n`)
+                  stream.end()
+                })
+
+                axiosResponse.data.on('error', (err) => {
+                  stream.write(`data: Error: ${err.message}\n\n`)
+                  stream.end()
+                })
+              } catch (err) {
+                stream.write(
+                  `data: Error contacting backend: ${err.message}\n\n`
+                )
+                stream.end()
+              }
+
+              return response
             }
           }
         }

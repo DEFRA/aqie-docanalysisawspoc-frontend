@@ -92,6 +92,26 @@
     {% endif %}
   </div>
 </div>
+{# <div id="stream-output" class="govuk-body"></div>
+
+<script>
+  const eventSource = new EventSource('/stream-summary?model={{ model }}&analysisType={{ analysisType }}&filename={{ filename }}');
+
+  eventSource.onmessage = function (event) {
+    const output = document.getElementById('stream-output');
+    output.innerHTML += `<p>${event.data}</p>`;
+  };
+
+  eventSource.addEventListener('end', function () {
+    eventSource.close();
+  });
+
+  eventSource.onerror = function (err) {
+    console.error('SSE error:', err);
+    eventSource.close();
+  });
+</script> #}
+
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <!-- pdf-progress.js removed -->
 

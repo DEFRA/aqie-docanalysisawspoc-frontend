@@ -243,7 +243,7 @@ export const config = convict({
   backendApiUrl: {
     doc: 'Backend service url',
     format: String,
-    default: `https://aqie-docanalysispoc-backend.${process.env.ENVIRONMENT}.cdp-int.defra.cloud`,
+    default: `https://aqie-docanalysispoc-backend.dev.cdp-int.defra.cloud`,
     env: 'BACKEND_API_URL'
   }
 })
