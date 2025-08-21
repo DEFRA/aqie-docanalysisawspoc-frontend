@@ -162,7 +162,7 @@ export const config = convict({
       docPassword: {
         doc: 'password for poc',
         format: '*',
-        default: 'password',
+        default: '',
         sensitive: true,
         env: 'POC_PASSWORD'
       }
