@@ -1,0 +1,86 @@
+{% extends 'layouts/page.njk' %}
+
+{% block pageTitle %}Analysis Status{% endblock %}
+
+{% block content %}
+<h1 class="govuk-heading-m">Document Analysis Status</h1>
+
+<div id="statusContainer">
+  <div id="loadingMessage" class="govuk-inset-text">
+    <div class="spinner" style="display: inline-block; margin-right: 10px;"></div>
+    Processing your document... Please wait...
+  </div>
+</div>
+
+<div id="markdownContent" class="govuk-body markdown-content" style="display: none; margin-top: 2em;">
+  <h2 class="govuk-heading-m">Analysis Results</h2>
+  <div id="markdownRenderer"></div>
+</div>
+
+<div id="errorMessage" class="govuk-error-summary" style="display: none;">
+  <div class="govuk-error-summary__body">
+    <p id="errorText"></p>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const requestId = '{{ requestId }}';
+  let pollInterval;
+
+  function pollStatus() {
+    fetch(`/checkstatus/${requestId}`)
+      .then(response => response.json())
+      .then(data => {
+        if (data.status === 'completed') {
+          clearInterval(pollInterval);
+          document.getElementById('loadingMessage').style.display = 'none';
+          document.getElementById('markdownContent').style.display = 'block';
+          
+          if (data.result) {
+            document.getElementById('markdownRenderer').innerHTML = marked.parse(data.result);
+            
+            // Apply GOV.UK styling to tables
+            document.querySelectorAll('#markdownRenderer table').forEach((table) => {
+              table.classList.add('govuk-table');
+              table.querySelectorAll('thead').forEach((thead) => {
+                thead.classList.add('govuk-table__head');
+              });
+              table.querySelectorAll('tbody').forEach((tbody) => {
+                tbody.classList.add('govuk-table__body');
+              });
+              table.querySelectorAll('th').forEach((th) => {
+                th.classList.add('govuk-table__header');
+              });
+              table.querySelectorAll('td').forEach((td) => {
+                td.classList.add('govuk-table__cell');
+              });
+            });
+          }
+        } else if (data.status === 'error') {
+          clearInterval(pollInterval);
+          document.getElementById('loadingMessage').style.display = 'none';
+          document.getElementById('errorMessage').style.display = 'block';
+          document.getElementById('errorText').textContent = data.message || 'An error occurred during processing';
+        }
+        // Continue polling if status is 'processing' or 'pending'
+      })
+      .catch(error => {
+        console.error('Error polling status:', error);
+        clearInterval(pollInterval);
+        document.getElementById('loadingMessage').style.display = 'none';
+        document.getElementById('errorMessage').style.display = 'block';
+        document.getElementById('errorText').textContent = 'Failed to check processing status';
+      });
+  }
+
+  // Start polling every 2 seconds
+  pollInterval = setInterval(pollStatus, 5000);
+  
+  // Initial poll
+  pollStatus();
+});
+</script>
+
+{% endblock %}

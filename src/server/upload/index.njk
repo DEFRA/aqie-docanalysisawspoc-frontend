@@ -45,74 +45,9 @@
 <div id="fileInfo" style="margin-top:1em; display:none;">
   <strong>Selected file:</strong> <span id="fileName"></span>
 </div>
-<!-- Progress container removed -->
-<div id="feedbackArea">
-  {% if status == 'processing' %}
-    <div class="govuk-inset-text">Parsing document... Analysing tables... Generating summary... Validating business case...</div>
-  {% elif status == 'error' %}
-    <div class="govuk-error-summary">{{ message }}</div>
-  {% endif %}
-</div>
 
-<div id="markdownContent" class="govuk-body markdown-content" style="{% if not markdownContent %}display: none;{% endif %} margin-top: 2em;">
-  <h2 class="govuk-heading-m">Summarisation & Critical gap analysis</h2>
-  
-  {% if summary %}
-  <div class="govuk-inset-text summary-section">
-    <h3 class="govuk-heading-s">AI-Generated Summary</h3>
-    <p>{{ summary | safe }}</p>
-  </div>
-  {% endif %}
-  
-  <div id="markdownRenderer">
-    {% if markdownContent %}
-      <script>
-        document.addEventListener('DOMContentLoaded', function() {
-          const markdownContent = `{{ markdownContent | safe }}`;
-          document.getElementById('markdownRenderer').innerHTML = marked.parse(markdownContent);
-          
-          // Apply GOV.UK styling to tables
-          document.querySelectorAll('#markdownRenderer table').forEach((table) => {
-            table.classList.add('govuk-table');
-            table.querySelectorAll('thead').forEach((thead) => {
-              thead.classList.add('govuk-table__head');
-            });
-            table.querySelectorAll('tbody').forEach((tbody) => {
-              tbody.classList.add('govuk-table__body');
-            });
-            table.querySelectorAll('th').forEach((th) => {
-              th.classList.add('govuk-table__header');
-            });
-            table.querySelectorAll('td').forEach((td) => {
-              td.classList.add('govuk-table__cell');
-            });
-          });
-        });
-      </script>
-    {% endif %}
-  </div>
-</div>
-{# <div id="stream-output" class="govuk-body"></div>
 
-<script>
-  const eventSource = new EventSource('/stream-summary?model={{ model }}&analysisType={{ analysisType }}&filename={{ filename }}');
 
-  eventSource.onmessage = function (event) {
-    const output = document.getElementById('stream-output');
-    output.innerHTML += `<p>${event.data}</p>`;
-  };
-
-  eventSource.addEventListener('end', function () {
-    eventSource.close();
-  });
-
-  eventSource.onerror = function (err) {
-    console.error('SSE error:', err);
-    eventSource.close();
-  });
-</script> #}
-
-<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <!-- pdf-progress.js removed -->
 
 {% endblock %}
