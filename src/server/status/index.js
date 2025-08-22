@@ -16,41 +16,62 @@ export const status = {
           handler: async (request, h) => {
             const { requestId } = request.params
             const user = request.auth.credentials.user
+            const backendApiUrl = config.get('backendApiUrl')
+            
+            // Check if results already exist
+            try {
+              const response = await axios.get(`${backendApiUrl}/gets3/${requestId}`)
+              
+              if (response.data && response.data.getS3result) {
+                return h.view('status/index', {
+                  isAuthenticated: true,
+                  user: user,
+                  requestId: requestId,
+                  status: 'complete',
+                  markdownContent: response.data.getS3result
+                })
+              }
+            } catch (error) {
+              // Results not ready yet, show polling state
+            }
             
             return h.view('status/index', {
               isAuthenticated: true,
               user: user,
-              requestId: requestId
+              requestId: requestId,
+              status: 'polling',
+              markdownContent: null
             })
           }
         },
         {
           method: 'GET',
-          path: '/checkstatus/{requestId}',
+          path: '/progress/{requestId}',
           options: { auth: { strategy: 'login', mode: 'required' } },
           handler: async (request, h) => {
             const { requestId } = request.params
+            const backendApiUrl = config.get('backendApiUrl')
             
             try {
-              const backendApiUrl = config.get('backendApiUrl')
               const response = await axios.get(`${backendApiUrl}/gets3/${requestId}`)
               
-              return h.view('status/index', {
-                  isAuthenticated: true,
-                  user: request.auth.credentials.user,
-                  status: 'success',
-                  markdownContent: response.data.getS3result,
-                  filename: file.hapi.filename,
-                  model: model,
-                  analysisType: analysisType
+              if (response.data && response.data.getS3result) {
+                return h.response({
+                  status: 'complete',
+                  content: response.data.getS3result
                 })
-              // return h.response(response.data.getS3result).code(200)
+              }
+              
+              return h.response({
+                status: 'processing',
+                content: '🔄 **Processing your document analysis...**\n\nPlease wait while our AI service analyzes your document. This may take a few moments.'
+              })
+              
             } catch (error) {
-              logger.error(`Error checking status: ${error.message}`)
-              return h.response({ 
-                status: 'error', 
-                message: 'Failed to check status' 
-              }).code(500)
+              return h.response({
+                status: 'processing',
+                content: '⏳ **Fetching analysis results...**\n\nConnecting to our AI service to retrieve your document analysis.'
+              })
             }
           }
         }

@@ -3,19 +3,47 @@
 {% block pageTitle %}Analysis Status{% endblock %}
 
 {% block content %}
+<div class="govuk-back-link">
+  <a href="/upload" class="govuk-back-link">Back to Upload</a>
+</div>
+
 <h1 class="govuk-heading-m">Document Analysis Status</h1>
 
-<div id="statusContainer">
-  <div id="loadingMessage" class="govuk-inset-text">
-    <div class="spinner" style="display: inline-block; margin-right: 10px;"></div>
-    Processing your document... Please wait...
+{% if markdownContent %}
+<div id="markdownContent" class="govuk-body markdown-content" style="margin-top: 2em;">
+  <h2 class="govuk-heading-m">Analysis Results</h2>
+  <div id="markdownRenderer">
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        const markdownContent = `{{ markdownContent | safe }}`;
+        document.getElementById('markdownRenderer').innerHTML = marked.parse(markdownContent);
+        
+        // Apply GOV.UK styling to tables
+        document.querySelectorAll('#markdownRenderer table').forEach((table) => {
+          table.classList.add('govuk-table');
+          table.querySelectorAll('thead').forEach((thead) => {
+            thead.classList.add('govuk-table__head');
+          });
+          table.querySelectorAll('tbody').forEach((tbody) => {
+            tbody.classList.add('govuk-table__body');
+          });
+          table.querySelectorAll('th').forEach((th) => {
+            th.classList.add('govuk-table__header');
+          });
+          table.querySelectorAll('td').forEach((td) => {
+            td.classList.add('govuk-table__cell');
+          });
+        });
+      });
+    </script>
   </div>
 </div>
-
-<div id="markdownContent" class="govuk-body markdown-content" style="display: none; margin-top: 2em;">
-  <h2 class="govuk-heading-m">Analysis Results</h2>
-  <div id="markdownRenderer"></div>
+{% else %}
+<div class="govuk-inset-text">
+  <div class="spinner" style="display: inline-block; margin-right: 10px;"></div>
+  {{ markdownContent or 'Processing your document analysis... Please wait while we fetch the results from our AI service.' }}
 </div>
+{% endif %}
 
 <div id="errorMessage" class="govuk-error-summary" style="display: none;">
   <div class="govuk-error-summary__body">
@@ -27,59 +55,24 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
   const requestId = '{{ requestId }}';
-  let pollInterval;
-
-  function pollStatus() {
-    fetch(`/checkstatus/${requestId}`)
-      .then(response => response.json())
-      .then(data => {
-        if (data.status === 'completed') {
-          clearInterval(pollInterval);
-          document.getElementById('loadingMessage').style.display = 'none';
-          document.getElementById('markdownContent').style.display = 'block';
-          
-          if (data.result) {
-            document.getElementById('markdownRenderer').innerHTML = marked.parse(data.result);
-            
-            // Apply GOV.UK styling to tables
-            document.querySelectorAll('#markdownRenderer table').forEach((table) => {
-              table.classList.add('govuk-table');
-              table.querySelectorAll('thead').forEach((thead) => {
-                thead.classList.add('govuk-table__head');
-              });
-              table.querySelectorAll('tbody').forEach((tbody) => {
-                tbody.classList.add('govuk-table__body');
-              });
-              table.querySelectorAll('th').forEach((th) => {
-                th.classList.add('govuk-table__header');
-              });
-              table.querySelectorAll('td').forEach((td) => {
-                td.classList.add('govuk-table__cell');
-              });
-            });
-          }
-        } else if (data.status === 'error') {
-          clearInterval(pollInterval);
-          document.getElementById('loadingMessage').style.display = 'none';
-          document.getElementById('errorMessage').style.display = 'block';
-          document.getElementById('errorText').textContent = data.message || 'An error occurred during processing';
-        }
-        // Continue polling if status is 'processing' or 'pending'
-      })
-      .catch(error => {
-        console.error('Error polling status:', error);
-        clearInterval(pollInterval);
-        document.getElementById('loadingMessage').style.display = 'none';
-        document.getElementById('errorMessage').style.display = 'block';
-        document.getElementById('errorText').textContent = 'Failed to check processing status';
-      });
-  }
-
-  // Start polling every 2 seconds
-  pollInterval = setInterval(pollStatus, 5000);
+  const status = '{{ status }}';
   
-  // Initial poll
-  pollStatus();
+  if (status === 'polling') {
+    function pollProgress() {
+      fetch(`/progress/${requestId}`)
+        .then(response => response.json())
+        .then(data => {
+          if (data.status === 'complete') {
+            location.reload(); // Reload page to show results
+          } else {
+            setTimeout(pollProgress, 5000);
+          }
+        })
+        .catch(() => setTimeout(pollProgress, 5000));
+    }
+    
+    pollProgress();
+  }
 });
 </script>
 
