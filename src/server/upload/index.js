@@ -254,17 +254,18 @@ export const upload = {
                 //   })
                 //   .join('\n\n')
 
-                // const backendServiceEnd = Date.now()
-                // logger.info(
-                //   `Backend Call time taken to receive response: ${(backendServiceEnd - backendServiceStart) / 1000} seconds`
-                // )
+                const backendServiceEnd = Date.now()
+                logger.info(
+                  `Backend Call time taken to receive response: ${(backendServiceEnd - backendServiceStart) / 1000} seconds`
+                )
 
-                // const totalTime = (backendServiceEnd - startTime) / 1000
-                // logger.info(
-                //   `Total processing time: ${totalTime} seconds`
-                // )
+                const totalTime = (backendServiceEnd - startTime) / 1000
+                logger.info(
+                  `Total processing time: ${totalTime} seconds`
+                )
 
                 const requestId = response.data.requestId;
+                logger.info(`Request ID: ${requestId}`)
                 return h.redirect(`/status/${requestId}`)
               } catch (apiError) {
                 logger.error(`Backend API error: ${apiError.message}`)
