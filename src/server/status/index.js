@@ -35,7 +35,16 @@ export const status = {
               const backendApiUrl = config.get('backendApiUrl')
               const response = await axios.get(`${backendApiUrl}/gets3/${requestId}`)
               
-              return h.response(response.data).code(200)
+              return h.view('status/index', {
+                  isAuthenticated: true,
+                  user: request.auth.credentials.user,
+                  status: 'success',
+                  markdownContent: response.data.getS3result,
+                  filename: file.hapi.filename,
+                  model: model,
+                  analysisType: analysisType
+                })
+              // return h.response(response.data.getS3result).code(200)
             } catch (error) {
               logger.error(`Error checking status: ${error.message}`)
               return h.response({ 
