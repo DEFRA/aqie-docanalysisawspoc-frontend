@@ -265,6 +265,8 @@ export const upload = {
                 )
 
                 const requestId = response.data.requestId;
+                logger.info(`Received response: ${JSON.stringify(response)}`)
+                logger.info(`Received response data: ${JSON.stringify(response.data)}`)
                 logger.info(`Request ID: ${requestId}`)
                 return h.redirect(`/status/${requestId}`)
               } catch (apiError) {
