@@ -69,7 +69,7 @@ document.addEventListener('DOMContentLoaded', function() {
       fetch(`/progress/${requestId}`)
         .then(response => response.json())
         .then(data => {
-          if (data.status === 'complete') {
+          if (data.status === 'completed') {
             location.reload();
           } else {
             setTimeout(pollProgress, 5000);
