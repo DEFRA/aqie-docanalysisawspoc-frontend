@@ -3,9 +3,7 @@
 {% block pageTitle %}Analysis Status{% endblock %}
 
 {% block content %}
-<div class="govuk-back-link">
-  <a href="/upload" class="govuk-back-link">Back to Upload</a>
-</div>
+<a href="/upload" class="govuk-back-link">Back to Upload</a>
 
 <h1 class="govuk-heading-m">Document Analysis Status</h1>
 
@@ -58,12 +56,21 @@ document.addEventListener('DOMContentLoaded', function() {
   const status = '{{ status }}';
   
   if (status === 'polling') {
+    const startTime = Date.now();
+    const maxDuration = 3 * 60 * 1000; // 3 minutes
+    
     function pollProgress() {
+      if (Date.now() - startTime > maxDuration) {
+        document.querySelector('.govuk-inset-text').innerHTML = 
+          '<p class="govuk-error-message">⚠️ Processing timeout: Analysis is taking longer than expected. Please try uploading your document again.</p>';
+        return;
+      }
+      
       fetch(`/progress/${requestId}`)
         .then(response => response.json())
         .then(data => {
           if (data.status === 'complete') {
-            location.reload(); // Reload page to show results
+            location.reload();
           } else {
             setTimeout(pollProgress, 5000);
           }
