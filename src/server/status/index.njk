@@ -54,7 +54,7 @@
 document.addEventListener('DOMContentLoaded', function() {
   const requestId = '{{ requestId }}';
   const status = '{{ status }}';
-  {{ status | dump}}
+  {{ status | dump }}
   
   if (status === 'polling' || status === 'completed') {
   if (status === 'completed') {
