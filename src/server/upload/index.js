@@ -352,11 +352,9 @@ export const upload = {
                 )
 
                 const totalTime = (backendServiceEnd - startTime) / 1000
-                logger.info(
-                  `Total processing time: ${totalTime} seconds`
-                )
+                logger.info(`Total processing time: ${totalTime} seconds`)
 
-                const requestId = response.data.requestId;
+                const requestId = response.data.requestId
                 logger.info(`Request ID: ${requestId}`)
                 return h.redirect(`/status/${requestId}`)
               } catch (apiError) {

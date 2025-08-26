@@ -55,7 +55,10 @@ document.addEventListener('DOMContentLoaded', function() {
   const requestId = '{{ requestId }}';
   const status = '{{ status }}';
   
-  if (status === 'polling') {
+  if (status === 'polling' || status === 'completed') {
+  if (status === 'completed') {
+      return;
+    }
     const startTime = Date.now();
     const maxDuration = 3 * 60 * 1000; // 3 minutes
     

@@ -19,15 +19,24 @@ export const status = {
             const backendApiUrl = config.get('backendApiUrl')
 
             // Check if results already exist
-            logger.info(`Status check for requestId: ${requestId}, backend URL: ${backendApiUrl}`)
+            logger.info(
+              `Status check for requestId: ${requestId}, backend URL: ${backendApiUrl}`
+            )
             try {
-
-              const response = await axios.get(`${backendApiUrl}/getS3/01f62de7-6b31-4057-bba8-c061f257df20`)
+              const response = await axios.get(
+                `${backendApiUrl}/getS3/01f62de7-6b31-4057-bba8-c061f257df20`
+              )
               logger.info(`Status check response status: ${response.status}`)
-              logger.info(`Status check response data: ${JSON.stringify(response.data)}`)
-              logger.info(`Status check response data getS3Result: ${JSON.stringify(response.data.getS3result)}`)
-              logger.info(`Status check response status: ${JSON.stringify(response.data.getS3result.status)}`)
-              let result = JSON.stringify(response.data);
+              logger.info(
+                `Status check response data: ${JSON.stringify(response.data)}`
+              )
+              logger.info(
+                `Status check response data getS3Result: ${JSON.stringify(response.data.getS3result)}`
+              )
+              logger.info(
+                `Status check response status: ${JSON.stringify(response.data.getS3result.status)}`
+              )
+              let result = JSON.stringify(response.data)
 
               if (result && result.getS3result.status === 'completed') {
                 return h.view('status/index', {
@@ -39,7 +48,9 @@ export const status = {
                 })
               }
             } catch (error) {
-              logger.info(`Status check error for ${requestId}: ${error.message}`)
+              logger.info(
+                `Status check error for ${requestId}: ${error.message}`
+              )
               // Results not ready yet, show polling state
             }
 
@@ -65,15 +76,23 @@ export const status = {
             logger.info(`Full backend URL: ${backendApiUrl}/getS3/${requestId}`)
 
             try {
-
-              const response = await axios.get(`${backendApiUrl}/getS3/01f62de7-6b31-4057-bba8-c061f257df20`)
-              let result = JSON.stringify(response.data);
-              logger.info(`Backend response status: ${response.status}, has result: ${!!(response.data && response.data.getS3result)}`)
+              const response = await axios.get(
+                `${backendApiUrl}/getS3/01f62de7-6b31-4057-bba8-c061f257df20`
+              )
+              let result = JSON.stringify(response.data)
+              logger.info(
+                `Backend response status: ${response.status}, has result: ${!!(response.data && response.data.getS3result)}`
+              )
               logger.info(`Progress check response status: ${response.status}`)
-              logger.info(`Progress check response data: ${JSON.stringify(response.data)}`)
-              logger.info(`Progress check response data getS3Result: ${JSON.stringify(response.data.getS3result)}`)
-              logger.info(`Progress check response status: ${JSON.stringify(response.data.getS3result.status)}`)
-
+              logger.info(
+                `Progress check response data: ${JSON.stringify(response.data)}`
+              )
+              logger.info(
+                `Progress check response data getS3Result: ${JSON.stringify(response.data.getS3result)}`
+              )
+              logger.info(
+                `Progress check response status: ${JSON.stringify(response.data.getS3result.status)}`
+              )
 
               if (result && result.getS3result.status === 'completed') {
                 return h.response({
@@ -84,15 +103,20 @@ export const status = {
 
               return h.response({
                 status: 'processing',
-                content: '🔄 **Processing your document analysis...**\n\nPlease wait while our AI service analyzes your document. This may take a few moments.'
+                content:
+                  '🔄 **Processing your document analysis...**\n\nPlease wait while our AI service analyzes your document. This may take a few moments.'
               })
-
             } catch (error) {
               logger.error(`Backend error for ${requestId}: ${error.message}`)
-              logger.error(`Error details:`, error.response?.status, error.response?.data)
+              logger.error(
+                `Error details:`,
+                error.response?.status,
+                error.response?.data
+              )
               return h.response({
                 status: 'processing',
-                content: '⏳ **Fetching analysis results...**\n\nConnecting to our AI service to retrieve your document analysis.'
+                content:
+                  '⏳ **Fetching analysis results...**\n\nConnecting to our AI service to retrieve your document analysis.'
               })
             }
           }
