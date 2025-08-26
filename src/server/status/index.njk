@@ -54,6 +54,7 @@
 document.addEventListener('DOMContentLoaded', function() {
   const requestId = '{{ requestId }}';
   const status = '{{ status }}';
+  {{ status | dump}}
   
   if (status === 'polling' || status === 'completed') {
   if (status === 'completed') {
@@ -72,8 +73,7 @@ document.addEventListener('DOMContentLoaded', function() {
       fetch(`/progress/${requestId}`)
         .then(response => response.json())
         .then(data => {
-          console.log('Fetch response data:', data);
-          console.log('Data status:', data.status);
+          {{ data | dump }}
           if (data.getS3result.status === 'completed') {
             location.reload();
           } else {
