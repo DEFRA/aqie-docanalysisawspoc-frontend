@@ -23,10 +23,10 @@ export const status = {
             try {
 
               const response = await axios.get(`${backendApiUrl}/getS3/01f62de7-6b31-4057-bba8-c061f257df20`)
-              logger.info(`Status check response: ${response.status}`)
-              logger.info(`Status check response: ${JSON.stringify(response.data)}`)
-              logger.info(`Status check response: ${JSON.stringify(response.data.getS3result)}`)
-
+              logger.info(`Status check response status: ${response.status}`)
+              logger.info(`Status check response data: ${JSON.stringify(response.data)}`)
+              logger.info(`Status check response data getS3Result: ${JSON.stringify(response.data.getS3result)}`)
+              logger.info(`Status check response status: ${JSON.stringify(response.data.getS3result.status)}`)
               let result = JSON.stringify(response.data);
 
               if (result && result.getS3result.status === 'completed') {
@@ -69,6 +69,11 @@ export const status = {
               const response = await axios.get(`${backendApiUrl}/getS3/01f62de7-6b31-4057-bba8-c061f257df20`)
               let result = JSON.stringify(response.data);
               logger.info(`Backend response status: ${response.status}, has result: ${!!(response.data && response.data.getS3result)}`)
+              logger.info(`Progress check response status: ${response.status}`)
+              logger.info(`Progress check response data: ${JSON.stringify(response.data)}`)
+              logger.info(`Progress check response data getS3Result: ${JSON.stringify(response.data.getS3result)}`)
+              logger.info(`Progress check response status: ${JSON.stringify(response.data.getS3result.status)}`)
+
 
               if (result && result.getS3result.status === 'completed') {
                 return h.response({
