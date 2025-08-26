@@ -43,7 +43,7 @@ export const status = {
                   requestId: requestId,
                   status: 'completed',
                   markdownContent: response.data.getS3result
-                }).type('application/json')
+                })
               }
             } catch (error) {
               logger.info(
