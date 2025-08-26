@@ -17,30 +17,32 @@ export const status = {
             const { requestId } = request.params
             const user = request.auth.credentials.user
             const backendApiUrl = config.get('backendApiUrl')
-            
+
             // Check if results already exist
             logger.info(`Status check for requestId: ${requestId}, backend URL: ${backendApiUrl}`)
             try {
-              
+
               const response = await axios.get(`${backendApiUrl}/getS3/${requestId}`)
               logger.info(`Status check response: ${response.status}`)
               logger.info(`Status check response: ${JSON.stringify(response.data)}`)
               logger.info(`Status check response: ${JSON.stringify(response.data.getS3result)}`)
 
-              if (response.data && response.data.getS3result) {
+              let result = JSON.stringify(response.data);
+
+              if (result && result.getS3result.status === 'completed') {
                 return h.view('status/index', {
                   isAuthenticated: true,
                   user: user,
                   requestId: requestId,
                   status: 'completed',
-                  markdownContent: response.data.getS3result
+                  markdownContent: result.getS3result
                 })
               }
             } catch (error) {
               logger.info(`Status check error for ${requestId}: ${error.message}`)
               // Results not ready yet, show polling state
             }
-            
+
             return h.view('status/index', {
               isAuthenticated: true,
               user: user,
@@ -57,29 +59,29 @@ export const status = {
           handler: async (request, h) => {
             const { requestId } = request.params
             const backendApiUrl = config.get('backendApiUrl')
-            
+
             logger.info(`Progress check for requestId: ${requestId}`)
             logger.info(`Backend API URL: ${backendApiUrl}`)
             logger.info(`Full backend URL: ${backendApiUrl}/getS3/${requestId}`)
-            
+
             try {
 
               const response = await axios.get(`${backendApiUrl}/getS3/${requestId}`)
-
+              let result = JSON.stringify(response.data);
               logger.info(`Backend response status: ${response.status}, has result: ${!!(response.data && response.data.getS3result)}`)
-              
-              if (response.data && response.data.getS3result) {
+
+              if (result && result.getS3result.status === 'completed') {
                 return h.response({
                   status: 'completed',
-                  content: response.data.getS3result
+                  content: result.getS3result
                 })
               }
-              
+
               return h.response({
                 status: 'processing',
                 content: '🔄 **Processing your document analysis...**\n\nPlease wait while our AI service analyzes your document. This may take a few moments.'
               })
-              
+
             } catch (error) {
               logger.error(`Backend error for ${requestId}: ${error.message}`)
               logger.error(`Error details:`, error.response?.status, error.response?.data)
