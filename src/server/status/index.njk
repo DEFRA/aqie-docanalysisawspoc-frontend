@@ -72,7 +72,9 @@ document.addEventListener('DOMContentLoaded', function() {
       fetch(`/progress/${requestId}`)
         .then(response => response.json())
         .then(data => {
-          if (data.status === 'completed') {
+          console.log('Fetch response data:', data);
+          console.log('Data status:', data.status);
+          if (data.getS3result.status === 'completed') {
             location.reload();
           } else {
             setTimeout(pollProgress, 5000);
