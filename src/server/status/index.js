@@ -27,7 +27,7 @@ export const status = {
                   isAuthenticated: true,
                   user: user,
                   requestId: requestId,
-                  status: 'complete',
+                  status: 'completed',
                   markdownContent: response.data.getS3result
                 })
               }
@@ -57,7 +57,7 @@ export const status = {
               
               if (response.data && response.data.getS3result) {
                 return h.response({
-                  status: 'complete',
+                  status: 'completed',
                   content: response.data.getS3result
                 })
               }
