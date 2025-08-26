@@ -24,13 +24,15 @@ export const status = {
               
               const response = await axios.get(`${backendApiUrl}/getS3/${requestId}`)
               logger.info(`Status check response: ${response.status}`)
-              
+              logger.info(`Status check response: ${response.data}`)
+              logger.info(`Status check response: ${response.data.getS3result}`)
+
               if (response.data && response.data.getS3result) {
                 return h.view('status/index', {
                   isAuthenticated: true,
                   user: user,
                   requestId: requestId,
-                  status: 'polling',
+                  status: 'completed',
                   markdownContent: response.data.getS3result
                 })
               }
