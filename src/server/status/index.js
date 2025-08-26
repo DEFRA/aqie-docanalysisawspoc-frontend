@@ -21,6 +21,7 @@ export const status = {
             // Check if results already exist
             logger.info(`Status check for requestId: ${requestId}, backend URL: ${backendApiUrl}`)
             try {
+              
               const response = await axios.get(`${backendApiUrl}/getS3/${requestId}`)
               logger.info(`Status check response: ${response.status}`)
               
@@ -29,7 +30,7 @@ export const status = {
                   isAuthenticated: true,
                   user: user,
                   requestId: requestId,
-                  status: 'completed',
+                  status: 'polling',
                   markdownContent: response.data.getS3result
                 })
               }
