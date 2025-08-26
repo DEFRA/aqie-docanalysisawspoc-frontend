@@ -23,19 +23,8 @@ export const status = {
               `Status check for requestId: ${requestId}, backend URL: ${backendApiUrl}`
             )
             try {
-              const response = await axios.get(
-                `${backendApiUrl}/getS3/01f62de7-6b31-4057-bba8-c061f257df20`
-              )
-              logger.info(`Status check response status: ${response.status}`)
-              logger.info(
-                `Status check response data: ${JSON.stringify(response.data)}`
-              )
-              logger.info(
-                `Status check response data getS3Result: ${JSON.stringify(response.data.getS3result)}`
-              )
-              logger.info(
-                `Status check response status: ${JSON.stringify(response.data.getS3result.status)}`
-              )
+              const response = await axios.get(`${backendApiUrl}/getS3/${requestId}`)
+
               if (response.data && response.data.getS3result && response.data.getS3result.status === 'completed') {
                 return h.view('status/index', {
                   isAuthenticated: true,
@@ -69,27 +58,8 @@ export const status = {
             const { requestId } = request.params
             const backendApiUrl = config.get('backendApiUrl')
 
-            logger.info(`Progress check for requestId: ${requestId}`)
-            logger.info(`Backend API URL: ${backendApiUrl}`)
-            logger.info(`Full backend URL: ${backendApiUrl}/getS3/${requestId}`)
-
             try {
-              const response = await axios.get(
-                `${backendApiUrl}/getS3/01f62de7-6b31-4057-bba8-c061f257df20`
-              )
-              logger.info(
-                `Backend response status: ${response.status}, has result: ${!!(response.data && response.data.getS3result)}`
-              )
-              logger.info(`Progress check response status: ${response.status}`)
-              logger.info(
-                `Progress check response data: ${JSON.stringify(response.data)}`
-              )
-              logger.info(
-                `Progress check response data getS3Result: ${JSON.stringify(response.data.getS3result)}`
-              )
-              logger.info(
-                `Progress check response status: ${JSON.stringify(response.data.getS3result?.status)}`
-              )
+              const response = await axios.get(`${backendApiUrl}/getS3/${requestId}`)
 
               if (response.data && response.data.getS3result && response.data.getS3result.status === 'completed') {
                 return h.response({

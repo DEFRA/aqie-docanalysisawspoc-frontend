@@ -54,10 +54,7 @@
 document.addEventListener('DOMContentLoaded', function() {
   const requestId = '{{ requestId }}';
   const status = '{{ status }}';
-  
-  console.log('Status from template:', status);
-  console.log('RequestId from template:', requestId);
-  
+
   if (status === 'polling') {
     const startTime = Date.now();
     const maxDuration = 3 * 60 * 1000; // 3 minutes
@@ -68,23 +65,16 @@ document.addEventListener('DOMContentLoaded', function() {
           '<p class="govuk-error-message">⚠️ Processing timeout: Analysis is taking longer than expected. Please try uploading your document again.</p>';
         return;
       }
-      
-      console.log('Polling for request:', requestId);
-      
+
       fetch(`/progress/${requestId}`)
         .then(response => {
           console.log('Response status:', response.status);
           return response.json();
         })
-        .then(data => {
-          console.log('Fetch response data:', data);
-          console.log('Data status:', data.status);
-          
+        .then(data => {         
           if (data.status === 'completed') {
-            console.log('Analysis completed, reloading page...');
             location.reload();
           } else {
-            console.log('Still processing, will poll again in 5 seconds...');
             setTimeout(pollProgress, 5000);
           }
         })
