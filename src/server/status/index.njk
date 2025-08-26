@@ -54,12 +54,11 @@
 document.addEventListener('DOMContentLoaded', function() {
   const requestId = '{{ requestId }}';
   const status = '{{ status }}';
-  {{ status | dump | safe }}
   
-  if (status === 'polling' || status === 'completed') {
-  if (status === 'completed') {
-      return;
-    }
+  console.log('Status from template:', status);
+  console.log('RequestId from template:', requestId);
+  
+  if (status === 'polling') {
     const startTime = Date.now();
     const maxDuration = 3 * 60 * 1000; // 3 minutes
     
@@ -70,20 +69,34 @@ document.addEventListener('DOMContentLoaded', function() {
         return;
       }
       
+      console.log('Polling for request:', requestId);
+      
       fetch(`/progress/${requestId}`)
-        .then(response => response.json())
+        .then(response => {
+          console.log('Response status:', response.status);
+          return response.json();
+        })
         .then(data => {
-          {{ data | dump | safe }}
-          if (data.getS3result.status === 'completed') {
+          console.log('Fetch response data:', data);
+          console.log('Data status:', data.status);
+          
+          if (data.status === 'completed') {
+            console.log('Analysis completed, reloading page...');
             location.reload();
           } else {
+            console.log('Still processing, will poll again in 5 seconds...');
             setTimeout(pollProgress, 5000);
           }
         })
-        .catch(() => setTimeout(pollProgress, 5000));
+        .catch(error => {
+          console.error('Polling error:', error);
+          setTimeout(pollProgress, 5000);
+        });
     }
     
     pollProgress();
+  } else if (status === 'completed') {
+    console.log('Analysis already completed');
   }
 });
 </script>

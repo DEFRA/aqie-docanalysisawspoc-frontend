@@ -36,16 +36,14 @@ export const status = {
               logger.info(
                 `Status check response status: ${JSON.stringify(response.data.getS3result.status)}`
               )
-              let result = JSON.stringify(response.data)
-
-              if (result && result.getS3result.status === 'completed') {
+              if (response.data && response.data.getS3result && response.data.getS3result.status === 'completed') {
                 return h.view('status/index', {
                   isAuthenticated: true,
                   user: user,
                   requestId: requestId,
                   status: 'completed',
-                  markdownContent: result.getS3result
-                })
+                  markdownContent: response.data.getS3result
+                }).type('application/json')
               }
             } catch (error) {
               logger.info(
@@ -79,7 +77,6 @@ export const status = {
               const response = await axios.get(
                 `${backendApiUrl}/getS3/01f62de7-6b31-4057-bba8-c061f257df20`
               )
-              let result = JSON.stringify(response.data)
               logger.info(
                 `Backend response status: ${response.status}, has result: ${!!(response.data && response.data.getS3result)}`
               )
@@ -91,14 +88,14 @@ export const status = {
                 `Progress check response data getS3Result: ${JSON.stringify(response.data.getS3result)}`
               )
               logger.info(
-                `Progress check response status: ${JSON.stringify(response.data.getS3result.status)}`
+                `Progress check response status: ${JSON.stringify(response.data.getS3result?.status)}`
               )
 
-              if (result && result.getS3result.status === 'completed') {
+              if (response.data && response.data.getS3result && response.data.getS3result.status === 'completed') {
                 return h.response({
                   status: 'completed',
-                  content: result.getS3result
-                })
+                  content: response.data.getS3result
+                }).type('application/json')
               }
 
               return h.response({
