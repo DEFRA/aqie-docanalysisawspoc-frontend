@@ -245,6 +245,26 @@ export const config = convict({
     format: String,
     default: `https://aqie-docanalysispoc-backend.dev.cdp-int.defra.cloud`,
     env: 'BACKEND_API_URL'
+  },
+  cdpUploaderUrl: {
+    doc: 'CDP uploader service URL',
+    format: String,
+    default: 'https://cdp-uploader.dev.cdp-int.defra.cloud',
+    env: 'CDP_UPLOADER_URL'
+  },
+  aws: {
+    region: {
+      doc: 'AWS region for S3 operations',
+      format: String,
+      default: 'eu-west-2',
+      env: 'AWS_REGION'
+    },
+    s3BucketName: {
+      doc: 'S3 bucket name for file uploads',
+      format: String,
+      default: 'dev-aqie-docanalysis-c63f2',
+      env: 'AWS_S3_BUCKET_NAME'
+    }
   }
 })
 

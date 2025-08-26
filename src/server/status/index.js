@@ -19,8 +19,10 @@ export const status = {
             const backendApiUrl = config.get('backendApiUrl')
             
             // Check if results already exist
+            logger.info(`Status check for requestId: ${requestId}, backend URL: ${backendApiUrl}`)
             try {
-              const response = await axios.get(`${backendApiUrl}/gets3/${requestId}`)
+              const response = await axios.get(`${backendApiUrl}/getS3/${requestId}`)
+              logger.info(`Status check response: ${response.status}`)
               
               if (response.data && response.data.getS3result) {
                 return h.view('status/index', {
@@ -32,6 +34,7 @@ export const status = {
                 })
               }
             } catch (error) {
+              logger.info(`Status check error for ${requestId}: ${error.message}`)
               // Results not ready yet, show polling state
             }
             
@@ -53,9 +56,13 @@ export const status = {
             const backendApiUrl = config.get('backendApiUrl')
             
             logger.info(`Progress check for requestId: ${requestId}`)
+            logger.info(`Backend API URL: ${backendApiUrl}`)
+            logger.info(`Full backend URL: ${backendApiUrl}/getS3/${requestId}`)
             
             try {
-              const response = await axios.get(`${backendApiUrl}/gets3/${requestId}`)
+
+              const response = await axios.get(`${backendApiUrl}/getS3/${requestId}`)
+
               logger.info(`Backend response status: ${response.status}, has result: ${!!(response.data && response.data.getS3result)}`)
               
               if (response.data && response.data.getS3result) {
@@ -71,7 +78,8 @@ export const status = {
               })
               
             } catch (error) {
-              logger.info(`Backend error for ${requestId}: ${error.message}`)
+              logger.error(`Backend error for ${requestId}: ${error.message}`)
+              logger.error(`Error details:`, error.response?.status, error.response?.data)
               return h.response({
                 status: 'processing',
                 content: '⏳ **Fetching analysis results...**\n\nConnecting to our AI service to retrieve your document analysis.'
