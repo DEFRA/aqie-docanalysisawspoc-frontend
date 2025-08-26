@@ -52,8 +52,11 @@ export const status = {
             const { requestId } = request.params
             const backendApiUrl = config.get('backendApiUrl')
             
+            logger.info(`Progress check for requestId: ${requestId}`)
+            
             try {
               const response = await axios.get(`${backendApiUrl}/gets3/${requestId}`)
+              logger.info(`Backend response status: ${response.status}, has result: ${!!(response.data && response.data.getS3result)}`)
               
               if (response.data && response.data.getS3result) {
                 return h.response({
@@ -68,6 +71,7 @@ export const status = {
               })
               
             } catch (error) {
+              logger.info(`Backend error for ${requestId}: ${error.message}`)
               return h.response({
                 status: 'processing',
                 content: '⏳ **Fetching analysis results...**\n\nConnecting to our AI service to retrieve your document analysis.'
