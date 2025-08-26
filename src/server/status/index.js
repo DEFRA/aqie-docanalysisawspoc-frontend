@@ -26,12 +26,13 @@ export const status = {
               const response = await axios.get(`${backendApiUrl}/getS3/${requestId}`)
 
               if (response.data && response.data.getS3result && response.data.getS3result.status === 'completed') {
+                let content = JSON.stringify(response.data.getS3result?.result?.content.find(item => item.type === 'text')?.text) || 'No text found'
                 return h.view('status/index', {
                   isAuthenticated: true,
                   user: user,
                   requestId: requestId,
                   status: 'completed',
-                  markdownContent: JSON.stringify(response.data.getS3result)
+                  markdownContent: content
                 })
               }
             } catch (error) {
@@ -62,9 +63,10 @@ export const status = {
               const response = await axios.get(`${backendApiUrl}/getS3/${requestId}`)
 
               if (response.data && response.data.getS3result && response.data.getS3result.status === 'completed') {
+                let content = JSON.stringify(response.data.getS3result?.result?.content.find(item => item.type === 'text')?.text) || 'No text found'
                 return h.response({
                   status: 'completed',
-                  content: JSON.stringify(response.data.getS3result)
+                  content: content
                 })
               }
 
