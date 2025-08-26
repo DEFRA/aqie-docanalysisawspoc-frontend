@@ -42,7 +42,7 @@ export const status = {
                   user: user,
                   requestId: requestId,
                   status: 'completed',
-                  markdownContent: response.data.getS3result
+                  markdownContent: JSON.stringify(response.data.getS3result)
                 })
               }
             } catch (error) {
@@ -94,8 +94,8 @@ export const status = {
               if (response.data && response.data.getS3result && response.data.getS3result.status === 'completed') {
                 return h.response({
                   status: 'completed',
-                  content: response.data.getS3result
-                }).type('application/json')
+                  content: JSON.stringify(response.data.getS3result)
+                })
               }
 
               return h.response({
