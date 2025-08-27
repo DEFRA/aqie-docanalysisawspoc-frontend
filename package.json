@@ -54,6 +54,7 @@
     "cssnano": "^5.1.0",
     "cssnano-preset-default": "^7.0.7",
     "date-fns": "^4.1.0",
+    "form-data": "^4.0.0",
     "fs-extra": "^11.3.0",
     "global-agent": "^3.0.0",
     "govuk-frontend": "^5.11.0",

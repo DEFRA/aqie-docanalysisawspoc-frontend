@@ -23,11 +23,15 @@ export const upload = {
           handler: (request, h) => {
             const user = request.auth.credentials.user
             const model = request.query.model || 'model1'
+            const status = request.query.status
+            const analysisType = request.query.analysisType || 'green'
+
             return h.view('upload/index', {
               isAuthenticated: true,
               user: user,
-              status: null,
-              model: model
+              status: status,
+              model: model,
+              analysisType: analysisType
             })
           }
         },
@@ -84,9 +88,15 @@ export const upload = {
             try {
               const parseStart = Date.now()
 
-              let newFilePath = path.join(process.cwd(), 'src', 'server', 'assets', 'uk_trade_strategy_print 4.pdf');
+              let newFilePath = path.join(
+                process.cwd(),
+                'src',
+                'server',
+                'assets',
+                'uk_trade_strategy_print 4.pdf'
+              )
 
-              logger.info(`Using PDF file: ${newFilePath}`);
+              logger.info(`Using PDF file: ${newFilePath}`)
               const pdfText = await parsePdfToJson(newFilePath)
               await fs.unlinkSync(filepath)
 
@@ -396,6 +406,36 @@ export const upload = {
                 model: model,
                 analysisType: analysisType
               })
+            }
+          }
+        },
+        {
+          method: 'GET',
+          path: '/process-s3-file',
+          options: {
+            auth: { strategy: 'login', mode: 'required' }
+          },
+          handler: async (request, h) => {
+            try {
+              const { s3Key, analysisType, model } = request.query
+
+              logger.info('Processing S3 file:', { s3Key, analysisType, model })
+
+              // TODO: Download file from S3 and process
+              // For now, redirect to existing processing with a placeholder
+              return h.view('upload/index', {
+                isAuthenticated: true,
+                user: request.auth.credentials.user,
+                status: 'success',
+                message: `File ${s3Key} uploaded successfully. Processing would start here.`,
+                analysisType,
+                model
+              })
+            } catch (error) {
+              logger.error('S3 file processing error:', error)
+              return h.redirect(
+                `/upload?status=error&message=${encodeURIComponent('Processing failed')}`
+              )
             }
           }
         },
