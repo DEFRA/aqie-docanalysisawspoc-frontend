@@ -5,6 +5,7 @@ import { status } from './status/index.js'
 import { home } from './home/index.js'
 import { serveStaticFiles } from './common/helpers/serve-static-files.js'
 import { login } from './login/index.js'
+import { cdpUpload } from './cdp-upload/index.js'
 
 export const router = {
   plugin: {
@@ -14,7 +15,7 @@ export const router = {
 
       await server.register([health])
 
-      await server.register([login, upload, status])
+      await server.register([login, upload, status, cdpUpload])
 
       await server.register([serveStaticFiles])
     }
