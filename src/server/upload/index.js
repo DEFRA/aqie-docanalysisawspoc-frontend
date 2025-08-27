@@ -2,25 +2,15 @@ import fs from 'fs'
 import path from 'path'
 import { pipeline } from 'stream'
 import util from 'util'
-import { parsePdfToJson, pdfParse } from '../utils/pdfParser.js'
+import { parsePdfToJson } from '../utils/pdfParser.js'
 import { createLogger } from '../../server/common/helpers/logging/logger.js'
 import { config } from '../../config/config.js'
 import axios from 'axios'
 import { PassThrough } from 'stream'
 import { greenPrompt, redPrompt } from '../common/constants/prompts.js'
-import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3'
 
 const logger = createLogger()
 const pump = util.promisify(pipeline)
-
-// Helper function to convert stream to buffer
-const streamToBuffer = async (stream) => {
-  const chunks = []
-  for await (const chunk of stream) {
-    chunks.push(chunk)
-  }
-  return Buffer.concat(chunks)
-}
 
 export const upload = {
   plugin: {
@@ -51,7 +41,7 @@ export const upload = {
               output: 'stream',
               parse: true,
               multipart: true,
-              maxBytes: 50 * 1024 * 1024,
+              maxBytes: 50 * 1024 * 1024, // 50MB limit
               allow: 'multipart/form-data',
               timeout: 5 * 60 * 1000
             },
@@ -61,108 +51,135 @@ export const upload = {
             }
           },
           handler: async (request, h) => {
+            const startTime = Date.now() // Start timer
             const { payload } = request
             const model = request.query.model || 'model1'
             const analysisType = payload?.analysisType || 'green'
-            let s3Key=''
-            let s3Bucket=''
-              // Sequential service-based upload
-              const file = payload?.policyPdf
-              if (!file || file.hapi.headers['content-type'] !== 'application/pdf') {
-                return h.view('upload/index', {
-                  isAuthenticated: true,
-                  user: request.auth.credentials.user,
-                  status: 'error',
-                  message: 'Please upload a PDF file.',
-                  model: model,
-                  analysisType: analysisType
-                })
-              }
-              
-              // Step 1: Invoke cdpUploaderUrl/initiate
-              const cdpUploaderUrl = config.get('cdpUploaderUrl')
-              const bucket = config.get('aws.s3BucketName')
-              
-              const initiateResponse = await axios.post(
-                `${cdpUploaderUrl}/initiate`,
-                { redirect: '/', s3Bucket: bucket },
-                { headers: { 'Content-Type': 'application/json' } }
-              )
-              
-              const uploadUrl = initiateResponse.data.uploadurl
-              
-              // Upload file to CDP service
-              const formData = new FormData()
-              formData.append('file', file)
-              
-              await fetch(uploadUrl, {
-                method: 'POST',
-                body: formData
-              })
-              
-              // Step 3: Poll uploadUrl every 2 seconds until status is ready
-              let uploadStatus = 'pending'
-              
-              while (uploadStatus !== 'ready') {
-                await new Promise(resolve => setTimeout(resolve, 2000))
-                
-                const statusResponse = await fetch(uploadUrl, {
-                  method: 'GET',
-                  headers: { 'Content-Type': 'application/json' }
-                })
-                
-                const status = await statusResponse.json()
-                uploadStatus = status.uploadStatus
-                
-                if (uploadStatus === 'ready') {
-                  s3Key = status.s3key
-                  s3Bucket = status.s3bucket
-                  break
-                }
-              }
-            
-            try {
-              // Step 4: Read from S3 using s3Key and s3Bucket
-              const s3Client = new S3Client({ region: config.get('aws.region') })
-              const getObjectCommand = new GetObjectCommand({
-                Bucket: s3Bucket,
-                Key: s3Key
-              })
-              
-              const s3Response = await s3Client.send(getObjectCommand)
-              const pdfBuffer = await streamToBuffer(s3Response.Body)
-              
-              // Step 5: Pass stream to parsePdfToJson function
-              const pdfText = await pdfParse(pdfBuffer)
-              const pdfTextContent = pdfText.map(page => page.content).join('\n\n')
-              
-              // Step 6: Call backend API (existing functionality)
-              const backendApiUrl = config.get('backendApiUrl')
-              const requestPrompt = {
-                systemprompt: analysisType === 'green' ? greenPrompt : redPrompt,
-                userprompt: pdfTextContent
-              }
-              
-              const response = await axios.post(
-                `${backendApiUrl}/summarize`,
-                {
-                  systemprompt: requestPrompt.systemprompt,
-                  userprompt: requestPrompt.userprompt,
-                  modelid: model
-                },
-                { headers: { 'Content-Type': 'text/plain' } }
-              )
-              
-              const requestId = response.data.requestId
-              return h.redirect(`/status/${requestId}`)
-              
-            } catch (error) {
-              logger.error(`Service upload error: ${error.message}`)
+            const file = payload?.policyPdf
+            logger.info(analysisType)
+            if (
+              !file ||
+              file.hapi.headers['content-type'] !== 'application/pdf'
+            ) {
               return h.view('upload/index', {
                 isAuthenticated: true,
                 user: request.auth.credentials.user,
                 status: 'error',
-                message: 'Error processing upload: ' + error.message,
+                message: 'Please upload a PDF file.',
+                model: model,
+                analysisType: payload?.analysisType || 'green'
+              })
+            }
+            const uploadDir = path.join(process.cwd(), 'uploads')
+            if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir)
+            const filename = `${Date.now()}-${file.hapi.filename}`
+            const filepath = path.join(uploadDir, filename)
+            const uploadStart = Date.now()
+            await pump(file, fs.createWriteStream(filepath))
+
+            const uploadEnd = Date.now()
+            logger.info(
+              `File upload time: ${(uploadEnd - uploadStart) / 1000} seconds`
+            )
+
+            try {
+              const parseStart = Date.now()
+
+              logger.info(`Using PDF file: ${filepath}`);
+              const pdfText = await parsePdfToJson(filepath)
+              await fs.unlinkSync(filepath)
+
+              const parseEnd = Date.now()
+              logger.info(
+                `PDF parsing time: ${(parseEnd - parseStart) / 1000} seconds`
+              )
+
+              // Convert PDF text to a string for the API call
+              //value of pdf file
+              const pdfTextContent = pdfText
+                .map((page) => page.content)
+                .join('\n\n')
+
+              logger.info(
+                `Size of PDF text content: ${pdfTextContent.length} characters`
+              )
+              const encoder = new TextEncoder()
+              const byteSize = encoder.encode(pdfTextContent).length
+
+              const sizeInKB = (byteSize / 1024).toFixed(2)
+
+              logger.info(`Size of PDF text content:- ${byteSize} bytes`)
+              logger.info(`Size of PDF text content:- ${sizeInKB} KB`)
+
+              try {
+                const backendApiUrl = config.get('backendApiUrl')
+
+                const requestPrompt = {
+                  systemprompt:
+                    analysisType === 'green' ? greenPrompt : redPrompt,
+                  userprompt: pdfTextContent
+                }
+
+                const backendServiceStart = Date.now()
+
+                const response = await axios.post(
+                  `${backendApiUrl}/summarize`,
+                  {
+                    systemprompt: requestPrompt.systemprompt,
+                    userprompt: requestPrompt.userprompt,
+                    modelid: model
+                  },
+                  {
+                    headers: {
+                      'Content-Type': 'text/plain'
+                    }
+                  }
+                )
+
+                const backendServiceEnd = Date.now()
+                logger.info(
+                  `Backend Call time taken to receive response: ${(backendServiceEnd - backendServiceStart) / 1000} seconds`
+                )
+
+                const totalTime = (backendServiceEnd - startTime) / 1000
+                logger.info(`Total processing time: ${totalTime} seconds`)
+
+                const requestId = response.data.requestId
+                logger.info(`Request ID: ${requestId}`)
+                return h.redirect(`/status/${requestId}`)
+              } catch (apiError) {
+                logger.error(`Backend API error: ${apiError.message}`)
+                if (apiError.status) {
+                  logger.error(`Status: ${apiError.status}`)
+                }
+                if (apiError.error) {
+                  logger.error(
+                    `Error details: ${JSON.stringify(apiError.error)}`
+                  )
+                }
+
+                // Return the view with just the markdown content
+                return h.view('upload/index', {
+                  isAuthenticated: true,
+                  user: request.auth.credentials.user,
+                  status: 'success',
+                  markdownContent:
+                    'Unable to generate summary. Using raw document content instead.',
+                  filename: file.hapi.filename,
+                  model: model,
+                  analysisType: analysisType
+                })
+              }
+            } catch (error) {
+              logger.error(`Error while parsing PDF: ${error}`)
+              logger.error(
+                `JSON Error while parsing PDF: ${JSON.stringify(error)}`
+              )
+              return h.view('upload/index', {
+                isAuthenticated: true,
+                user: request.auth.credentials.user,
+                status: 'error',
+                message: 'Error processing PDF: ' + error.message,
                 model: model,
                 analysisType: analysisType
               })
@@ -203,7 +220,7 @@ export const upload = {
 
                 const axiosResponse = await axios({
                   method: 'post',
-                  url: `${backendApiUrl}/stream-summarize`,
+                  url: `${backendApiUrl}/stream-summarize`, // <-- your streaming endpoint
                   data: {
                     systemprompt: prompt,
                     userprompt: pdfTextContent,
