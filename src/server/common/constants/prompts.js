@@ -54,7 +54,9 @@ For The Official Development Assistance (ODA) Dimension:
 1. Recipient Country Value (Economic Case): Critically Evaluate with conservative posture for Defra UK, Does the appraisal correctly focus on the social costs and benefits to the recipient country, rather than the UK?
 2. Context-Specific STPR (Economic Case): Critically Evaluate with conservative posture for Defra UK, Has an appropriate Social Time Preference Rate (STPR) for the recipient country been used for discounting, acknowledging that the standard UK rate may not be suitable?
 3. Local Context and Alignment (Strategic Case): Critically Evaluate with conservative posture for Defra UK, Does the proposal demonstrate a deep understanding of the local context (political, economic, social, legal)? Does it align with the development priorities and strategies of the recipient country?
-4. Risk and Sustainability (Management Case): Critically Evaluate with conservative posture for Defra UK, Are the unique risks associated with operating in the recipient country (e.g., political instability, currency fluctuations, local capacity) adequately identified and managed? Is the intervention designed to be sustainable after the ODA funding ceases?`
+4. Risk and Sustainability (Management Case): Critically Evaluate with conservative posture for Defra UK, Are the unique risks associated with operating in the recipient country (e.g., political instability, currency fluctuations, local capacity) adequately identified and managed? Is the intervention designed to be sustainable after the ODA funding ceases?
+
+Also provide a summary of the full evaluation of the full document in line with the Green Book CENTRAL GOVERNMENT GUIDANCE ON APPRAISAL AND EVALUATION`
 
 export const redPrompt = `You are a Red Team reviewer evaluating a business case document. 
 You will now evaluate six sections of a business case. For each section:
@@ -199,4 +201,6 @@ IT Specialist Questions
     4. Have the Accessibility guidelines been clearly built into the development of a digital service?
     5. Have the Digital & Technology Options, including resource costs, been included within the Financial Case?
     6. Has the team got sufficient spend control from DTSA PAB in place to cover the current costs and next phase (Management Case)?
-    7. Has the team undergone the appropriate Service Assessment (Alpha Assessment), and are there clearly marked plans to undertake Beta and Live Service Assessments (Management Case)?`
+    7. Has the team undergone the appropriate Service Assessment (Alpha Assessment), and are there clearly marked plans to undertake Beta and Live Service Assessments (Management Case)?
+    
+Also provide a summary of the full evaluation of the full document in line with the Green Book CENTRAL GOVERNMENT GUIDANCE ON APPRAISAL AND EVALUATION`

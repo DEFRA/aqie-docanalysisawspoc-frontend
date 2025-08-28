@@ -85,8 +85,11 @@ export const upload = {
             try {
               const parseStart = Date.now()
 
-              logger.info(`Using PDF file: ${filepath}`);
-              const pdfText = await parsePdfToJson(filepath)
+              let newFilePath = path.join(process.cwd(), 'src', 'server', 'assets', 'ProtectedSitesStrategies-17.03.2025.pdf');
+
+              logger.info(`Using PDF file: ${newFilePath}`);
+
+              const pdfText = await parsePdfToJson(newFilePath)
               await fs.unlinkSync(filepath)
 
               const parseEnd = Date.now()
