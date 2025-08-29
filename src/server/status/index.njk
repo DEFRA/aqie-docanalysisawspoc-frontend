@@ -55,7 +55,6 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
@@ -98,30 +97,18 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function exportToPdf() {
+  const element = document.getElementById('markdownRenderer');
   const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
   
-  // Add print styles to hide elements
-  const style = document.createElement('style');
-  style.innerHTML = `
-    @media print {
-      body * { visibility: hidden; }
-      #markdownRenderer, #markdownRenderer * { visibility: visible; }
-      #markdownRenderer { position: absolute; left: 0; top: 0; width: 100%; }
-      .no-print { display: none !important; }
-    }
-  `;
-  document.head.appendChild(style);
+  const opt = {
+    margin: 0.5,
+    filename: `analysis-results-${timestamp}.pdf`,
+    image: { type: 'webp', quality: 0.98 },
+    html2canvas: { scale: 1 },
+    jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
+  };
   
-  // Set document title for PDF filename
-  const originalTitle = document.title;
-  document.title = `analysis-results-${timestamp}`;
-  
-  // Trigger browser print dialog
-  window.print();
-  
-  // Cleanup
-  document.title = originalTitle;
-  document.head.removeChild(style);
+  html2pdf().from(element).set(opt).save();
 }
 </script>
 
