@@ -11,7 +11,7 @@
 <div id="markdownContent" class="govuk-body markdown-content" style="margin-top: 2em;">
   <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1em;">
     <h2 class="govuk-heading-m" style="margin: 0;">Analysis Results</h2>
-    <button id="exportPdfBtn" class="govuk-button govuk-button--secondary" onclick="exportToPdf()">Export to PDF</button>
+    <button id="exportPdfBtn" class="govuk-button" style="background-color: #00703c; border-color: #00703c;" onclick="exportToPdf()">Export to PDF</button>
   </div>
   <div id="markdownRenderer">
     <script>
@@ -96,47 +96,37 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function exportToPdf() {
-  const { jsPDF } = window.jspdf;
-  const pdf = new jsPDF();
+  const element = document.getElementById('markdownRenderer');
+  const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
   
-  const markdownContent = `{{ markdownContent | safe }}`;
-  const lines = markdownContent.split('\n');
-  
-  let yPosition = 20;
-  const pageHeight = pdf.internal.pageSize.height;
-  const margin = 20;
-  const lineHeight = 6;
-  
-  pdf.setFontSize(16);
-  pdf.text('Document Analysis Results', margin, yPosition);
-  yPosition += 15;
-  
-  pdf.setFontSize(10);
-  
-  lines.forEach(line => {
-    if (yPosition > pageHeight - margin) {
+  html2canvas(element, {
+    scale: 2,
+    useCORS: true,
+    allowTaint: true
+  }).then(canvas => {
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF();
+    const imgData = canvas.toDataURL('image/png');
+    
+    const imgWidth = 210;
+    const pageHeight = 295;
+    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+    let heightLeft = imgHeight;
+    
+    let position = 0;
+    
+    pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+    heightLeft -= pageHeight;
+    
+    while (heightLeft >= 0) {
+      position = heightLeft - imgHeight;
       pdf.addPage();
-      yPosition = margin;
+      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
     }
     
-    const cleanLine = line.replace(/[#*`]/g, '').trim();
-    if (cleanLine) {
-      const splitLines = pdf.splitTextToSize(cleanLine, pdf.internal.pageSize.width - 2 * margin);
-      splitLines.forEach(splitLine => {
-        if (yPosition > pageHeight - margin) {
-          pdf.addPage();
-          yPosition = margin;
-        }
-        pdf.text(splitLine, margin, yPosition);
-        yPosition += lineHeight;
-      });
-    } else {
-      yPosition += lineHeight / 2;
-    }
+    pdf.save(`analysis-results-${timestamp}.pdf`);
   });
-  
-  const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
-  pdf.save(`analysis-results-${timestamp}.pdf`);
 }
 </script>
 
