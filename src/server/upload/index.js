@@ -51,141 +51,242 @@ export const upload = {
             }
           },
           handler: async (request, h) => {
-            const startTime = Date.now() // Start timer
-            const { payload } = request
-            const model = request.query.model || 'model1'
-            const analysisType = payload?.analysisType || 'green'
-            const file = payload?.policyPdf
-            logger.info(analysisType)
-            if (
-              !file ||
-              file.hapi.headers['content-type'] !== 'application/pdf'
-            ) {
-              return h.view('upload/index', {
-                isAuthenticated: true,
-                user: request.auth.credentials.user,
-                status: 'error',
-                message: 'Please upload a PDF file.',
-                model: model,
-                analysisType: payload?.analysisType || 'green'
+          //   const startTime = Date.now() // Start timer
+          //   const { payload } = request
+          //   const model = request.query.model || 'model1'
+          //   const analysisType = payload?.analysisType || 'green'
+          //   const file = payload?.policyPdf
+          //   logger.info(analysisType)
+          //   if (
+          //     !file ||
+          //     file.hapi.headers['content-type'] !== 'application/pdf'
+          //   ) {
+          //     return h.view('upload/index', {
+          //       isAuthenticated: true,
+          //       user: request.auth.credentials.user,
+          //       status: 'error',
+          //       message: 'Please upload a PDF file.',
+          //       model: model,
+          //       analysisType: payload?.analysisType || 'green'
+          //     })
+          //   }
+          //   const uploadDir = path.join(process.cwd(), 'uploads')
+          //   if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir)
+          //   const filename = `${Date.now()}-${file.hapi.filename}`
+          //   const filepath = path.join(uploadDir, filename)
+          //   const uploadStart = Date.now()
+          //   await pump(file, fs.createWriteStream(filepath))
+
+          //   const uploadEnd = Date.now()
+          //   logger.info(
+          //     `File upload time: ${(uploadEnd - uploadStart) / 1000} seconds`
+          //   )
+
+          //   try {
+          //     const parseStart = Date.now()
+
+          //     let newFilePath = path.join(process.cwd(), 'src', 'server', 'assets', 'ProtectedSitesStrategies-17.03.2025.pdf');
+
+          //     logger.info(`Using PDF file: ${newFilePath}`);
+
+          //     const pdfText = await parsePdfToJson(newFilePath)
+          //     await fs.unlinkSync(filepath)
+
+          //     const parseEnd = Date.now()
+          //     logger.info(
+          //       `PDF parsing time: ${(parseEnd - parseStart) / 1000} seconds`
+          //     )
+
+          //     // Convert PDF text to a string for the API call
+          //     //value of pdf file
+          //     const pdfTextContent = pdfText
+          //       .map((page) => page.content)
+          //       .join('\n\n')
+
+          //     logger.info(
+          //       `Size of PDF text content: ${pdfTextContent.length} characters`
+          //     )
+          //     const encoder = new TextEncoder()
+          //     const byteSize = encoder.encode(pdfTextContent).length
+
+          //     const sizeInKB = (byteSize / 1024).toFixed(2)
+
+          //     logger.info(`Size of PDF text content:- ${byteSize} bytes`)
+          //     logger.info(`Size of PDF text content:- ${sizeInKB} KB`)
+
+          //     try {
+          //       const backendApiUrl = config.get('backendApiUrl')
+
+          //       const requestPrompt = {
+          //         systemprompt:
+          //           analysisType === 'green' ? greenPrompt : redPrompt,
+          //         userprompt: pdfTextContent
+          //       }
+
+          //       const backendServiceStart = Date.now()
+
+          //       const response = await axios.post(
+          //         `${backendApiUrl}/summarize`,
+          //         {
+          //           systemprompt: requestPrompt.systemprompt,
+          //           userprompt: requestPrompt.userprompt,
+          //           modelid: model
+          //         },
+          //         {
+          //           headers: {
+          //             'Content-Type': 'text/plain'
+          //           }
+          //         }
+          //       )
+
+          //       const backendServiceEnd = Date.now()
+          //       logger.info(
+          //         `Backend Call time taken to receive response: ${(backendServiceEnd - backendServiceStart) / 1000} seconds`
+          //       )
+
+          //       const totalTime = (backendServiceEnd - startTime) / 1000
+          //       logger.info(`Total processing time: ${totalTime} seconds`)
+
+          //       const requestId = response.data.requestId
+          //       logger.info(`Request ID: ${requestId}`)
+          //       return h.redirect(`/status/${requestId}`)
+          //     } catch (apiError) {
+          //       logger.error(`Backend API error: ${apiError.message}`)
+          //       if (apiError.status) {
+          //         logger.error(`Status: ${apiError.status}`)
+          //       }
+          //       if (apiError.error) {
+          //         logger.error(
+          //           `Error details: ${JSON.stringify(apiError.error)}`
+          //         )
+          //       }
+
+          //       // Return the view with just the markdown content
+          //       return h.view('upload/index', {
+          //         isAuthenticated: true,
+          //         user: request.auth.credentials.user,
+          //         status: 'success',
+          //         markdownContent:
+          //           'Unable to generate summary. Using raw document content instead.',
+          //         filename: file.hapi.filename,
+          //         model: model,
+          //         analysisType: analysisType
+          //       })
+          //     }
+          //   } catch (error) {
+          //     logger.error(`Error while parsing PDF: ${error}`)
+          //     logger.error(
+          //       `JSON Error while parsing PDF: ${JSON.stringify(error)}`
+          //     )
+          //     return h.view('upload/index', {
+          //       isAuthenticated: true,
+          //       user: request.auth.credentials.user,
+          //       status: 'error',
+          //       message: 'Error processing PDF: ' + error.message,
+          //       model: model,
+          //       analysisType: analysisType
+          //     })
+          //   }
+
+          try {
+              const cdpUploaderUrl = config.get('cdpUploaderUrl')
+              const s3BucketName = config.get('aws.s3BucketName')
+              const analysisType = request.query.analysisType || 'green'
+              const model = request.query.model || 'model1'
+              const baseUrl = `${request.server.info.protocol}://${request.info.host}`
+
+              const file = request.payload.policyPdf
+              if (!file) {
+                return h.redirect(
+                  `/upload?status=error&message=${encodeURIComponent('No file provided')}`
+                )
+              }
+
+              // Call /initiate to get upload configuration
+              const response = await fetch(`${cdpUploaderUrl}/initiate`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  redirect: `/upload/poll-status`,
+                  s3Bucket: s3BucketName
+                })
               })
+
+              const upload = await response.json()
+
+              const { uploadUrl, uploadId, statusUrl } = upload
+
+              // Return upload form that will submit to CDP uploader directly
+              return h.view('upload/index', {
+                uploadUrl,
+                uploadId,
+                statusUrl,
+                analysisType,
+                model,
+                isAuthenticated: true,
+                user: request.auth.credentials.user
+              })
+            } catch (error) {
+              logger.error(
+                'CDP Upload initiate error:',
+                error.response?.data || error.message
+              )
+              logger.error('Error status:', error.response?.status)
+              return h.redirect(
+                `/upload?status=error&message=${encodeURIComponent('Upload initiation failed')}`
+              )
             }
-            const uploadDir = path.join(process.cwd(), 'uploads')
-            if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir)
-            const filename = `${Date.now()}-${file.hapi.filename}`
-            const filepath = path.join(uploadDir, filename)
-            const uploadStart = Date.now()
-            await pump(file, fs.createWriteStream(filepath))
-
-            const uploadEnd = Date.now()
-            logger.info(
-              `File upload time: ${(uploadEnd - uploadStart) / 1000} seconds`
-            )
-
+          }
+        },{
+          method: 'GET',
+          path: '/upload/poll-status',
+          options: {
+            auth: { strategy: 'login', mode: 'required' }
+          },
+          handler: async (request, h) => {
             try {
-              const parseStart = Date.now()
+              const { statusUrl, analysisType, model } = request.query
 
-              let newFilePath = path.join(process.cwd(), 'src', 'server', 'assets', 'ProtectedSitesStrategies-17.03.2025.pdf');
+              const response = await axios.get(statusUrl)
+              const { uploadStatus, files } = response.data
 
-              logger.info(`Using PDF file: ${newFilePath}`);
+              // 1. Check uploadStatus. UploadStatus can either be 'pending' (i.e. file is still being scanned) or 'ready'
+    if (uploadStatus !== 'ready') {
+      // If its not ready show the holding page. The holding page shows a please wait message and auto-reloads
+      // after x seconds, causing this whole controller to run again, checking the status.
 
-              const pdfText = await parsePdfToJson(newFilePath)
-              await fs.unlinkSync(filepath)
+      return h.view('upload/index', {
+                statusUrl,
+                analysisType,
+                model,
+                isAuthenticated: true,
+                user: request.auth.credentials.user
+      })
+    }
 
-              const parseEnd = Date.now()
-              logger.info(
-                `PDF parsing time: ${(parseEnd - parseStart) / 1000} seconds`
-              )
-
-              // Convert PDF text to a string for the API call
-              //value of pdf file
-              const pdfTextContent = pdfText
-                .map((page) => page.content)
-                .join('\n\n')
-
-              logger.info(
-                `Size of PDF text content: ${pdfTextContent.length} characters`
-              )
-              const encoder = new TextEncoder()
-              const byteSize = encoder.encode(pdfTextContent).length
-
-              const sizeInKB = (byteSize / 1024).toFixed(2)
-
-              logger.info(`Size of PDF text content:- ${byteSize} bytes`)
-              logger.info(`Size of PDF text content:- ${sizeInKB} KB`)
-
-              try {
-                const backendApiUrl = config.get('backendApiUrl')
-
-                const requestPrompt = {
-                  systemprompt:
-                    analysisType === 'green' ? greenPrompt : redPrompt,
-                  userprompt: pdfTextContent
-                }
-
-                const backendServiceStart = Date.now()
-
-                const response = await axios.post(
-                  `${backendApiUrl}/summarize`,
-                  {
-                    systemprompt: requestPrompt.systemprompt,
-                    userprompt: requestPrompt.userprompt,
-                    modelid: model
-                  },
-                  {
-                    headers: {
-                      'Content-Type': 'text/plain'
-                    }
-                  }
-                )
-
-                const backendServiceEnd = Date.now()
-                logger.info(
-                  `Backend Call time taken to receive response: ${(backendServiceEnd - backendServiceStart) / 1000} seconds`
-                )
-
-                const totalTime = (backendServiceEnd - startTime) / 1000
-                logger.info(`Total processing time: ${totalTime} seconds`)
-
-                const requestId = response.data.requestId
-                logger.info(`Request ID: ${requestId}`)
-                return h.redirect(`/status/${requestId}`)
-              } catch (apiError) {
-                logger.error(`Backend API error: ${apiError.message}`)
-                if (apiError.status) {
-                  logger.error(`Status: ${apiError.status}`)
-                }
-                if (apiError.error) {
-                  logger.error(
-                    `Error details: ${JSON.stringify(apiError.error)}`
-                  )
-                }
-
-                // Return the view with just the markdown content
-                return h.view('upload/index', {
-                  isAuthenticated: true,
-                  user: request.auth.credentials.user,
-                  status: 'success',
-                  markdownContent:
-                    'Unable to generate summary. Using raw document content instead.',
-                  filename: file.hapi.filename,
-                  model: model,
-                  analysisType: analysisType
+              if (uploadStatus === 'ready') {
+                const s3Key = response.data.form.basicfile.s3Key
+    const s3Bucket = response.data.form.basicfile.s3Bucket
+    const metadata = await s3Client.send(
+      new HeadObjectCommand({
+        Bucket: s3Bucket,
+        Key: s3Key
+      })
+    )
+                // Trigger processing
+                return h.response({
+                  status: 'ready',
+                  s3Key,
+                  analysisType,
+                  model,
+                  message: 'File ready for processing'
                 })
               }
+
+              return h.response({ status: uploadStatus })
             } catch (error) {
-              logger.error(`Error while parsing PDF: ${error}`)
-              logger.error(
-                `JSON Error while parsing PDF: ${JSON.stringify(error)}`
-              )
-              return h.view('upload/index', {
-                isAuthenticated: true,
-                user: request.auth.credentials.user,
-                status: 'error',
-                message: 'Error processing PDF: ' + error.message,
-                model: model,
-                analysisType: analysisType
-              })
+              logger.error('Status polling error:', error)
+              return h.response({ error: 'Status check failed' }).code(500)
             }
           }
         },
