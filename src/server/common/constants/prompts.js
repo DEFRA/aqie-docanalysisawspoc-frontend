@@ -1,5 +1,6 @@
 export const greenPrompt = `Evaluate the text based on the Green Book CENTRAL GOVERNMENT GUIDANCE ON APPRAISAL AND EVALUATION given below 
-You will now evaluate six sections of a business case. For each section:
+You will now evaluate six sections of a business case along with a summary of the full evaluation at top. 
+For each section: 
 1. Provide a RAG (🔴 Red, 🟠 Amber, 🟢 Green) rating per question.
 2. Create a summary for each case section of count of red, amber and green rating (with total number of Red, Amber and Green) at the end of the report 
 3. Show the output in Tabular format (Question, Rating and Comments)
@@ -54,12 +55,11 @@ For The Official Development Assistance (ODA) Dimension:
 1. Recipient Country Value (Economic Case): Critically Evaluate with conservative posture for Defra UK, Does the appraisal correctly focus on the social costs and benefits to the recipient country, rather than the UK?
 2. Context-Specific STPR (Economic Case): Critically Evaluate with conservative posture for Defra UK, Has an appropriate Social Time Preference Rate (STPR) for the recipient country been used for discounting, acknowledging that the standard UK rate may not be suitable?
 3. Local Context and Alignment (Strategic Case): Critically Evaluate with conservative posture for Defra UK, Does the proposal demonstrate a deep understanding of the local context (political, economic, social, legal)? Does it align with the development priorities and strategies of the recipient country?
-4. Risk and Sustainability (Management Case): Critically Evaluate with conservative posture for Defra UK, Are the unique risks associated with operating in the recipient country (e.g., political instability, currency fluctuations, local capacity) adequately identified and managed? Is the intervention designed to be sustainable after the ODA funding ceases?
-
-Also provide a summary of the full evaluation of the full document in line with the Green Book CENTRAL GOVERNMENT GUIDANCE ON APPRAISAL AND EVALUATION`
+4. Risk and Sustainability (Management Case): Critically Evaluate with conservative posture for Defra UK, Are the unique risks associated with operating in the recipient country (e.g., political instability, currency fluctuations, local capacity) adequately identified and managed? Is the intervention designed to be sustainable after the ODA funding ceases?`
 
 export const redPrompt = `You are a Red Team reviewer evaluating a business case document. 
-You will now evaluate six sections of a business case. For each section:
+You will now evaluate six sections of a business case  along with a summary of the full evaluation at top. 
+For each section:
 1. Evaluate all listed questions.
 2. Provide a RAG (🔴 Red, 🟠 Amber, 🟢 Green) rating per question.
 3. Show the output in Tabular format (Question, Rating and Comments)
