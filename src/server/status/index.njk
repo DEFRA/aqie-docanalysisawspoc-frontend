@@ -3,15 +3,15 @@
 {% block pageTitle %}Analysis Status{% endblock %}
 
 {% block content %}
-<a href="/upload" class="govuk-back-link">Back to Upload</a>
+<a href="/upload" class="govuk-back-link no-print">Back to Upload</a>
 
-<h1 class="govuk-heading-m">Document Analysis Status</h1>
+<h1 class="govuk-heading-m no-print">Document Analysis Status</h1>
 
 {% if markdownContent %}
 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1em;">
   <h2 class="govuk-heading-m" style="margin: 0;">Analysis Results</h2>
   {% if status == 'completed' %}
-  <button id="exportPdfBtn" class="govuk-button" style="background-color: #00703c; border-color: #00703c;" onclick="exportToPdf()">Export to PDF</button>
+  <button id="exportPdfBtn" class="govuk-button no-print" style="background-color: #00703c; border-color: #00703c;" onclick="exportToPdf()">Export to PDF</button>
   {% endif %}
 </div>
 <div id="markdownContent" class="govuk-body markdown-content" style="margin-top: 1em;">
@@ -98,18 +98,30 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function exportToPdf() {
-  const element = document.getElementById('markdownContent');
   const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
   
-  const opt = {
-    margin: 1,
-    filename: `analysis-results-${timestamp}.pdf`,
-    image: { type: 'webp', quality: 0.98 },
-    html2canvas: { scale: 2 },
-    jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
-  };
+  // Add print styles to hide elements
+  const style = document.createElement('style');
+  style.innerHTML = `
+    @media print {
+      body * { visibility: hidden; }
+      #markdownRenderer, #markdownRenderer * { visibility: visible; }
+      #markdownRenderer { position: absolute; left: 0; top: 0; width: 100%; }
+      .no-print { display: none !important; }
+    }
+  `;
+  document.head.appendChild(style);
   
-  html2pdf().set(opt).from(element).save();
+  // Set document title for PDF filename
+  const originalTitle = document.title;
+  document.title = `analysis-results-${timestamp}`;
+  
+  // Trigger browser print dialog
+  window.print();
+  
+  // Cleanup
+  document.title = originalTitle;
+  document.head.removeChild(style);
 }
 </script>
 
