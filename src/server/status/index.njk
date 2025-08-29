@@ -99,15 +99,22 @@ function exportToPdf() {
   const element = document.getElementById('markdownRenderer');
   const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
   
+  // Hide export button during PDF generation
+  const exportBtn = document.getElementById('exportPdfBtn');
+  exportBtn.style.display = 'none';
+  
   const opt = {
     margin: 1,
     filename: `analysis-results-${timestamp}.pdf`,
-    image: { type: 'jpeg', quality: 0.98 },
+    image: { type: 'webp', quality: 0.98 },
     html2canvas: { scale: 2 },
     jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
   };
   
-  html2pdf().set(opt).from(element).save();
+  html2pdf().set(opt).from(element).save().then(() => {
+    // Show export button again after PDF generation
+    exportBtn.style.display = 'inline-block';
+  });
 }
 </script>
 

@@ -1,5 +1,5 @@
 export const greenPrompt = `Evaluate the text based on the Green Book CENTRAL GOVERNMENT GUIDANCE ON APPRAISAL AND EVALUATION given below 
-You will now evaluate six sections of a business case along with a summary of the full evaluation at top. 
+You will now evaluate six sections of a business case. Begin your response with a concise summary of the overall evaluation, followed by detailed sections. 
 For each section: 
 1. Provide a RAG (🔴 Red, 🟠 Amber, 🟢 Green) rating per question.
 2. Create a summary for each case section of count of red, amber and green rating (with total number of Red, Amber and Green) at the end of the report 
@@ -58,7 +58,7 @@ For The Official Development Assistance (ODA) Dimension:
 4. Risk and Sustainability (Management Case): Critically Evaluate with conservative posture for Defra UK, Are the unique risks associated with operating in the recipient country (e.g., political instability, currency fluctuations, local capacity) adequately identified and managed? Is the intervention designed to be sustainable after the ODA funding ceases?`
 
 export const redPrompt = `You are a Red Team reviewer evaluating a business case document. 
-You will now evaluate six sections of a business case  along with a summary of the full evaluation at top. 
+You will now evaluate six sections of a business case. Begin your response with a concise summary of the overall evaluation, followed by detailed sections.
 For each section:
 1. Evaluate all listed questions.
 2. Provide a RAG (🔴 Red, 🟠 Amber, 🟢 Green) rating per question.
