@@ -54,7 +54,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
   const requestId = '{{ requestId }}';
@@ -99,34 +99,15 @@ function exportToPdf() {
   const element = document.getElementById('markdownRenderer');
   const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
   
-  html2canvas(element, {
-    scale: 2,
-    useCORS: true,
-    allowTaint: true
-  }).then(canvas => {
-    const { jsPDF } = window.jspdf;
-    const pdf = new jsPDF();
-    const imgData = canvas.toDataURL('image/png');
-    
-    const imgWidth = 210;
-    const pageHeight = 295;
-    const imgHeight = (canvas.height * imgWidth) / canvas.width;
-    let heightLeft = imgHeight;
-    
-    let position = 0;
-    
-    pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-    heightLeft -= pageHeight;
-    
-    while (heightLeft >= 0) {
-      position = heightLeft - imgHeight;
-      pdf.addPage();
-      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-      heightLeft -= pageHeight;
-    }
-    
-    pdf.save(`analysis-results-${timestamp}.pdf`);
-  });
+  const opt = {
+    margin: 1,
+    filename: `analysis-results-${timestamp}.pdf`,
+    image: { type: 'jpeg', quality: 0.98 },
+    html2canvas: { scale: 2 },
+    jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+  };
+  
+  html2pdf().set(opt).from(element).save();
 }
 </script>
 
