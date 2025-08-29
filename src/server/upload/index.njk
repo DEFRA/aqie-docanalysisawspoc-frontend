@@ -9,25 +9,14 @@
 <h1 class="govuk-heading-m">Upload a Document to Generate AI-Powered Insights</h1>
 <form id="uploadForm" action="/upload" method="post" enctype="multipart/form-data" onsubmit="document.getElementById('submitButton').disabled = true; document.getElementById('loadingMessage').style.display = 'block';">
   <div class="govuk-form-group">
-    <fieldset class="govuk-fieldset">
-      <legend class="govuk-fieldset__legend govuk-fieldset__legend--s">
-        Prompt analysis type
-      </legend>
-      <div class="govuk-radios govuk-radios--inline">
-        <div class="govuk-radios__item">
-          <input class="govuk-radios__input" id="analysisType-red" name="analysisType" type="radio" value="red" {% if not analysisType or analysisType == 'red' %}checked{% endif %}>
-          <label class="govuk-label govuk-radios__label" for="analysisType-red">
-            Red book
-          </label>
-        </div>
-        <div class="govuk-radios__item">
-          <input class="govuk-radios__input" id="analysisType-green" name="analysisType" type="radio" value="green" {% if analysisType == 'green' %}checked{% endif %}>
-          <label class="govuk-label govuk-radios__label" for="analysisType-green">
-            Green book
-          </label>
-        </div>
-      </div>
-    </fieldset>
+    <label class="govuk-label" for="analysisType">
+      Prompt analysis type
+    </label>
+    <select class="govuk-select" id="analysisType" name="analysisType" required style="padding: 8px 12px; border: 2px solid #0b0c0c; border-radius: 4px; font-size: 16px; background: white; min-width: 200px;" oninvalid="this.setCustomValidity('Please select an analysis type')" oninput="this.setCustomValidity('')">
+      <option value="">Select analysis type</option>
+      <option value="red" {% if analysisType == 'red' %}selected{% endif %}>📕 Red book</option>
+      <option value="green" {% if analysisType == 'green' %}selected{% endif %}>📗 Green book</option>
+    </select>
   </div>
   <div class="govuk-form-group">
     <label class="govuk-label" for="policyPdf">Select PDF file</label>
