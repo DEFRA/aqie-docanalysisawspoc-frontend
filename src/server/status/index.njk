@@ -14,7 +14,7 @@
   <button id="exportPdfBtn" class="govuk-button no-print" style="background-color: #00703c; border-color: #00703c;" onclick="exportToPdf()">Export to PDF</button>
   {% endif %}
 </div>
-<div id="markdownContent" class="govuk-body markdown-content" style="margin-top: 1em;">
+<div id="markdownContent" class="govuk-body markdown-content" style="margin-top: 1em; border: none;">
   <div id="markdownRenderer">
     <script>
       document.addEventListener('DOMContentLoaded', function() {
@@ -55,7 +55,7 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
 <script>
 document.addEventListener('DOMContentLoaded', function() {
   const requestId = '{{ requestId }}';
@@ -97,7 +97,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function exportToPdf() {
-  const element = document.getElementById('markdownRenderer');
+  const element = document.getElementById('markdownRenderer').cloneNode(true);
   const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
   
   const opt = {
@@ -107,8 +107,26 @@ function exportToPdf() {
     html2canvas: { scale: 1 },
     jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
   };
+    
+  const style = document.createElement('style');
+  style.innerHTML = `
+    @media print {
+      .no-print { display: none !important; }
+      body * { visibility: hidden; }
+      .print-header, .print-header * { visibility: visible; }
+      #markdownRenderer, #markdownRenderer * { visibility: visible; }
+      .print-header { position: absolute; left: 0; top: 0; width: 100%; }
+      #markdownRenderer { position: absolute; left: 0; top: 80px; width: 100%; }
+      .print-header .govuk-header__service-name { display: none !important; }
+    }
+  `;
+  document.head.appendChild(style);
   
-  html2pdf().from(element).set(opt).save();
+  window.print();
+  
+  setTimeout(() => {
+    document.head.removeChild(style);
+  }, 1000);
 }
 </script>
 
