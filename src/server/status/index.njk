@@ -97,17 +97,6 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function exportToPdf() {
-  const element = document.getElementById('markdownRenderer').cloneNode(true);
-  const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
-  
-  const opt = {
-    margin: 0.5,
-    filename: `analysis-results-${timestamp}.pdf`,
-    image: { type: 'webp', quality: 0.98 },
-    html2canvas: { scale: 1 },
-    jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
-  };
-    
   const style = document.createElement('style');
   style.innerHTML = `
     @media print {

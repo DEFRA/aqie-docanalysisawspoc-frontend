@@ -7,7 +7,7 @@ import { createLogger } from '../../server/common/helpers/logging/logger.js'
 import { config } from '../../config/config.js'
 import axios from 'axios'
 import { PassThrough } from 'stream'
-import { greenPrompt, redPrompt } from '../common/constants/prompts.js'
+import { greenPrompt, redPrompt, redInvestmentCommitteeBriefing, executiveBriefing } from '../common/constants/prompts.js'
 
 const logger = createLogger()
 const pump = util.promisify(pipeline)
@@ -117,9 +117,23 @@ export const upload = {
               try {
                 const backendApiUrl = config.get('backendApiUrl')
 
+                let selectedPrompt;
+                switch (analysisType) {
+                  case 'green':
+                    selectedPrompt = greenPrompt;
+                    break;
+                  case 'red-investment':
+                    selectedPrompt = redInvestmentCommitteeBriefing;
+                    break;
+                  case 'executive':
+                    selectedPrompt = executiveBriefing;
+                    break;
+                  default:
+                    selectedPrompt = redPrompt;
+                }
+                
                 const requestPrompt = {
-                  systemprompt:
-                    analysisType === 'green' ? greenPrompt : redPrompt,
+                  systemprompt: selectedPrompt,
                   userprompt: pdfTextContent
                 }
 
@@ -204,7 +218,20 @@ export const upload = {
               }
 
               const pdfTextContent = fs.readFileSync(tempStorePath, 'utf-8')
-              const prompt = analysisType === 'green' ? greenPrompt : redPrompt
+              let prompt;
+              switch (analysisType) {
+                case 'green':
+                  prompt = greenPrompt;
+                  break;
+                case 'red-investment':
+                  prompt = redInvestmentCommitteeBriefing;
+                  break;
+                case 'executive':
+                  prompt = executiveBriefing;
+                  break;
+                default:
+                  prompt = redPrompt;
+              }
 
               const response = h.response()
               response.code(200)
