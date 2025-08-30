@@ -19,7 +19,10 @@ function loadQueue() {
   try {
     if (fs.existsSync(queueFile)) {
       const data = fs.readFileSync(queueFile, 'utf8')
-      return new Map(JSON.parse(data))
+      const parsed = JSON.parse(data)
+      if (Array.isArray(parsed)) {
+        return new Map(parsed)
+      }
     }
   } catch (error) {
     console.error('Error loading queue:', error)

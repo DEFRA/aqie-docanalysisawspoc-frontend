@@ -40,7 +40,18 @@
 <!-- Upload History Table -->
 {% if uploads and uploads.length > 0 %}
 <div class="govuk-form-group" style="margin-top: 2em;">
-  <h2 class="govuk-heading-m">Upload History</h2>
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1em;">
+    <h2 class="govuk-heading-m" style="margin: 0;">Upload History</h2>
+    <div>
+      <label for="pageSize" class="govuk-label" style="margin-right: 0.5em;">Show:</label>
+      <select id="pageSize" class="govuk-select" style="width: auto;">
+        <option value="10">10</option>
+        <option value="25">25</option>
+        <option value="50">50</option>
+        <option value="100">100</option>
+      </select>
+    </div>
+  </div>
   <table class="govuk-table" id="uploadHistoryTable">
     <thead class="govuk-table__head">
       <tr class="govuk-table__row">
@@ -48,7 +59,6 @@
         <th class="govuk-table__header">Analysis Type</th>
         <th class="govuk-table__header">Status</th>
         <th class="govuk-table__header">Timestamp</th>
-        <th class="govuk-table__header">Request ID</th>
         <th class="govuk-table__header">Action</th>
       </tr>
     </thead>
@@ -60,8 +70,9 @@
         <td class="govuk-table__cell">
           <span class="status-badge status-{{ upload.status }}">{{ upload.status }}</span>
         </td>
-        <td class="govuk-table__cell">{{ upload.timestamp | date('DD-MM-YYYY HH:mm') }}</td>
-        <td class="govuk-table__cell">{{ upload.requestId }}</td>
+        <td class="govuk-table__cell">
+          <script>document.write(new Date('{{ upload.timestamp }}').toLocaleString('en-GB', {day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'}).replace(',', ''));</script>
+        </td>
         <td class="govuk-table__cell">
           {% if upload.status == 'completed' %}
           <a href="/status/{{ upload.requestId }}" target="_blank" class="govuk-link">View Results</a>
@@ -73,6 +84,16 @@
       {% endfor %}
     </tbody>
   </table>
+  
+  <div id="pagination" class="govuk-pagination" style="margin-top: 1em;">
+    <div class="govuk-pagination__prev">
+      <button id="prevBtn" class="govuk-link govuk-pagination__link" disabled><<</button>
+    </div>
+    <ul class="govuk-pagination__list" id="pageNumbers"></ul>
+    <div class="govuk-pagination__next">
+      <button id="nextBtn" class="govuk-link govuk-pagination__link">>></button>
+    </div>
+  </div>
 </div>
 
 <style>
@@ -94,24 +115,61 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+  let allUploads = [];
+  let currentPage = 1;
+  let pageSize = 10;
+  
+  const pageSizeSelect = document.getElementById('pageSize');
+  const prevBtn = document.getElementById('prevBtn');
+  const nextBtn = document.getElementById('nextBtn');
+  
+  pageSizeSelect.addEventListener('change', function() {
+    pageSize = parseInt(this.value);
+    currentPage = 1;
+    renderTable();
+  });
+  
+  prevBtn.addEventListener('click', function() {
+    if (currentPage > 1) {
+      currentPage--;
+      renderTable();
+    }
+  });
+  
+  nextBtn.addEventListener('click', function() {
+    const totalPages = Math.ceil(allUploads.length / pageSize);
+    if (currentPage < totalPages) {
+      currentPage++;
+      renderTable();
+    }
+  });
+  
+  // Initial load
+  updateUploadHistory();
+  
   setInterval(updateUploadHistory, 10000);
   
   async function updateUploadHistory() {
     try {
       const response = await fetch('/upload/status');
       const uploads = await response.json();
-      updateHistoryTable(uploads);
+      allUploads = uploads;
+      renderTable();
     } catch (error) {
       console.error('Failed to update upload history:', error);
     }
   }
   
-  function updateHistoryTable(uploads) {
+  function renderTable() {
     const tbody = document.getElementById('uploadHistoryBody');
     if (!tbody) return;
     
+    const startIndex = (currentPage - 1) * pageSize;
+    const endIndex = startIndex + pageSize;
+    const pageUploads = allUploads.slice(startIndex, endIndex);
+    
     tbody.innerHTML = '';
-    uploads.forEach(upload => {
+    pageUploads.forEach(upload => {
       const row = document.createElement('tr');
       row.className = 'govuk-table__row';
       
@@ -134,11 +192,38 @@ document.addEventListener('DOMContentLoaded', function() {
           <span class="status-badge status-${upload.status}">${upload.status}</span>
         </td>
         <td class="govuk-table__cell">${timestamp}</td>
-        <td class="govuk-table__cell">${upload.requestId}</td>
         <td class="govuk-table__cell">${actionCell}</td>
       `;
       tbody.appendChild(row);
     });
+    
+    updatePagination();
+  }
+  
+  function updatePagination() {
+    const totalPages = Math.ceil(allUploads.length / pageSize);
+    
+    prevBtn.disabled = currentPage === 1;
+    nextBtn.disabled = currentPage === totalPages || totalPages === 0;
+    
+    const pageNumbers = document.getElementById('pageNumbers');
+    pageNumbers.innerHTML = '';
+    
+    for (let i = 1; i <= totalPages; i++) {
+      const li = document.createElement('li');
+      li.className = `govuk-pagination__item ${i === currentPage ? 'govuk-pagination__item--current' : ''}`;
+      
+      const link = document.createElement('button');
+      link.className = 'govuk-link govuk-pagination__link';
+      link.textContent = i;
+      link.addEventListener('click', function() {
+        currentPage = i;
+        renderTable();
+      });
+      
+      li.appendChild(link);
+      pageNumbers.appendChild(li);
+    }
   }
 });
 </script>
