@@ -1,0 +1,159 @@
+{% extends 'layouts/page.njk' %}
+
+{% block pageTitle %}Upload Queue{% endblock %}
+
+{% block content %}
+<h1 class="govuk-heading-l">Document Analysis Queue</h1>
+
+<div class="govuk-grid-row">
+  <div class="govuk-grid-column-full">
+    
+    <!-- Upload Form -->
+    <div class="govuk-form-group">
+      <h2 class="govuk-heading-m">Upload New Document</h2>
+      <form id="queueUploadForm" enctype="multipart/form-data">
+        <div class="govuk-form-group">
+          <label class="govuk-label" for="analysisType">Analysis Type</label>
+          <select class="govuk-select" id="analysisType" name="analysisType" required>
+            <option value="">Select analysis type</option>
+            <option value="red">📕 Red book</option>
+            <option value="green">📗 Green book</option>
+            <option value="red-investment">📊 Red Investment Committee Briefing</option>
+            <option value="executive">💼 Executive Briefing</option>
+          </select>
+        </div>
+        
+        <div class="govuk-form-group">
+          <label class="govuk-label" for="policyPdf">Upload PDF</label>
+          <input class="govuk-file-upload" id="policyPdf" name="policyPdf" type="file" accept=".pdf" required>
+        </div>
+        
+        <button type="submit" class="govuk-button">Add to Queue</button>
+      </form>
+    </div>
+
+    <!-- Upload Queue Table -->
+    <div class="govuk-form-group">
+      <h2 class="govuk-heading-m">Upload Queue</h2>
+      <table class="govuk-table" id="uploadTable">
+        <thead class="govuk-table__head">
+          <tr class="govuk-table__row">
+            <th class="govuk-table__header">Filename</th>
+            <th class="govuk-table__header">Analysis Type</th>
+            <th class="govuk-table__header">Status</th>
+            <th class="govuk-table__header">Timestamp</th>
+            <th class="govuk-table__header">Action</th>
+          </tr>
+        </thead>
+        <tbody class="govuk-table__body" id="uploadTableBody">
+          {% for upload in uploads %}
+          <tr class="govuk-table__row" data-upload-id="{{ upload.id }}">
+            <td class="govuk-table__cell">{{ upload.filename }}</td>
+            <td class="govuk-table__cell">{{ upload.analysisType }}</td>
+            <td class="govuk-table__cell">
+              <span class="status-badge status-{{ upload.status }}">{{ upload.status }}</span>
+            </td>
+            <td class="govuk-table__cell">{{ upload.timestamp | date('DD/MM/YYYY HH:mm') }}</td>
+            <td class="govuk-table__cell">
+              {% if upload.requestId %}
+              <a href="/queue/mock/{{ upload.requestId }}" target="_blank" class="govuk-link">View Results</a>
+              {% else %}
+              <span class="govuk-hint">Processing...</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<style>
+.status-badge {
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: bold;
+}
+.status-uploading { background: #ffeb3b; color: #333; }
+.status-processing { background: #2196f3; color: white; }
+.status-analyzing { background: #ff9800; color: white; }
+.status-completed { background: #00703c; color: white; animation: pulse 2s infinite; }
+@keyframes pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.7; }
+  100% { opacity: 1; }
+}
+.status-failed { background: #f44336; color: white; }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const form = document.getElementById('queueUploadForm');
+  const tableBody = document.getElementById('uploadTableBody');
+  
+  // Handle form submission
+  form.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(form);
+    
+    try {
+      const response = await fetch('/queue/upload', {
+        method: 'POST',
+        body: formData
+      });
+      
+      if (response.ok) {
+        form.reset();
+        updateQueue();
+      }
+    } catch (error) {
+      console.error('Upload failed:', error);
+    }
+  });
+  
+  // Poll for status updates every 10 seconds
+  setInterval(updateQueue, 10000);
+  
+  async function updateQueue() {
+    try {
+      const response = await fetch('/queue/status');
+      const uploads = await response.json();
+      
+      updateTable(uploads);
+    } catch (error) {
+      console.error('Failed to update queue:', error);
+    }
+  }
+  
+  function updateTable(uploads) {
+    tableBody.innerHTML = '';
+    
+    uploads.forEach(upload => {
+      const row = document.createElement('tr');
+      row.className = 'govuk-table__row';
+      row.dataset.uploadId = upload.id;
+      
+      const actionCell = upload.requestId 
+        ? `<a href="/queue/mock/${upload.requestId}" target="_blank" class="govuk-link">View Results</a>`
+        : '<span class="govuk-hint">Processing...</span>';
+      
+      row.innerHTML = `
+        <td class="govuk-table__cell">${upload.filename}</td>
+        <td class="govuk-table__cell">${upload.analysisType}</td>
+        <td class="govuk-table__cell">
+          <span class="status-badge status-${upload.status}">${upload.status}</span>
+        </td>
+        <td class="govuk-table__cell">${new Date(upload.timestamp).toLocaleString()}</td>
+        <td class="govuk-table__cell">${actionCell}</td>
+      `;
+      
+      tableBody.appendChild(row);
+    });
+  }
+});
+</script>
+
+{% endblock %}

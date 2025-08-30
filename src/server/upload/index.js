@@ -12,6 +12,67 @@ import { greenPrompt, redPrompt, redInvestmentCommitteeBriefing, executiveBriefi
 const logger = createLogger()
 const pump = util.promisify(pipeline)
 
+// Persistent upload queue using file storage
+const queueFile = path.join(process.cwd(), 'upload-queue.json')
+
+function loadQueue() {
+  try {
+    if (fs.existsSync(queueFile)) {
+      const data = fs.readFileSync(queueFile, 'utf8')
+      return new Map(JSON.parse(data))
+    }
+  } catch (error) {
+    console.error('Error loading queue:', error)
+  }
+  return new Map()
+}
+
+function saveQueue() {
+  try {
+    fs.writeFileSync(queueFile, JSON.stringify([...uploadQueue]))
+  } catch (error) {
+    console.error('Error saving queue:', error)
+  }
+}
+
+const uploadQueue = loadQueue()
+
+function startSNSPolling(uploadId, requestId) {
+  const pollInterval = setInterval(async () => {
+    try {
+      const backendApiUrl = config.get('backendApiUrl')
+      const response = await axios.get(`${backendApiUrl}/getS3/${requestId}`)
+      
+      const upload = uploadQueue.get(uploadId)
+      if (!upload) {
+        clearInterval(pollInterval)
+        return
+      }
+      
+      if (response.data && response.data.getS3result && response.data.getS3result.status === 'completed') {
+        upload.status = 'completed'
+        uploadQueue.set(uploadId, upload)
+        saveQueue()
+        clearInterval(pollInterval)
+        logger.info(`SNS: Upload ${uploadId} completed successfully`)
+      }
+    } catch (error) {
+      logger.info(`Polling error for ${uploadId}: ${error.message}`)
+    }
+  }, 10000)
+  
+  setTimeout(() => {
+    clearInterval(pollInterval)
+    const upload = uploadQueue.get(uploadId)
+    if (upload && upload.status === 'analyzing') {
+      upload.status = 'failed'
+      upload.error = 'Analysis timeout'
+      uploadQueue.set(uploadId, upload)
+      saveQueue()
+    }
+  }, 600000)
+}
+
 export const upload = {
   plugin: {
     name: 'upload',
@@ -24,11 +85,19 @@ export const upload = {
           handler: (request, h) => {
             const user = request.auth.credentials.user
             const model = request.query.model || 'model1'
+            
+            // Get user's uploads
+            const userId = user?.id || user?.email || 'anonymous'
+            const userUploads = Array.from(uploadQueue.values())
+              .filter(upload => upload.userId === userId)
+              .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+            
             return h.view('upload/index', {
               isAuthenticated: true,
               user: user,
               status: null,
-              model: model
+              model: model,
+              uploads: userUploads
             })
           }
         },
@@ -163,7 +232,43 @@ export const upload = {
 
                 const requestId = response.data.requestId
                 logger.info(`Request ID: ${requestId}`)
-                return h.redirect(`/status/${requestId}`)
+                
+                // Add to upload queue instead of redirecting
+                const user = request.auth.credentials.user
+                const uploadRequest = {
+                  id: `upload_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+                  userId: user?.id || user?.email || 'anonymous',
+                  filename: file.hapi.filename,
+                  analysisType: analysisType,
+                  model: model,
+                  status: 'analyzing',
+                  timestamp: new Date().toISOString(),
+                  requestId: requestId
+                }
+                
+                // Store in persistent queue
+                uploadQueue.set(uploadRequest.id, uploadRequest)
+                saveQueue()
+                
+                // Start SNS-like background polling
+                startSNSPolling(uploadRequest.id, requestId)
+                
+                // Get updated uploads list including the new one
+                const userId = user?.id || user?.email || 'anonymous'
+                const userUploads = Array.from(uploadQueue.values())
+                  .filter(upload => upload.userId === userId)
+                  .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+                
+                return h.view('upload/index', {
+                  isAuthenticated: true,
+                  user: user,
+                  status: 'success',
+                  message: 'File uploaded successfully. Analysis in progress.',
+                  model: model,
+                  analysisType: analysisType,
+                  requestId: requestId,
+                  uploads: userUploads
+                })
               } catch (apiError) {
                 logger.error(`Backend API error: ${apiError.message}`)
                 if (apiError.status) {
@@ -248,9 +353,24 @@ export const upload = {
               try {
                 const backendApiUrl = config.get('backendApiUrl')
 
+                let prompt;
+                switch (analysisType) {
+                  case 'green':
+                    prompt = greenPrompt;
+                    break;
+                  case 'red-investment':
+                    prompt = redInvestmentCommitteeBriefing;
+                    break;
+                  case 'executive':
+                    prompt = executiveBriefing;
+                    break;
+                  default:
+                    prompt = redPrompt;
+                }
+                
                 const axiosResponse = await axios({
                   method: 'post',
-                  url: `${backendApiUrl}/stream-summarize`, // <-- your streaming endpoint
+                  url: `${backendApiUrl}/stream-summarize`,
                   data: {
                     systemprompt: prompt,
                     userprompt: pdfTextContent,
@@ -284,6 +404,19 @@ export const upload = {
 
               return response
             }
+          }
+        },
+        {
+          method: 'GET',
+          path: '/upload/status',
+          options: { auth: { strategy: 'login', mode: 'required' } },
+          handler: (request, h) => {
+            const user = request.auth.credentials.user
+            const userId = user?.id || user?.email || 'anonymous'
+            const userUploads = Array.from(uploadQueue.values())
+              .filter(upload => upload.userId === userId)
+            
+            return h.response(userUploads)
           }
         }
       ])
