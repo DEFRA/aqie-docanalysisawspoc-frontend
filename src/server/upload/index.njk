@@ -185,9 +185,16 @@ document.addEventListener('DOMContentLoaded', function() {
         minute: '2-digit'
       }).replace(',', '');
       
+      const analysisTypeDisplay = {
+        'red': '📕 Red book',
+        'green': '📗 Green book',
+        'red-investment': '📊 Red Investment Committee Briefing',
+        'executive': '💼 Executive Briefing'
+      }[upload.analysisType] || upload.analysisType;
+      
       row.innerHTML = `
         <td class="govuk-table__cell">${upload.filename}</td>
-        <td class="govuk-table__cell">${upload.analysisType}</td>
+        <td class="govuk-table__cell">${analysisTypeDisplay}</td>
         <td class="govuk-table__cell">
           <span class="status-badge status-${upload.status}">${upload.status}</span>
         </td>
