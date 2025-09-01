@@ -153,7 +153,7 @@ document.addEventListener('DOMContentLoaded', function() {
     try {
       const response = await fetch('/upload/status');
       const uploads = await response.json();
-      allUploads = uploads;
+      allUploads = uploads.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
       renderTable();
     } catch (error) {
       console.error('Failed to update upload history:', error);

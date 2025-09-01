@@ -418,6 +418,7 @@ export const upload = {
             const userId = user?.id || user?.email || 'anonymous'
             const userUploads = Array.from(uploadQueue.values())
               .filter(upload => upload.userId === userId)
+              .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
             
             return h.response(userUploads)
           }
