@@ -60,7 +60,7 @@ describe.skip('context and cache', () => {
               href: '/logout'
             }
           ],
-          serviceName: 'Business case interrogation',
+          serviceName: 'Business Case Summarisation',
           serviceUrl: '/'
         })
       })
@@ -149,7 +149,7 @@ describe.skip('context and cache', () => {
               href: '/logout'
             }
           ],
-          serviceName: 'Business case interrogation',
+          serviceName: 'Business Case Summarisation',
           serviceUrl: '/'
         })
       })

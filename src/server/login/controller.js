@@ -15,7 +15,7 @@ const loginController = {
         pageTitle: 'Login Page - GOV.UK',
         heading: 'Login Page',
         page: 'upload',
-        serviceName: 'Business case interrogation',
+        serviceName: 'Business Case Summarisation',
         isAuthenticated: request.auth.isAuthenticated,
         errors: errors?.errors,
         errorMessage: errorMessage?.errorMessage
