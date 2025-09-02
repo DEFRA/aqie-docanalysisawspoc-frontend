@@ -56,7 +56,7 @@
     <thead class="govuk-table__head">
       <tr class="govuk-table__row">
         <th class="govuk-table__header">Filename</th>
-        <th class="govuk-table__header">Analysis Type</th>
+        <th class="govuk-table__header">Analysis type</th>
         <th class="govuk-table__header">Status</th>
         <th class="govuk-table__header">Timestamp</th>
         <th class="govuk-table__header">Action</th>
@@ -97,19 +97,30 @@
 </div>
 
 <style>
+.govuk-table__cell {
+  font-size: 12px;
+  vertical-align: middle;
+  padding: 8px 12px;
+}
 .status-badge {
-  padding: 2px 8px;
+  padding: 4px 8px;
   border-radius: 4px;
   font-size: 12px;
   font-weight: bold;
+  display: inline-block;
 }
-.status-analyzing { background: #ff9800; color: white; }
-.status-completed { background: #00703c; color: white; animation: pulse 2s infinite; }
+.status-analysing { background: #ff9800; color: white; animation: pulse 2s infinite;}
+.status-processing { background: #2196f3; color: white; }
+.status-completed { background: #00703c; color: white; }
 .status-failed { background: #f44336; color: white; }
 @keyframes pulse {
   0% { opacity: 1; }
   50% { opacity: 0.7; }
   100% { opacity: 1; }
+}
+.govuk-table__header {
+  font-size: 12px;
+  font-weight: 600;
 }
 </style>
 
