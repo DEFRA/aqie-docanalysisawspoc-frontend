@@ -67,7 +67,7 @@ function startSNSPolling(uploadId, requestId) {
   setTimeout(() => {
     clearInterval(pollInterval)
     const upload = uploadQueue.get(uploadId)
-    if (upload && upload.status === 'analyzing') {
+    if (upload && upload.status === 'analysing') {
       upload.status = 'failed'
       upload.error = 'Analysis timeout'
       uploadQueue.set(uploadId, upload)
@@ -194,7 +194,7 @@ export const upload = {
                   case 'green':
                     selectedPrompt = greenPrompt;
                     break;
-                  case 'red-investment':
+                  case 'investment':
                     selectedPrompt = redInvestmentCommitteeBriefing;
                     break;
                   case 'executive':
@@ -244,7 +244,7 @@ export const upload = {
                   filename: file.hapi.filename,
                   analysisType: analysisType,
                   model: model,
-                  status: 'analyzing',
+                  status: 'analysing',
                   timestamp: new Date().toISOString(),
                   requestId: requestId
                 }
@@ -331,7 +331,7 @@ export const upload = {
                 case 'green':
                   prompt = greenPrompt;
                   break;
-                case 'red-investment':
+                case 'investment':
                   prompt = redInvestmentCommitteeBriefing;
                   break;
                 case 'executive':
@@ -361,7 +361,7 @@ export const upload = {
                   case 'green':
                     prompt = greenPrompt;
                     break;
-                  case 'red-investment':
+                  case 'investment':
                     prompt = redInvestmentCommitteeBriefing;
                     break;
                   case 'executive':

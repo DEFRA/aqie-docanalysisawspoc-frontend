@@ -14,10 +14,10 @@
     </label>
     <select class="govuk-select" id="analysisType" name="analysisType" required style="padding: 8px 12px; border: 2px solid #0b0c0c; border-radius: 4px; font-size: 16px; background: white; min-width: 200px;" oninvalid="this.setCustomValidity('Please select an analysis type')" oninput="this.setCustomValidity('')">
       <option value="">Select analysis type</option>
-      <option value="red" {% if analysisType == 'red' %}selected{% endif %}>📕 Red book</option>
+      <option value="red" {% if analysisType == 'red' %}selected{% endif %}>🔴 Red team</option>
       <option value="green" {% if analysisType == 'green' %}selected{% endif %}>📗 Green book</option>
-      <option value="red-investment" {% if analysisType == 'red-investment' %}selected{% endif %}>📊 Red Investment Committee Briefing</option>
-      <option value="executive" {% if analysisType == 'executive' %}selected{% endif %}>💼 Executive Briefing</option>
+      <option value="investment" {% if analysisType == 'investment' %}selected{% endif %}>📊 Investment committee briefing</option>
+      <option value="executive" {% if analysisType == 'executive' %}selected{% endif %}>💼 Executive briefing</option>
     </select>
   </div>
   <div class="govuk-form-group">
@@ -186,10 +186,10 @@ document.addEventListener('DOMContentLoaded', function() {
       }).replace(',', '');
       
       const analysisTypeDisplay = {
-        'red': '📕 Red book',
+        'red': '🔴 Red team',
         'green': '📗 Green book',
-        'red-investment': '📊 Red Investment Committee Briefing',
-        'executive': '💼 Executive Briefing'
+        'investment': '📊 Investment committee briefing',
+        'executive': '💼 Executive briefing'
       }[upload.analysisType] || upload.analysisType;
       
       row.innerHTML = `

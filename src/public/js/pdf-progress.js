@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const steps = [
       { progress: 10, message: 'Reading PDF content...' },
       { progress: 25, message: 'Extracting text from pages...' },
-      { progress: 40, message: 'Analyzing document structure...' },
+      { progress: 40, message: 'Analysing document structure...' },
       { progress: 55, message: 'Identifying tables and figures...' },
       { progress: 70, message: 'Processing metadata...' },
       { progress: 85, message: 'Formatting results...' },
