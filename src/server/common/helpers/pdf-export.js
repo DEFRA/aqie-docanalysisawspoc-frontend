@@ -1,5 +1,7 @@
 export function exportToPdf(markdownContent) {
+  // eslint-disable-next-line new-cap
   const { jsPDF } = window.jspdf
+  // eslint-disable-next-line new-cap
   const pdf = new jsPDF()
 
   const lines = markdownContent.split('\n')

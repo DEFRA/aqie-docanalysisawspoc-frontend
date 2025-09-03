@@ -1,6 +1,6 @@
-import { createLogger } from '../common/helpers/logging/logger.js'
+// import { createLogger } from '../common/helpers/logging/logger.js'
 
-const logger = createLogger()
+// const logger = createLogger()
 
 export const home = {
   plugin: {
@@ -11,7 +11,7 @@ export const home = {
           method: 'GET',
           path: '/',
           handler: (request, h) => {
-            const user = request.auth.credentials.user
+            // const user = request.auth.credentials.user
             return h.redirect('/upload')
           }
         }

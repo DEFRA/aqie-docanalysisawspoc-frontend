@@ -1,12 +1,11 @@
 import fs from 'fs'
 import path from 'path'
-import { pipeline } from 'stream'
+import { pipeline, PassThrough } from 'stream'
 import util from 'util'
 import { parsePdfToJson } from '../utils/pdfParser.js'
 import { createLogger } from '../../server/common/helpers/logging/logger.js'
 import { config } from '../../config/config.js'
 import axios from 'axios'
-import { PassThrough } from 'stream'
 import {
   greenPrompt,
   redPrompt,
@@ -335,20 +334,20 @@ export const upload = {
               }
 
               const pdfTextContent = fs.readFileSync(tempStorePath, 'utf-8')
-              let prompt
-              switch (analysisType) {
-                case 'green':
-                  prompt = greenPrompt
-                  break
-                case 'investment':
-                  prompt = redInvestmentCommitteeBriefing
-                  break
-                case 'executive':
-                  prompt = executiveBriefing
-                  break
-                default:
-                  prompt = redPrompt
-              }
+              // let prompt
+              // switch (analysisType) {
+              //   case 'green':
+              //     prompt = greenPrompt
+              //     break
+              //   case 'investment':
+              //     prompt = redInvestmentCommitteeBriefing
+              //     break
+              //   case 'executive':
+              //     prompt = executiveBriefing
+              //     break
+              //   default:
+              //     prompt = redPrompt
+              // }
 
               const response = h.response()
               response.code(200)

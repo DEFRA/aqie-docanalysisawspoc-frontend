@@ -32,7 +32,7 @@ export const status = {
                 response.data.getS3result &&
                 response.data.getS3result.status === 'completed'
               ) {
-                let content =
+                const content =
                   JSON.stringify(
                     response.data.getS3result?.result?.content.find(
                       (item) => item.type === 'text'
@@ -80,7 +80,7 @@ export const status = {
                 response.data.getS3result &&
                 response.data.getS3result.status === 'completed'
               ) {
-                let content =
+                const content =
                   JSON.stringify(
                     response.data.getS3result?.result?.content.find(
                       (item) => item.type === 'text'
