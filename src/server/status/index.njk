@@ -19,7 +19,7 @@
   <div id="markdownRenderer">
     <script>
       document.addEventListener('DOMContentLoaded', function() {
-        const markdownContent = {{ markdownContent | safe | dump }};
+        const markdownContent = {{ markdownContent | safe }};
         document.getElementById('markdownRenderer').innerHTML = marked.parse(markdownContent);
         
         // Apply GOV.UK styling to tables
