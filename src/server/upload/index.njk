@@ -8,6 +8,7 @@
 {% block content %}
 <h1 class="govuk-heading-m">Upload a Document to Generate AI-Powered Insights</h1>
 <form id="uploadForm" action="/upload" method="post" enctype="multipart/form-data" onsubmit="return handleCdpUpload();">
+  <p style ="color:red"> DEBUG: Form action = {{ action }} </p>
   <div class="govuk-form-group">
     <fieldset class="govuk-fieldset">
       <legend class="govuk-fieldset__legend govuk-fieldset__legend--s">
@@ -53,6 +54,7 @@ function handleCdpUpload() {
  
   // Start polling after form submission
   setTimeout(() => {
+    console.log('Starting to poll upload status...');
     pollUploadStatus();
   }, 2000);
  
@@ -60,13 +62,14 @@ function handleCdpUpload() {
 }
  
 function pollUploadStatus() {
+     console.log('inside: pollUploadStatus(): Starting to poll upload status...');
   const statusUrl = '{{ statusUrl }}';
   const analysisType = '{{ analysisType }}';
   const model = '{{ model }}';
  
   const poll = async () => {
     try {
-      const response = await fetch(`/upload/poll-status?statusUrl=${encodeURIComponent(statusUrl)}&analysisType=${analysisType}&model=${model}`);
+      const response = await fetch(`/upload_status/poll-status?statusUrl=${encodeURIComponent(statusUrl)}&analysisType=${analysisType}&model=${model}`);
       const data = await response.json();
      
       if (data.status === 'ready') {

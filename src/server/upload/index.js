@@ -36,6 +36,9 @@ export const upload = {
           method: 'POST',
           path: '/upload',
           options: {
+            cors: {
+              origin: ['*'], // Allow all origins
+            },
             auth: { strategy: 'login', mode: 'required' },
             payload: {
               output: 'stream',
@@ -195,168 +198,65 @@ export const upload = {
               const model = request.query.model || 'model1'
               const baseUrl = `${request.server.info.protocol}://${request.info.host}`
 
-              const file = request.payload.policyPdf
-              if (!file) {
-                return h.redirect(
-                  `/upload?status=error&message=${encodeURIComponent('No file provided')}`
-                )
-              }
+              // const file = request.payload.policyPdf
+              // if (!file) {
+              //   return h.redirect(
+              //     `/upload?status=error&message=${encodeURIComponent('No file provided')}`
+              //   )
+              // }
 
               // Call /initiate to get upload configuration
+              console.log("clicking summarise")
               const response = await fetch(`${cdpUploaderUrl}/initiate`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                  redirect: `/upload/poll-status`,
+                  redirect: `/upload_status/poll-status`,
                   s3Bucket: s3BucketName
                 })
               })
 
               const upload = await response.json()
+              
 
-              const { uploadUrl, uploadId, statusUrl } = upload
+const { uploadUrl, uploadId, statusUrl } = upload;
+
+if(uploadUrl.startswith('/')){
+  uploadUrl= cdpUploaderUrl + uploadUrl;
+}
+
+// const queryParams = new URLSearchParams({
+//   uploadUrl,
+//   uploadId,
+//   statusUrl
+// });
+// console.log("uploadId",uploadId)
+// console.log("QUERY PARAMS:", queryParams.toString());
+ // Optional: remember the status URL in the session for later
+ console.log("statusUrl ",statusUrl)
+ console.log("uploadUrl ",uploadUrl)
+ console.log("uploadId ",uploadId) 
+    request.yar.set('basic-upload', { statusUrl: statusUrl })
+
+return h.view('upload/index', {
+  isAuthenticated: true,
+  user: request.auth.credentials.user,
+  action : uploadUrl,
+  uploadId,
+  statusUrl,
+  model: model,
+  analysisType: analysisType
+})
+// return h.redirect(`/poll-status?$statusUrl=${encodeURIComponent(uploadId)}`);
+
+            //  const { uploadUrl, uploadId, statusUrl } = upload
+             //  return h.redirect('/poll-status')
 
               // Return upload form that will submit to CDP uploader directly
-              return h.view('upload/index', {
-                uploadUrl,
-                uploadId,
-                statusUrl,
-                analysisType,
-                model,
-                isAuthenticated: true,
-                user: request.auth.credentials.user
-              })
-            } catch (error) {
-              logger.error(
-                'CDP Upload initiate error:',
-                error.response?.data || error.message
-              )
-              logger.error('Error status:', error.response?.status)
-              return h.redirect(
-                `/upload?status=error&message=${encodeURIComponent('Upload initiation failed')}`
-              )
-            }
-          }
-        },{
-          method: 'GET',
-          path: '/upload/poll-status',
-          options: {
-            auth: { strategy: 'login', mode: 'required' }
-          },
-          handler: async (request, h) => {
-            try {
-              const { statusUrl, analysisType, model } = request.query
-
-              const response = await axios.get(statusUrl)
-              const { uploadStatus, files } = response.data
-
-              // 1. Check uploadStatus. UploadStatus can either be 'pending' (i.e. file is still being scanned) or 'ready'
-    if (uploadStatus !== 'ready') {
-      // If its not ready show the holding page. The holding page shows a please wait message and auto-reloads
-      // after x seconds, causing this whole controller to run again, checking the status.
-
-      return h.view('upload/index', {
-                statusUrl,
-                analysisType,
-                model,
-                isAuthenticated: true,
-                user: request.auth.credentials.user
-      })
-    }
-
-              if (uploadStatus === 'ready') {
-                const s3Key = response.data.form.basicfile.s3Key
-    const s3Bucket = response.data.form.basicfile.s3Bucket
-    const metadata = await s3Client.send(
-      new HeadObjectCommand({
-        Bucket: s3Bucket,
-        Key: s3Key
-      })
-    )
-                // Trigger processing
-                return h.response({
-                  status: 'ready',
-                  s3Key,
-                  analysisType,
-                  model,
-                  message: 'File ready for processing'
-                })
-              }
-
-              return h.response({ status: uploadStatus })
+             
             } catch (error) {
               logger.error('Status polling error:', error)
               return h.response({ error: 'Status check failed' }).code(500)
-            }
-          }
-        },
-        {
-          method: 'GET',
-          path: '/stream-summary',
-          options: {
-            auth: { strategy: 'login', mode: 'required' },
-            handler: async (request, h) => {
-              const { model, analysisType, filename } = request.query
-              const uploadDir = path.join(process.cwd(), 'uploads')
-              const tempStorePath = path.join(uploadDir, `${filename}.txt`)
-
-              if (!fs.existsSync(tempStorePath)) {
-                return h.response('Missing parsed content').code(404)
-              }
-
-              const pdfTextContent = fs.readFileSync(tempStorePath, 'utf-8')
-              const prompt = analysisType === 'green' ? greenPrompt : redPrompt
-
-              const response = h.response()
-              response.code(200)
-              response.type('text/event-stream')
-              response.header('Cache-Control', 'no-cache')
-              response.header('Connection', 'keep-alive')
-
-              const stream = new PassThrough()
-              response.source = stream
-
-              // Send initial message
-              stream.write(`data: Starting analysis...\n\n`)
-
-              try {
-                const backendApiUrl = config.get('backendApiUrl')
-
-                const axiosResponse = await axios({
-                  method: 'post',
-                  url: `${backendApiUrl}/stream-summarize`, // <-- your streaming endpoint
-                  data: {
-                    systemprompt: prompt,
-                    userprompt: pdfTextContent,
-                    modelid: model
-                  },
-                  responseType: 'stream'
-                })
-
-                axiosResponse.data.on('data', (chunk) => {
-                  const text = chunk.toString().trim()
-                  if (text) {
-                    stream.write(`data: ${text}\n\n`)
-                  }
-                })
-
-                axiosResponse.data.on('end', () => {
-                  stream.write(`event: end\ndata: done\n\n`)
-                  stream.end()
-                })
-
-                axiosResponse.data.on('error', (err) => {
-                  stream.write(`data: Error: ${err.message}\n\n`)
-                  stream.end()
-                })
-              } catch (err) {
-                stream.write(
-                  `data: Error contacting backend: ${err.message}\n\n`
-                )
-                stream.end()
-              }
-
-              return response
             }
           }
         }
