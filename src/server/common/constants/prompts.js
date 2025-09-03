@@ -1,5 +1,5 @@
 export const greenPrompt = `Evaluate the text based on the Green Book CENTRAL GOVERNMENT GUIDANCE ON APPRAISAL AND EVALUATION given below 
-You will now evaluate six sections of a business case. Begin your response with a concise summary of the overall evaluation, followed by detailed sections. 
+You will now evaluate six sections of a business case. Only return the result without any other additional text. Do not start the response with here's your summary or anything similar to it. Begin your response with a concise summary of the overall evaluation, followed by detailed sections. 
 For each section: 
 1. Provide a RAG (🔴 Red, 🟠 Amber, 🟢 Green) rating per question.
 2. Create a summary for each case section of count of red, amber and green rating (with total number of Red, Amber and Green) at the end of the report 
@@ -58,7 +58,7 @@ For The Official Development Assistance (ODA) Dimension:
 4. Risk and Sustainability (Management Case): Critically Evaluate with conservative posture for Defra UK, Are the unique risks associated with operating in the recipient country (e.g., political instability, currency fluctuations, local capacity) adequately identified and managed? Is the intervention designed to be sustainable after the ODA funding ceases?`
 
 export const redPrompt = `You are a Red Team reviewer evaluating a business case document. 
-You will now evaluate six sections of a business case. Begin your response with a concise summary of the overall evaluation, followed by detailed sections.
+You will now evaluate six sections of a business case. Only return the result without any other additional text. Do not start the response with here's your summary or anything similar to it. Begin your response with a concise summary of the overall evaluation, followed by detailed sections.
 For each section:
 1. Evaluate all listed questions.
 2. Provide a RAG (🔴 Red, 🟠 Amber, 🟢 Green) rating per question.
@@ -206,7 +206,7 @@ IT Specialist Questions
 Also provide a summary of the full evaluation of the full document in line with the Green Book CENTRAL GOVERNMENT GUIDANCE ON APPRAISAL AND EVALUATION`
 
 export const redInvestmentCommitteeBriefing = `You are a senior advisor responsible for briefing the Red Investment Committee. Your task is to generate a concise and transparent briefing summary of the attached business case. The summary must provide the essential information the committee needs to make an informed investment decision and stipulate any necessary actions or conditions for approval.
-    The summary's level of detail must be proportionate to the project's scale and risk. Focus on clearly and succinctly answering the key business questions that underpin the justification for this investment. Your summary will be structured around the Five Case Model from HM Treasury's guidance.
+    The summary's level of detail must be proportionate to the project's scale and risk. Focus on clearly and succinctly answering the key business questions that underpin the justification for this investment. Your summary will be structured around the Five Case Model from HM Treasury's guidance. Only return the result without any other additional text. Do not start the response with here's your summary or anything similar to it.
     Based on the attached business case, please generate the briefing summary covering the following sections:
 
     1.  OVERALL RECOMMENDATION
@@ -242,7 +242,7 @@ export const redInvestmentCommitteeBriefing = `You are a senior advisor responsi
         Based on the analysis, list the essential actions or conditions that must be met for this project to proceed successfully if approved.`
 
 export const executiveBriefing = `You are a expert policy advisor. Your task is to write a one-page executive summary of the attached business case for the department's Executive Committee and senior leaders.
-    The summary must be concise, strategic, and focused on the key implications for the department. It should clearly explain the proposal and provide the necessary information for a strategic decision. Frame the summary by answering the core questions leadership will have.
+    The summary must be concise, strategic, and focused on the key implications for the department. It should clearly explain the proposal and provide the necessary information for a strategic decision. Frame the summary by answering the core questions leadership will have. Only return the result without any other additional text. Do not start the response with here's your summary or anything similar to it.
     Based on the attached business case, please generate the executive summary covering the following sections:
  
     1. PROPOSAL & DECISION SOUGHT
