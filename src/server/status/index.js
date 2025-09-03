@@ -23,10 +23,21 @@ export const status = {
               `Status check for requestId: ${requestId}, backend URL: ${backendApiUrl}`
             )
             try {
-              const response = await axios.get(`${backendApiUrl}/getS3/${requestId}`)
+              const response = await axios.get(
+                `${backendApiUrl}/getS3/${requestId}`
+              )
 
-              if (response.data && response.data.getS3result && response.data.getS3result.status === 'completed') {
-                let content = JSON.stringify(response.data.getS3result?.result?.content.find(item => item.type === 'text')?.text) || 'No text found'
+              if (
+                response.data &&
+                response.data.getS3result &&
+                response.data.getS3result.status === 'completed'
+              ) {
+                let content =
+                  JSON.stringify(
+                    response.data.getS3result?.result?.content.find(
+                      (item) => item.type === 'text'
+                    )?.text
+                  ) || 'No text found'
                 return h.view('status/index', {
                   isAuthenticated: true,
                   user: user,
@@ -60,10 +71,21 @@ export const status = {
             const backendApiUrl = config.get('backendApiUrl')
 
             try {
-              const response = await axios.get(`${backendApiUrl}/getS3/${requestId}`)
+              const response = await axios.get(
+                `${backendApiUrl}/getS3/${requestId}`
+              )
 
-              if (response.data && response.data.getS3result && response.data.getS3result.status === 'completed') {
-                let content = JSON.stringify(response.data.getS3result?.result?.content.find(item => item.type === 'text')?.text) || 'No text found'
+              if (
+                response.data &&
+                response.data.getS3result &&
+                response.data.getS3result.status === 'completed'
+              ) {
+                let content =
+                  JSON.stringify(
+                    response.data.getS3result?.result?.content.find(
+                      (item) => item.type === 'text'
+                    )?.text
+                  ) || 'No text found'
                 return h.response({
                   status: 'completed',
                   content: content
