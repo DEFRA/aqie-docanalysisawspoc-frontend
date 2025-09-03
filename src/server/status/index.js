@@ -66,7 +66,7 @@ export const status = {
                 let content = JSON.stringify(response.data.getS3result?.result?.content.find(item => item.type === 'text')?.text) || 'No text found'
                 return h.response({
                   status: 'completed',
-                  content: content.substring(1, content.length - 1)
+                  content: content
                 })
               }
 
