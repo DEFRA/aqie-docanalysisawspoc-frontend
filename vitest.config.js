@@ -9,7 +9,7 @@ export default defineConfig({
       provider: 'v8',
       reportsDirectory: './coverage',
       reporter: ['text', 'lcov'],
-      include: ['src/**'],
+      // include: ['src/**'],
       exclude: [
         ...configDefaults.exclude,
         '.public',

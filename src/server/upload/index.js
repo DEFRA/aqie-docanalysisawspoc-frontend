@@ -1,13 +1,17 @@
 import fs from 'fs'
 import path from 'path'
-import { pipeline } from 'stream'
+import { pipeline, PassThrough } from 'stream'
 import util from 'util'
 import { parsePdfToJson } from '../utils/pdfParser.js'
 import { createLogger } from '../../server/common/helpers/logging/logger.js'
 import { config } from '../../config/config.js'
 import axios from 'axios'
-import { PassThrough } from 'stream'
-import { greenPrompt, redPrompt, redInvestmentCommitteeBriefing, executiveBriefing } from '../common/constants/prompts.js'
+import {
+  greenPrompt,
+  redPrompt,
+  redInvestmentCommitteeBriefing,
+  executiveBriefing
+} from '../common/constants/prompts.js'
 
 const logger = createLogger()
 const pump = util.promisify(pipeline)
@@ -45,14 +49,18 @@ function startSNSPolling(uploadId, requestId) {
     try {
       const backendApiUrl = config.get('backendApiUrl')
       const response = await axios.get(`${backendApiUrl}/getS3/${requestId}`)
-      
+
       const upload = uploadQueue.get(uploadId)
       if (!upload) {
         clearInterval(pollInterval)
         return
       }
-      
-      if (response.data && response.data.getS3result && response.data.getS3result.status === 'completed') {
+
+      if (
+        response.data &&
+        response.data.getS3result &&
+        response.data.getS3result.status === 'completed'
+      ) {
         upload.status = 'completed'
         uploadQueue.set(uploadId, upload)
         saveQueue()
@@ -63,7 +71,7 @@ function startSNSPolling(uploadId, requestId) {
       logger.info(`Polling error for ${uploadId}: ${error.message}`)
     }
   }, 10000)
-  
+
   setTimeout(() => {
     clearInterval(pollInterval)
     const upload = uploadQueue.get(uploadId)
@@ -88,13 +96,13 @@ export const upload = {
           handler: (request, h) => {
             const user = request.auth.credentials.user
             const model = request.query.model || 'model1'
-            
+
             // Get user's uploads
             const userId = user?.id || user?.email || 'anonymous'
             const userUploads = Array.from(uploadQueue.values())
-              .filter(upload => upload.userId === userId)
+              .filter((upload) => upload.userId === userId)
               .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
-            
+
             return h.view('upload/index', {
               isAuthenticated: true,
               user: user,
@@ -159,7 +167,7 @@ export const upload = {
 
               //let newFilePath = path.join(process.cwd(), 'src', 'server', 'assets', 'ProtectedSitesStrategies-17.03.2025.pdf');
 
-              logger.info(`Using PDF file: ${filepath}`);
+              logger.info(`Using PDF file: ${filepath}`)
 
               const pdfText = await parsePdfToJson(filepath)
               await fs.unlinkSync(filepath)
@@ -189,21 +197,21 @@ export const upload = {
               try {
                 const backendApiUrl = config.get('backendApiUrl')
 
-                let selectedPrompt;
+                let selectedPrompt
                 switch (analysisType) {
                   case 'green':
-                    selectedPrompt = greenPrompt;
-                    break;
+                    selectedPrompt = greenPrompt
+                    break
                   case 'investment':
-                    selectedPrompt = redInvestmentCommitteeBriefing;
-                    break;
+                    selectedPrompt = redInvestmentCommitteeBriefing
+                    break
                   case 'executive':
-                    selectedPrompt = executiveBriefing;
-                    break;
+                    selectedPrompt = executiveBriefing
+                    break
                   default:
-                    selectedPrompt = redPrompt;
+                    selectedPrompt = redPrompt
                 }
-                
+
                 const requestPrompt = {
                   systemprompt: selectedPrompt,
                   userprompt: pdfTextContent
@@ -235,7 +243,7 @@ export const upload = {
 
                 const requestId = response.data.requestId
                 logger.info(`Request ID: ${requestId}`)
-                
+
                 // Add to upload queue instead of redirecting
                 const user = request.auth.credentials.user
                 const uploadRequest = {
@@ -248,20 +256,20 @@ export const upload = {
                   timestamp: new Date().toISOString(),
                   requestId: requestId
                 }
-                
+
                 // Store in persistent queue
                 uploadQueue.set(uploadRequest.id, uploadRequest)
                 saveQueue()
-                
+
                 // Start SNS-like background polling
                 startSNSPolling(uploadRequest.id, requestId)
-                
+
                 // Get updated uploads list including the new one
                 const userId = user?.id || user?.email || 'anonymous'
                 const userUploads = Array.from(uploadQueue.values())
-                  .filter(upload => upload.userId === userId)
+                  .filter((upload) => upload.userId === userId)
                   .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
-                
+
                 return h.view('upload/index', {
                   isAuthenticated: true,
                   user: user,
@@ -326,20 +334,20 @@ export const upload = {
               }
 
               const pdfTextContent = fs.readFileSync(tempStorePath, 'utf-8')
-              let prompt;
-              switch (analysisType) {
-                case 'green':
-                  prompt = greenPrompt;
-                  break;
-                case 'investment':
-                  prompt = redInvestmentCommitteeBriefing;
-                  break;
-                case 'executive':
-                  prompt = executiveBriefing;
-                  break;
-                default:
-                  prompt = redPrompt;
-              }
+              // let prompt
+              // switch (analysisType) {
+              //   case 'green':
+              //     prompt = greenPrompt
+              //     break
+              //   case 'investment':
+              //     prompt = redInvestmentCommitteeBriefing
+              //     break
+              //   case 'executive':
+              //     prompt = executiveBriefing
+              //     break
+              //   default:
+              //     prompt = redPrompt
+              // }
 
               const response = h.response()
               response.code(200)
@@ -356,21 +364,21 @@ export const upload = {
               try {
                 const backendApiUrl = config.get('backendApiUrl')
 
-                let prompt;
+                let prompt
                 switch (analysisType) {
                   case 'green':
-                    prompt = greenPrompt;
-                    break;
+                    prompt = greenPrompt
+                    break
                   case 'investment':
-                    prompt = redInvestmentCommitteeBriefing;
-                    break;
+                    prompt = redInvestmentCommitteeBriefing
+                    break
                   case 'executive':
-                    prompt = executiveBriefing;
-                    break;
+                    prompt = executiveBriefing
+                    break
                   default:
-                    prompt = redPrompt;
+                    prompt = redPrompt
                 }
-                
+
                 const axiosResponse = await axios({
                   method: 'post',
                   url: `${backendApiUrl}/stream-summarize`,
@@ -417,9 +425,9 @@ export const upload = {
             const user = request.auth.credentials.user
             const userId = user?.id || user?.email || 'anonymous'
             const userUploads = Array.from(uploadQueue.values())
-              .filter(upload => upload.userId === userId)
+              .filter((upload) => upload.userId === userId)
               .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
-            
+
             return h.response(userUploads)
           }
         }
