@@ -11,11 +11,22 @@ const basicUploadFormController = {
     // First, initiate the upload by calling the CDP-Uploader's initiate API.
     const endpointUrl = config.get('cdpUploaderUrl') + '/initiate'
 
+    // Improved protocol detection: prefer server.info.protocol, then X-Forwarded-Proto, then fallback
+    let protocol = request.server.info.protocol
+    if (!protocol && request.headers['x-forwarded-proto']) {
+      protocol = request.headers['x-forwarded-proto'].split(',')[0].trim()
+    }
+    if (!protocol) {
+      protocol = request.server.info.port === 443 ? 'https' : 'http'
+    }
+    const host = request.info.host
+    const redirectUrl = `${protocol}://${host}/basic/complete`
+
     const response = await fetch(endpointUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        redirect: '/basic/complete',
+        redirect: redirectUrl,
         s3Bucket: config.get('aws.s3BucketName')
       })
     })

@@ -105,9 +105,9 @@ export const upload = {
 
             return h.view('upload/index', {
               isAuthenticated: true,
-              user: user,
+              user,
               status: null,
-              model: model,
+              model,
               uploads: userUploads
             })
           }
@@ -151,7 +151,7 @@ export const upload = {
                   user: request.auth.credentials.user,
                   status: 'error',
                   message: 'Please upload a PDF file.',
-                  model: model,
+                  model,
                   analysisType: payload?.analysisType || 'green'
                 })
               }
@@ -255,11 +255,11 @@ export const upload = {
                     id: `upload_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
                     userId: user?.id || user?.email || 'anonymous',
                     filename: file.hapi.filename,
-                    analysisType: analysisType,
-                    model: model,
+                    analysisType,
+                    model,
                     status: 'analysing',
                     timestamp: new Date().toISOString(),
-                    requestId: requestId
+                    requestId
                   }
 
                   // Store in persistent queue
@@ -279,13 +279,13 @@ export const upload = {
 
                   return h.view('upload/index', {
                     isAuthenticated: true,
-                    user: user,
+                    user,
                     status: 'success',
                     message:
                       'File uploaded successfully. Analysis in progress.',
-                    model: model,
-                    analysisType: analysisType,
-                    requestId: requestId,
+                    model,
+                    analysisType,
+                    requestId,
                     uploads: userUploads
                   })
                 } catch (apiError) {
@@ -307,8 +307,8 @@ export const upload = {
                     markdownContent:
                       'Unable to generate summary. Using raw document content instead.',
                     filename: file.hapi.filename,
-                    model: model,
-                    analysisType: analysisType
+                    model,
+                    analysisType
                   })
                 }
               } catch (error) {
@@ -321,8 +321,8 @@ export const upload = {
                   user: request.auth.credentials.user,
                   status: 'error',
                   message: 'Error processing PDF: ' + error.message,
-                  model: model,
-                  analysisType: analysisType
+                  model,
+                  analysisType
                 })
               }
             } else {
