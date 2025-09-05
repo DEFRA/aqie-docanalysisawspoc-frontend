@@ -11,10 +11,14 @@ const basicUploadFormController = {
     // First, initiate the upload by calling the CDP-Uploader's initiate API.
     const endpointUrl = config.get('cdpUploaderUrl') + '/initiate'
 
-    // Dynamically build the redirect URL based on the current request
-    const protocol =
-      request.server.info.protocol ||
-      (request.server.info.port === 443 ? 'https' : 'http')
+    // Improved protocol detection: prefer server.info.protocol, then X-Forwarded-Proto, then fallback
+    let protocol = request.server.info.protocol
+    if (!protocol && request.headers['x-forwarded-proto']) {
+      protocol = request.headers['x-forwarded-proto'].split(',')[0].trim()
+    }
+    if (!protocol) {
+      protocol = request.server.info.port === 443 ? 'https' : 'http'
+    }
     const host = request.info.host
     const redirectUrl = `${protocol}://${host}/basic/complete`
 
