@@ -40,8 +40,8 @@ export const status = {
                   ) || 'No text found'
                 return h.view('status/index', {
                   isAuthenticated: true,
-                  user: user,
-                  requestId: requestId,
+                  user,
+                  requestId,
                   status: 'completed',
                   markdownContent: content
                 })
@@ -55,8 +55,8 @@ export const status = {
 
             return h.view('status/index', {
               isAuthenticated: true,
-              user: user,
-              requestId: requestId,
+              user,
+              requestId,
               status: 'polling',
               markdownContent: null
             })
@@ -88,7 +88,7 @@ export const status = {
                   ) || 'No text found'
                 return h.response({
                   status: 'completed',
-                  content: content
+                  content
                 })
               }
 

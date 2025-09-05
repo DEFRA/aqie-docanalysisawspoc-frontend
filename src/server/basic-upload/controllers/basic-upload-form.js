@@ -12,7 +12,9 @@ const basicUploadFormController = {
     const endpointUrl = config.get('cdpUploaderUrl') + '/initiate'
 
     // Dynamically build the redirect URL based on the current request
-    const protocol = request.server.info.protocol || (request.server.info.port === 443 ? 'https' : 'http')
+    const protocol =
+      request.server.info.protocol ||
+      (request.server.info.port === 443 ? 'https' : 'http')
     const host = request.info.host
     const redirectUrl = `${protocol}://${host}/basic/complete`
 
