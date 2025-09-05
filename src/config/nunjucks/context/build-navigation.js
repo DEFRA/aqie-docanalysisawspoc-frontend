@@ -2,8 +2,8 @@ export function buildNavigation(request) {
   return [
     {
       text: 'Policy Summarizer',
-      href: '/upload',
-      current: request?.path === '/upload'
+      href: '/basic',
+      current: request?.path === '/basic'
     },
     {
       text: 'Logout',

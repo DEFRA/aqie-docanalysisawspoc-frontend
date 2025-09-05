@@ -5,8 +5,17 @@
 {# Import GOVUK components globally #}
 {% from "govuk/components/breadcrumbs/macro.njk" import govukBreadcrumbs %}
 {% from "govuk/components/service-navigation/macro.njk" import govukServiceNavigation %}
+{% from "govuk/components/fieldset/macro.njk" import govukFieldset %}
+{% from "govuk/components/file-upload/macro.njk" import govukFileUpload %}
+{% from "govuk/components/input/macro.njk" import govukInput %}
+{% from "govuk/components/select/macro.njk" import govukSelect %}
+{% from "govuk/components/tag/macro.njk" import govukTag %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
 {# Import custom components globally #}
 {% from "heading/macro.njk" import appHeading %}
+{% from "breadcrumbs/macro.njk" import appBreadcrumbs %}
+{% from "banner/macro.njk" import appBanner %}
+{% from "loader/macro.njk" import appLoader %}
 {% set mainClasses = "app-main-wrapper" %}
 {% block head %}
   <link
