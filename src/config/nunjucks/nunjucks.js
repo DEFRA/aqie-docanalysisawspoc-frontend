@@ -13,7 +13,11 @@ const nunjucksEnvironment = nunjucks.configure(
   [
     'node_modules/govuk-frontend/dist/',
     path.resolve(dirname, '../../server/common/templates'),
-    path.resolve(dirname, '../../server/common/components')
+    path.resolve(dirname, '../../server/common/components'),
+    path.resolve(dirname, '../../server/common/banner/macros'),
+    path.resolve(dirname, '../../server/common/breadcrumbs/macros'),
+    path.resolve(dirname, '../../server/common/heading/macros'),
+    path.resolve(dirname, '../../server/common/loader/macros')
   ],
   {
     autoescape: true,

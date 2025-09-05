@@ -4,6 +4,7 @@ import { upload } from './upload/index.js'
 import { status } from './status/index.js'
 import { serveStaticFiles } from './common/helpers/serve-static-files.js'
 import { login } from './login/index.js'
+import { basicUpload } from './basic-upload/index.js'
 
 export const router = {
   plugin: {
@@ -13,7 +14,7 @@ export const router = {
 
       await server.register([health])
 
-      await server.register([login, upload, status])
+      await server.register([login, upload, status, basicUpload])
 
       await server.register([serveStaticFiles])
     }

@@ -5,7 +5,7 @@ const loginController = {
   handler: (request, h) => {
     if (request.auth.isAuthenticated) {
       console.log('Inside Login Controller')
-      return h.redirect('/upload')
+      return h.redirect('/basic')
     } else {
       const errors = request.yar.get('errors')
       const errorMessage = request.yar.get('errorMessage')
@@ -31,7 +31,7 @@ const authController = {
       //once user loggedin , set the cookie with user data and send back cookie with authentication
       //this info will also be validated in serverside using validate function
       request.cookieAuth.set({ password: request.payload.password })
-      return h.redirect('/upload')
+      return h.redirect('/basic')
     } else {
       request.yar.set('errors', {
         errors: {

@@ -1,0 +1,36 @@
+$banner-width: 520px;
+
+.app-banner {
+  border-radius: $app-border-radius;
+  margin: govuk-spacing(2) auto 0;
+  padding: govuk-spacing(1);
+  text-align: center;
+  width: 100%;
+
+  @include govuk-media-query($from: tablet) {
+    max-width: $banner-width;
+    max-width: govuk-px-to-rem($banner-width);
+  }
+}
+
+.app-banner__content {
+  @include govuk-font(19, "bold");
+  color: govuk-colour("white");
+  margin: govuk-spacing(1);
+}
+
+.app-banner--success {
+  background-color: $govuk-success-colour;
+}
+
+.app-banner--info {
+  background-color: $govuk-brand-colour;
+}
+
+.app-banner--error {
+  background-color: $govuk-error-colour;
+}
+
+.app-banner--hidden {
+  display: none;
+}

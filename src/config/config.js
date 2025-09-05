@@ -118,6 +118,17 @@ export const config = convict({
     default: isProduction,
     env: 'ENABLE_METRICS'
   },
+  enableCdpUploader: {
+    doc: 'Enable integration with CDP uploader service',
+    format: Boolean,
+    default: false,
+    env: 'ENABLE_CDP_UPLOADER'
+  },
+  localstackEndpoint: {
+    doc: 'Localstack endpoint',
+    format: String,
+    default: 'http://localhost:4566'
+  },
   session: {
     cache: {
       engine: {
@@ -162,7 +173,7 @@ export const config = convict({
       docPassword: {
         doc: 'password for poc',
         format: '*',
-        default: '',
+        default: 'password',
         sensitive: true,
         env: 'POC_PASSWORD'
       }
