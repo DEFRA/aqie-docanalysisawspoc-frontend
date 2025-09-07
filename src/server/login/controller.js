@@ -1,10 +1,14 @@
 import { config } from '../../config/config.js'
+import { createLogger } from '../common/helpers/logging/logger.js'
+
+const logger = createLogger()
+
 const sessionConfig = config.get('session')
 const password = sessionConfig.cookie.docPassword
 const loginController = {
   handler: (request, h) => {
     if (request.auth.isAuthenticated) {
-      console.log('Inside Login Controller')
+      logger.info('Inside Login Controller')
       return h.redirect('/basic')
     } else {
       const errors = request.yar.get('errors')

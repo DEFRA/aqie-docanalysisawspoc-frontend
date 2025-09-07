@@ -1,5 +1,7 @@
 import path from 'path'
+
 import hapi from '@hapi/hapi'
+import h2o2 from '@hapi/h2o2'
 
 import { router } from './router.js'
 import { config } from '../config/config.js'
@@ -13,8 +15,7 @@ import { sessionCache } from './common/helpers/session-cache/session-cache.js'
 import { getCacheEngine } from './common/helpers/session-cache/cache-engine.js'
 import { secureContext } from './common/helpers/secure-context/secure-context.js'
 import hapiCookie from '@hapi/cookie'
-
-export async function createServer() {
+async function createServer() {
   setupProxy()
   const server = hapi.server({
     host: config.get('host'),
@@ -56,6 +57,8 @@ export async function createServer() {
     }
   })
 
+  // Register h2o2 for reverse proxy support
+  await server.register(h2o2)
   await server.register(hapiCookie)
 
   const sessionConfig = config.get('session')
@@ -92,7 +95,33 @@ export async function createServer() {
     router // Register all the controllers/routes defined in src/server/router.js
   ])
 
+  // Add reverse proxy route for /uploader/* to CDP Uploader service
+  server.route({
+    method: '*',
+    path: '/uploader/{path*}',
+    handler: async (request, h) => {
+      // Log incoming headers and cookies for debugging
+      server.logger?.info?.(
+        '[Proxy] Incoming headers:',
+        JSON.stringify(request.headers)
+      )
+      // Use h2o2 proxy handler
+      return h.proxy({
+        passThrough: true,
+        mapUri: (req) => {
+          const cdpUploaderUrl = config.get('cdpUploaderUrl')
+          const path = req.params.path || ''
+          return {
+            uri: `${cdpUploaderUrl}/${path}`
+          }
+        }
+      })
+    }
+  })
+
   server.ext('onPreResponse', catchAll)
 
   return server
 }
+
+export { createServer }
