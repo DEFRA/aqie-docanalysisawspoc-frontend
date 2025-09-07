@@ -9,18 +9,18 @@ const basicUploadFormController = {
     request.yar.clear('basic-upload')
 
     // First, initiate the upload by calling the CDP-Uploader's initiate API.
+    // Use the real uploader URL for server-to-server calls
     const endpointUrl = config.get('cdpUploaderUrl') + '/initiate'
 
-    // Improved protocol detection: prefer server.info.protocol, then X-Forwarded-Proto, then fallback
-    let protocol = request.server.info.protocol
-    if (!protocol && request.headers['x-forwarded-proto']) {
-      protocol = request.headers['x-forwarded-proto'].split(',')[0].trim()
-    }
-    if (!protocol) {
-      protocol = request.server.info.port === 443 ? 'https' : 'http'
-    }
-    const host = request.info.host
-    const redirectUrl = `${protocol}://${host}/basic/complete`
+    // Use a relative path for redirect as required by the CDP Uploader API
+    const redirectUrl = '/basic/complete'
+    logger.info(
+      'CDP Uploader initiate payload:',
+      JSON.stringify({
+        redirect: redirectUrl,
+        s3Bucket: config.get('aws.s3BucketName')
+      })
+    )
 
     const response = await fetch(endpointUrl, {
       method: 'POST',
@@ -31,9 +31,19 @@ const basicUploadFormController = {
       })
     })
 
-    const upload = await response.json()
+    const contentType = response.headers.get('content-type') || ''
+    if (!response.ok || !contentType.includes('application/json')) {
+      const text = await response.text()
+      logger.error(`Uploader responded with status ${response.status}: ${text}`)
+      throw new Error(`Uploader error: ${response.status}`)
+    }
 
-    const absoluteuploadUrl = config.get('cdpUploaderUrl') + upload.uploadUrl
+    const upload = await response.json()
+    logger.info('Initiate response from cdp-uploader:', JSON.stringify(upload))
+    logger.info('Upload URL:', upload.uploadUrl)
+    logger.info('Status URL:', upload.statusUrl)
+    // Use the reverse proxy for uploadUrl and statusUrl
+    const absoluteuploadUrl = '/uploader' + upload.uploadUrl
     // The payload from initiate contains two urls:
     // uploadUrl - we will use this URL in the form we're about to render. The content of this form will be sent to
     //          the CDP Uploader first, not our service.
@@ -41,7 +51,10 @@ const basicUploadFormController = {
     //             or use the statusId query param from the redirect.
 
     // Optional: remember the status URL in the session for later
-    request.yar.set('basic-upload', { statusUrl: upload.statusUrl })
+    // Store the proxied statusUrl in the session for later
+    request.yar.set('basic-upload', {
+      statusUrl: '/uploader' + upload.statusUrl
+    })
     logger.info('Upload URL:', absoluteuploadUrl)
     logger.info('Status URL:', upload.statusUrl)
 
