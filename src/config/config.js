@@ -124,6 +124,13 @@ export const config = convict({
     default: false,
     env: 'ENABLE_CDP_UPLOADER'
   },
+  appBaseUrl: {
+    doc: 'appBaseUrl for redirects',
+    format: String,
+    // default: 'https://tradeplatform-ai.openai.azure.com/',
+    default: 'https://aqie-docanalysisawspoc-frontend.test.cdp-int.defra.cloud',
+    env: 'APP_BASE_URL'
+  },
   localstackEndpoint: {
     doc: 'Localstack endpoint',
     format: String,
