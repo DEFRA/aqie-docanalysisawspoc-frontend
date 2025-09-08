@@ -38,6 +38,9 @@ async function createServer() {
         xss: 'enabled',
         noSniff: true,
         xframe: true
+      },
+      payload: {
+        maxBytes: 104857600 // 100MB, adjust as needed
       }
     },
     router: {
