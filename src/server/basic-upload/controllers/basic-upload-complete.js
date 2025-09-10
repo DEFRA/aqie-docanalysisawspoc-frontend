@@ -19,8 +19,8 @@ const baseUploadCompleteController = {
 
     const { statusUrl } = request.yar.get('basic-upload')
     logger.info(
-      'Status URL from session its from complete comtroller:',
-      statusUrl
+      `'Status URL from session its from complete comtroller:',
+      ${statusUrl}`
     )
     // You'll likely want to handle the statusUrl not being set more gracefully than this!
 
@@ -29,7 +29,7 @@ const baseUploadCompleteController = {
       headers: { 'Content-Type': 'application/json' }
     })
     const status = await response.json()
-    logger.info('Status response from cdp-uploader:', JSON.stringify(status))
+    logger.info(`'Status response from cdp-uploader:', ${JSON.stringify(status)}`)
     // 1. Check uploadStatus. UploadStatus can either be 'pending' (i.e. file is still being scanned) or 'ready'
     if (status.uploadStatus !== 'ready') {
       // If its not ready show the holding page. The holding page shows a please wait message and auto-reloads

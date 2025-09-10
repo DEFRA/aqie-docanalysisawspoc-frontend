@@ -128,7 +128,7 @@ export const config = convict({
     doc: 'appBaseUrl for redirects',
     format: String,
     // default: 'https://tradeplatform-ai.openai.azure.com/',
-    default: 'https://aqie-docanalysisawspoc-frontend.test.cdp-int.defra.cloud',
+    default: 'https://aqie-docanalysisawspoc-frontend.dev.cdp-int.defra.cloud',
     env: 'APP_BASE_URL'
   },
   localstackEndpoint: {
