@@ -29,7 +29,9 @@ const baseUploadCompleteController = {
       headers: { 'Content-Type': 'application/json' }
     })
     const status = await response.json()
-    logger.info(`'Status response from cdp-uploader:', ${JSON.stringify(status)}`)
+    logger.info(
+      `'Status response from cdp-uploader:', ${JSON.stringify(status)}`
+    )
     // 1. Check uploadStatus. UploadStatus can either be 'pending' (i.e. file is still being scanned) or 'ready'
     if (status.uploadStatus !== 'ready') {
       // If its not ready show the holding page. The holding page shows a please wait message and auto-reloads
