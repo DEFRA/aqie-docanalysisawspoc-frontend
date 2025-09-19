@@ -5,6 +5,7 @@ import { status } from './status/index.js'
 import { serveStaticFiles } from './common/helpers/serve-static-files.js'
 import { login } from './login/index.js'
 import { basicUpload } from './basic-upload/index.js'
+import { cdpUploader } from './cdp-uploader/index.js'
 
 export const router = {
   plugin: {

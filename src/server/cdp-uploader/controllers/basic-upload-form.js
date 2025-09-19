@@ -4,13 +4,13 @@ import { initUpload } from '../helper/init-upload.js'
 
 const logger = createLogger()
 const basicUploadFormController = {
-  options: {auth: { strategy: 'login', mode: 'required' }},
+  options: { auth: { strategy: 'login', mode: 'required' } },
 
   handler: async (request, h) => {
     // Clear any session data.
     request.yar.clear('basic-upload')
-                  const { payload } = request  
-    const redirect = '/basic/complete' // <-- Use relative URI as required by the uploader
+    const { payload } = request
+    const redirect = '/cdpUploader/complete' // <-- Use relative URI as required by the uploader
     const s3Bucket = config.get('aws.s3BucketName')
 
     const secureUpload = await initUpload({
@@ -26,20 +26,21 @@ const basicUploadFormController = {
 
     // Optional: remember the status URL in the session for later
     request.yar.set('basic-upload', { statusUrl: secureUpload.statusUrl })
-     request.yar.set('model', { model: request.query.model || 'model1' })
-      request.yar.set('analysisType', { analysisType: payload?.analysisType || 'green' })
+    request.yar.set('model', { model: request.query.model || 'model1' })
+    request.yar.set('analysisType', {
+      analysisType: payload?.analysisType || 'green'
+    })
     logger.info(`Upload URL: ${secureUpload.uploadUrl}`)
     logger.info(`Status URL: ${secureUpload.statusUrl}`)
 
     // Next, render the form passing in the uploadUrl. This is just a simple HTML form that makes a multipart/form-data request
-    return h.view('basic-upload/views/basic-upload-form', {
+    return h.view('cdp-uploader/views/basic-upload-form', {
       isAuthenticated: true,
       user: request.auth.credentials.user,
       action: secureUpload.uploadUrl,
       analysisType: payload?.analysisType || 'green',
       model: request.query.model || 'model1'
     })
-    
   }
 }
 export { basicUploadFormController }

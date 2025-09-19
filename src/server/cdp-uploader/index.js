@@ -8,13 +8,13 @@ const cdpUploader = {
       server.route([
         {
           method: 'GET',
-          path: '/basic',
-          options: { auth: { strategy: 'login', mode: 'required' } }, 
+          path: '/cdpUploader',
+          options: { auth: { strategy: 'login', mode: 'required' } },
           ...basicUploadFormController
         },
         {
           method: 'GET',
-          path: '/basic/complete',
+          path: '/cdpUploader/complete',
           options: { auth: { strategy: 'login', mode: 'required' } },
           ...baseUploadCompleteController
         }
