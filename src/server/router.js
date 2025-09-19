@@ -14,7 +14,7 @@ export const router = {
 
       await server.register([health])
 
-      await server.register([login, upload, status, basicUpload])
+      await server.register([login, upload, status, basicUpload, cdpUploader])
 
       await server.register([serveStaticFiles])
     }
