@@ -1,10 +1,10 @@
 import { s3Client } from '../../common/helpers/s3-client.js'
-import { GetObjectCommand } from '@aws-sdk/client-s3'
+import { GetObjectCommand, HeadObjectCommand } from '@aws-sdk/client-s3'
 import { createLogger } from '../../common/helpers/logging/logger.js'
 import fs from 'fs'
 import path from 'path'
-import { pipeline } from 'stream'
-import util from 'util'
+// import { pipeline } from 'stream'
+// import util from 'util'
 import { parsePdfToJson } from '../../utils/pdfParser.js'
 import { config } from '../../../config/config.js'
 import axios from 'axios'
@@ -13,10 +13,10 @@ import {
   redPrompt,
   redInvestmentCommitteeBriefing,
   executiveBriefing
-} from '../common/constants/prompts.js'
+} from '../../common/constants/prompts.js'
 
 const logger = createLogger()
-const pump = util.promisify(pipeline)
+// const pump = util.promisify(pipeline)
 
 // Persistent upload queue using file storage
 const queueFile = path.join(process.cwd(), 'upload-queue.json')
@@ -147,15 +147,23 @@ const baseUploadCompleteController = {
                 Key: s3Key
               })
             )
-            logger.info(`S3 Object retrieved: ${s3Key} from bucket: ${s3Bucket}` )
-            const headerresponse = await s3.send(
+            logger.info(
+              `S3 Object retrieved: ${s3Key} from bucket: ${s3Bucket}`
+            )
+            const headerresponse = await s3Client.send(
               new HeadObjectCommand({
                 Bucket: s3Bucket,
                 Key: s3Key
               })
-            );
-            logger.info("Custom ContentType:", headerresponse.Metadata["contenttype"]);
-            logger.info("Encoded Filename:", headerresponse.Metadata["encodedfilename"]);
+            )
+            logger.info(
+              'Custom ContentType:',
+              headerresponse.Metadata['contenttype']
+            )
+            logger.info(
+              'Encoded Filename:',
+              headerresponse.Metadata['encodedfilename']
+            )
             // Step 2: Convert stream to buffer
             const streamToBuffer = async (stream) => {
               const chunks = []
@@ -165,7 +173,7 @@ const baseUploadCompleteController = {
               return Buffer.concat(chunks)
             }
             const buffer = await streamToBuffer(getObjectResponse.Body)
-            logger.info(`File size from S3: ${buffer.length} bytes` )
+            logger.info(`File size from S3: ${buffer.length} bytes`)
             // Check if file is empty
             if (buffer.length === 0) {
               logger.warn(`File is empty: ${s3Key} from bucket: ${s3Bucket}`)
@@ -187,14 +195,18 @@ const baseUploadCompleteController = {
             const uploadDir = path.join(process.cwd(), 'uploads')
             if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir)
             const filename = `${Date.now()}-${path.basename(s3Key)}`
-            logger.info(`Original Filename from S3 Key: ${path.basename(s3Key)}` )
-            const encodedFilename = `${Date.now()}-${headerresponse.Metadata["encodedfilename"]}`            
-            logger.info(`Encoded Filename from Metadata: ${encodedFilename}` )
+            logger.info(
+              `Original Filename from S3 Key: ${path.basename(s3Key)}`
+            )
+            const encodedFilename = `${Date.now()}-${headerresponse.Metadata['encodedfilename']}`
+            logger.info(`Encoded Filename from Metadata: ${encodedFilename}`)
             const filepath = path.join(uploadDir, filename)
             const uploadStart = Date.now()
             await fs.promises.writeFile(filepath, buffer)
             const uploadEnd = Date.now()
-            logger.info(`File upload time: ${(uploadEnd - uploadStart) / 1000} seconds`)
+            logger.info(
+              `File upload time: ${(uploadEnd - uploadStart) / 1000} seconds`
+            )
             logger.info(`File saved to: ${filepath}`)
             // Step 4: Parse PDF to JSON
             const parseStart = Date.now()
@@ -209,7 +221,9 @@ const baseUploadCompleteController = {
             logger.info(`Parsed PDF content: ${pdfText.length}`)
             if (!pdfText || pdfText.length === 0) {
               logger.warn(`No text extracted from PDF: ${s3Key}`)
-              return h.response({ error: 'No text extracted from PDF' }).code(400)
+              return h
+                .response({ error: 'No text extracted from PDF' })
+                .code(400)
             }
             // Convert PDF text to a string for the API call
             //value of pdf file
@@ -283,7 +297,7 @@ const baseUploadCompleteController = {
               const uploadRequest = {
                 id: `upload_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
                 userId: user?.id || user?.email || 'anonymous',
-                filename: file.hapi.filename,
+                filename: filename,
                 analysisType,
                 model,
                 status: 'analysing',
@@ -330,7 +344,7 @@ const baseUploadCompleteController = {
                 status: 'success',
                 markdownContent:
                   'Unable to generate summary. Using raw document content instead.',
-                filename: file.hapi.filename,
+                filename: filename,
                 model,
                 analysisType
               })

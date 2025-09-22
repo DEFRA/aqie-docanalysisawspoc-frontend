@@ -30,8 +30,8 @@ const basicUploadFormController = {
     request.yar.set('analysisType', {
       analysisType: payload?.analysisType || 'green'
     })
-    logger.info(`Model: ${request.query.model || 'model1'}` )
-    logger.info(`Analysis Type: ${payload?.analysisType || 'green'}` )
+    logger.info(`Model: ${request.query.model || 'model1'}`)
+    logger.info(`Analysis Type: ${payload?.analysisType || 'green'}`)
     logger.info(`Upload URL: ${secureUpload.uploadUrl}`)
     logger.info(`Status URL: ${secureUpload.statusUrl}`)
 
