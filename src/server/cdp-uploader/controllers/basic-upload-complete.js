@@ -138,8 +138,8 @@ const baseUploadCompleteController = {
 
           if (status.uploadStatus === 'ready') {
             const startTime = Date.now()
-            const s3Key = status.form.basicfile.s3Key
-            const s3Bucket = status.form.basicfile.s3Bucket
+            const s3Key = status.form.policyPdf.s3Key
+            const s3Bucket = status.form.policyPdf.s3Bucket
             // Step 1: Get PDF file from S3
             const getObjectResponse = await s3Client.send(
               new GetObjectCommand({
@@ -370,25 +370,25 @@ const baseUploadCompleteController = {
     // 2. Handle the file not being selected (optional).
     //
     // The 'form' field of the status is basically the content of the multipart/form-data form.
-    // We can handle it just like handling a normal POST request. If no file is selected the basicfile field of the form
+    // We can handle it just like handling a normal POST request. If no file is selected the policyPdf field of the form
     // will be missing.
-    if (!status.form.basicfile) {
+    if (!status.form.policyPdf) {
       request.yar.flash('basic-upload', {
-        formErrors: { basicfile: { message: 'Select a file' } }
+        formErrors: { policyPdf: { message: 'Select a file' } }
       })
       return h.redirect('/cdpUploader')
     }
 
     // 3. Check if the uploader had any errors (viruses, zero size file, failed to uploaded etc)
     //
-    // If the uploaded file has an error, the basicfile field will have a 'hasError' field set to 'true' and
+    // If the uploaded file has an error, the policyPdf field will have a 'hasError' field set to 'true' and
     // an 'errorMessage' field populated with the failure reason.
-    if (status.form.basicfile?.hasError === true) {
+    if (status.form.policyPdf?.hasError === true) {
       // The errorMessage field uses the GDS standard file upload error messages so can be presented directly to users.
       // see: https://design-system.service.gov.uk/components/file-upload/
       request.yar.flash('basic-upload', {
         formErrors: {
-          basicfile: { message: status.form.basicfile.errorMessage }
+          policyPdf: { message: status.form.policyPdf.errorMessage }
         }
       })
       return h.redirect('/cdpUploader')
