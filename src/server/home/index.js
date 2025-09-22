@@ -12,7 +12,7 @@ export const home = {
           path: '/',
           handler: (request, h) => {
             // const user = request.auth.credentials.user
-            return h.redirect('/basic')
+            return h.redirect('/cdpUploader')
           }
         }
       ])
