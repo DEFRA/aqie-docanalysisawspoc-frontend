@@ -317,7 +317,7 @@ const baseUploadCompleteController = {
               const userUploads = Array.from(uploadQueue.values())
                 .filter((upload) => upload.userId === userId)
                 .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
-
+              logger.info(`User uploads: ${JSON.stringify(userUploads)}`)
               return h.view('cdp-uploader/views/basic-upload-form', {
                 isAuthenticated: true,
                 user,
@@ -416,4 +416,20 @@ const baseUploadCompleteController = {
   }
 }
 
-export { baseUploadCompleteController }
+const cdpUploaderCompleteController = {
+  options: {},
+  handler: async (request, h) => {
+    logger.info('Status API called to get user uploads')
+    const user = request.auth.credentials.user
+    const userId = user?.id || user?.email || 'anonymous'
+    logger.info(`Fetching uploads for user: ${userId}`)
+
+    // Get all uploads for this user
+    const userUploads = Array.from(uploadQueue.values())
+      .filter((upload) => upload.userId === userId)
+      .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+    logger.info(`User uploads: ${JSON.stringify(userUploads)}`)
+    return h.response(userUploads)
+  }
+}
+export { baseUploadCompleteController, cdpUploaderCompleteController }

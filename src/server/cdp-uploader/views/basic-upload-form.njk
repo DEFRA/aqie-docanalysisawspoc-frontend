@@ -166,7 +166,7 @@ document.addEventListener('DOMContentLoaded', function() {
   
   async function updateUploadHistory() {
     try {
-      const response = await fetch('/upload/status');
+      const response = await fetch('/cdpUploader/status');
       const uploads = await response.json();
       allUploads = uploads.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
       renderTable();
