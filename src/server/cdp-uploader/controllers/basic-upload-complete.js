@@ -6,7 +6,7 @@ import path from 'path'
 import { pipeline } from 'stream'
 import util from 'util'
 import { parsePdfToJson } from '../../utils/pdfParser.js'
-import { config } from '../../config/config.js'
+import { config } from '../../../config/config.js'
 import axios from 'axios'
 import {
   greenPrompt,
@@ -105,6 +105,8 @@ const baseUploadCompleteController = {
       `'Status URL from session its from complete comtroller:',
       ${statusUrl}`
     )
+    logger.info(`Model inside the complete controller: ${model}`)
+    logger.info(`Analysis Type inside the complete controller: ${analysisType}`)
     // You'll likely want to handle the statusUrl not being set more gracefully than this!
 
     const response = await fetch(statusUrl, {
@@ -121,7 +123,7 @@ const baseUploadCompleteController = {
       // after x seconds, causing this whole controller to run again, checking the status.
 
       const maxAttempts = 10 // Max number of polling attempts
-      const delayMs = 1000 // Delay between attempts in milliseconds
+      const delayMs = 2000 // Delay between attempts in milliseconds
 
       let status
       for (let attempt = 0; attempt < maxAttempts; attempt++) {
@@ -145,6 +147,15 @@ const baseUploadCompleteController = {
                 Key: s3Key
               })
             )
+            logger.info(`S3 Object retrieved: ${s3Key} from bucket: ${s3Bucket}` )
+            const headerresponse = await s3.send(
+              new HeadObjectCommand({
+                Bucket: s3Bucket,
+                Key: s3Key
+              })
+            );
+            logger.info("Custom ContentType:", headerresponse.Metadata["contenttype"]);
+            logger.info("Encoded Filename:", headerresponse.Metadata["encodedfilename"]);
             // Step 2: Convert stream to buffer
             const streamToBuffer = async (stream) => {
               const chunks = []
@@ -154,26 +165,52 @@ const baseUploadCompleteController = {
               return Buffer.concat(chunks)
             }
             const buffer = await streamToBuffer(getObjectResponse.Body)
+            logger.info(`File size from S3: ${buffer.length} bytes` )
+            // Check if file is empty
+            if (buffer.length === 0) {
+              logger.warn(`File is empty: ${s3Key} from bucket: ${s3Bucket}`)
+              return h.response({ error: 'File is empty' }).code(400)
+            }
+            // Step 3: Save buffer to a temporary file
+            // const uploadDir = path.join(process.cwd(), 'uploads')
+            // if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir)
+            // const filename = `${Date.now()}-${file.hapi.filename}`
+            // const filepath = path.join(uploadDir, filename)
+            // const uploadStart = Date.now()
+            // await pump(buffer, fs.createWriteStream(filepath))
+            // const uploadEnd = Date.now()
+            // logger.info(
+            //   `File upload time: ${(uploadEnd - uploadStart) / 1000} seconds`
+            // )
+            // logger.info(`File saved to: ${filepath}`)
             // Step 3: Save buffer to a temporary file
             const uploadDir = path.join(process.cwd(), 'uploads')
             if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir)
-            const filename = `${Date.now()}-${file.hapi.filename}`
+            const filename = `${Date.now()}-${path.basename(s3Key)}`
+            logger.info(`Original Filename from S3 Key: ${path.basename(s3Key)}` )
+            const encodedFilename = `${Date.now()}-${headerresponse.Metadata["encodedfilename"]}`            
+            logger.info(`Encoded Filename from Metadata: ${encodedFilename}` )
             const filepath = path.join(uploadDir, filename)
             const uploadStart = Date.now()
-            await pump(buffer, fs.createWriteStream(filepath))
+            await fs.promises.writeFile(filepath, buffer)
             const uploadEnd = Date.now()
-            logger.info(
-              `File upload time: ${(uploadEnd - uploadStart) / 1000} seconds`
-            )
+            logger.info(`File upload time: ${(uploadEnd - uploadStart) / 1000} seconds`)
+            logger.info(`File saved to: ${filepath}`)
             // Step 4: Parse PDF to JSON
             const parseStart = Date.now()
             const pdfText = await parsePdfToJson(filepath)
-            await fs.unlinkSync(filepath)
+            // await fs.unlinkSync(filepath)
+            fs.unlinkSync(filepath)
             const parseEnd = Date.now()
             logger.info(
               `PDF parsing time: ${(parseEnd - parseStart) / 1000} seconds`
             )
-
+            // logger.info(`Parsed PDF content: ${JSON.stringify(pdfText)}`)
+            logger.info(`Parsed PDF content: ${pdfText.length}`)
+            if (!pdfText || pdfText.length === 0) {
+              logger.warn(`No text extracted from PDF: ${s3Key}`)
+              return h.response({ error: 'No text extracted from PDF' }).code(400)
+            }
             // Convert PDF text to a string for the API call
             //value of pdf file
             const pdfTextContent = pdfText
