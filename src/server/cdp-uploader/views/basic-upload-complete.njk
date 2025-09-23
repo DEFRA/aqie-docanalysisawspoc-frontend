@@ -7,7 +7,7 @@
 
 {% block content %}
 <h1 class="govuk-heading-m">Upload a Document to Generate AI-Powered Insights</h1>
-<form id="uploadForm" action="{{ action }}" method="post" enctype="multipart/form-data" onsubmit="document.getElementById('submitButton').disabled = true; document.getElementById('loadingMessage').style.display = 'block';">
+<form id="uploadForm" action="/cdpUploader" method="post" enctype="multipart/form-data" onsubmit="document.getElementById('submitButton').disabled = true; document.getElementById('loadingMessage').style.display = 'block';">
   <div class="govuk-form-group">
     <label class="govuk-label" for="analysisType">
       Prompt analysis type
