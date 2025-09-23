@@ -319,7 +319,7 @@ const baseUploadCompleteController = {
                 .filter((upload) => upload.userId === userId)
                 .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
               logger.info(`User uploads: ${JSON.stringify(userUploads)}`)
-              return h.view('cdp-uploader/views/basic-upload-complete', {
+              return h.view('cdp-uploader/views/basic-upload-form', {
                 isAuthenticated: true,
                 user,
                 status: 'success',
@@ -339,7 +339,7 @@ const baseUploadCompleteController = {
               }
 
               // Return the view with just the markdown content
-              return h.view('cdp-uploader/views/basic-upload-complete', {
+              return h.view('cdp-uploader/views/basic-upload-form', {
                 isAuthenticated: true,
                 user: request.auth.credentials.user,
                 status: 'success',
