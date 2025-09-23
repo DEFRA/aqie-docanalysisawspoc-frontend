@@ -194,7 +194,8 @@ const baseUploadCompleteController = {
             // Step 3: Save buffer to a temporary file
             const uploadDir = path.join(process.cwd(), 'uploads')
             if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir)
-            const filename = `${Date.now()}-${path.basename(s3Key)}`
+            // const filename = `${Date.now()}-${path.basename(s3Key)}`
+            const filename = `${Date.now()}-${headerresponse.Metadata['encodedfilename']}`
             logger.info(
               `Original Filename from S3 Key: ${path.basename(s3Key)}`
             )
@@ -297,7 +298,7 @@ const baseUploadCompleteController = {
               const uploadRequest = {
                 id: `upload_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
                 userId: user?.id || user?.email || 'anonymous',
-                filename: filename,
+                filename: headerresponse.Metadata['encodedfilename'],
                 analysisType,
                 model,
                 status: 'analysing',
@@ -318,7 +319,7 @@ const baseUploadCompleteController = {
                 .filter((upload) => upload.userId === userId)
                 .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
               logger.info(`User uploads: ${JSON.stringify(userUploads)}`)
-              return h.view('cdp-uploader/views/basic-upload-form', {
+              return h.view('cdp-uploader/views/basic-upload-complete', {
                 isAuthenticated: true,
                 user,
                 status: 'success',
@@ -338,13 +339,13 @@ const baseUploadCompleteController = {
               }
 
               // Return the view with just the markdown content
-              return h.view('cdp-uploader/views/basic-upload-form', {
+              return h.view('cdp-uploader/views/basic-upload-complete', {
                 isAuthenticated: true,
                 user: request.auth.credentials.user,
                 status: 'success',
                 markdownContent:
                   'Unable to generate summary. Using raw document content instead.',
-                filename: filename,
+                filename: headerresponse.Metadata['encodedfilename'],
                 model,
                 analysisType
               })

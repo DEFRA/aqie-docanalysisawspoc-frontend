@@ -1,5 +1,8 @@
 import { basicUploadFormController } from '../../server/cdp-uploader/controllers/basic-upload-form.js'
-import { baseUploadCompleteController, cdpUploaderCompleteController } from '../../server/cdp-uploader/controllers/basic-upload-complete.js'
+import {
+  baseUploadCompleteController,
+  cdpUploaderCompleteController
+} from '../../server/cdp-uploader/controllers/basic-upload-complete.js'
 
 const cdpUploader = {
   plugin: {
