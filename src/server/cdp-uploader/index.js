@@ -11,7 +11,7 @@ const cdpUploader = {
     register: async (server) => {
       server.route([
         {
-          method: 'POST',
+          method: 'GET',
           path: '/Uploader',
           options: { auth: { strategy: 'login', mode: 'required' } },
           ...basicUploadFormController
@@ -30,7 +30,7 @@ const cdpUploader = {
         },
         {
           method: 'GET',
-          path: '/Uploader',
+          path: '/Uploader/back',
           options: { auth: { strategy: 'login', mode: 'required' } },
           ...cdpUploaderBackController
         }
