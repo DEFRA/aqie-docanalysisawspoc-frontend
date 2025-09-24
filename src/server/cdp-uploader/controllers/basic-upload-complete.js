@@ -14,7 +14,6 @@ import {
   redInvestmentCommitteeBriefing,
   executiveBriefing
 } from '../../common/constants/prompts.js'
-import { initUpload } from '../helper/init-upload.js'
 
 const logger = createLogger()
 // const pump = util.promisify(pipeline)
@@ -324,7 +323,6 @@ const baseUploadCompleteController = {
                 isAuthenticated: true,
                 user,
                 status: 'success',
-                action: secureUpload.uploadUrl,
                 message: 'File uploaded successfully. Analysis in progress.',
                 model,
                 analysisType,
