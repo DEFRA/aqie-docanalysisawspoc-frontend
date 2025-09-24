@@ -435,25 +435,29 @@ const cdpUploaderCompleteController = {
 }
 
 const cdpUploaderBackController = {
-          options: { auth: { strategy: 'login', mode: 'required' } },
-          handler: (request, h) => {
-            const user = request.auth.credentials.user
-            const model = request.query.model || 'model1'
+  options: { auth: { strategy: 'login', mode: 'required' } },
+  handler: (request, h) => {
+    const user = request.auth.credentials.user
+    const model = request.query.model || 'model1'
 
-            // Get user's uploads
-            const userId = user?.id || user?.email || 'anonymous'
-            const userUploads = Array.from(uploadQueue.values())
-              .filter((upload) => upload.userId === userId)
-              .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+    // Get user's uploads
+    const userId = user?.id || user?.email || 'anonymous'
+    const userUploads = Array.from(uploadQueue.values())
+      .filter((upload) => upload.userId === userId)
+      .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
 
-            return h.view('cdp-uploader/views/basic-upload-form', {
-              isAuthenticated: true,
-              user,
-              status: null,
-              model,
-              uploads: userUploads
-            })
-          }
+    return h.view('cdp-uploader/views/basic-upload-form', {
+      isAuthenticated: true,
+      user,
+      status: null,
+      model,
+      uploads: userUploads
+    })
+  }
 }
 
-export { baseUploadCompleteController, cdpUploaderCompleteController, cdpUploaderBackController }
+export {
+  baseUploadCompleteController,
+  cdpUploaderCompleteController,
+  cdpUploaderBackController
+}
