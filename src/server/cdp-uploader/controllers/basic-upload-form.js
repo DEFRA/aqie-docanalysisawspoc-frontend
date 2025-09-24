@@ -10,7 +10,7 @@ const basicUploadFormController = {
     // Clear any session data.
     request.yar.clear('basic-upload')
     const { payload } = request
-    const redirect = '/cdpUploader/complete' // <-- Use relative URI as required by the uploader
+    const redirect = '/Uploader/complete' // <-- Use relative URI as required by the uploader
     const s3Bucket = config.get('aws.s3BucketName')
 
     const secureUpload = await initUpload({
