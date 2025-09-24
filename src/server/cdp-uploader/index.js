@@ -1,7 +1,8 @@
 import { basicUploadFormController } from '../../server/cdp-uploader/controllers/basic-upload-form.js'
 import {
   baseUploadCompleteController,
-  cdpUploaderCompleteController
+  cdpUploaderCompleteController,
+  cdpUploaderBackController
 } from '../../server/cdp-uploader/controllers/basic-upload-complete.js'
 
 const cdpUploader = {
@@ -10,22 +11,28 @@ const cdpUploader = {
     register: async (server) => {
       server.route([
         {
-          method: 'GET',
-          path: '/cdpUploader',
+          method: 'POST',
+          path: '/Uploader',
           options: { auth: { strategy: 'login', mode: 'required' } },
           ...basicUploadFormController
         },
         {
           method: 'GET',
-          path: '/cdpUploader/complete',
+          path: '/Uploader/complete',
           options: { auth: { strategy: 'login', mode: 'required' } },
           ...baseUploadCompleteController
         },
         {
           method: 'GET',
-          path: '/cdpUploader/status',
+          path: '/Uploader/status',
           options: { auth: { strategy: 'login', mode: 'required' } },
           ...cdpUploaderCompleteController
+        },
+        {
+          method: 'GET',
+          path: '/Uploader',
+          options: { auth: { strategy: 'login', mode: 'required' } },
+          ...cdpUploaderBackController
         }
       ])
     }

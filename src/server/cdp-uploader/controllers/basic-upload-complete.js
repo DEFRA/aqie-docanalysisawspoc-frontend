@@ -377,7 +377,7 @@ const baseUploadCompleteController = {
       request.yar.flash('basic-upload', {
         formErrors: { policyPdf: { message: 'Select a file' } }
       })
-      return h.redirect('/cdpUploader')
+      return h.redirect('/Uploader')
     }
 
     // 3. Check if the uploader had any errors (viruses, zero size file, failed to uploaded etc)
@@ -392,7 +392,7 @@ const baseUploadCompleteController = {
           policyPdf: { message: status.form.policyPdf.errorMessage }
         }
       })
-      return h.redirect('/cdpUploader')
+      return h.redirect('/Uploader')
     }
 
     // 4. Handle the clean file
@@ -433,4 +433,31 @@ const cdpUploaderCompleteController = {
     return h.response(userUploads)
   }
 }
-export { baseUploadCompleteController, cdpUploaderCompleteController }
+
+const cdpUploaderBackController = {
+  options: { auth: { strategy: 'login', mode: 'required' } },
+  handler: (request, h) => {
+    const user = request.auth.credentials.user
+    const model = request.query.model || 'model1'
+
+    // Get user's uploads
+    const userId = user?.id || user?.email || 'anonymous'
+    const userUploads = Array.from(uploadQueue.values())
+      .filter((upload) => upload.userId === userId)
+      .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+
+    return h.view('cdp-uploader/views/basic-upload-form', {
+      isAuthenticated: true,
+      user,
+      status: null,
+      model,
+      uploads: userUploads
+    })
+  }
+}
+
+export {
+  baseUploadCompleteController,
+  cdpUploaderCompleteController,
+  cdpUploaderBackController
+}
