@@ -14,6 +14,7 @@ import {
   redInvestmentCommitteeBriefing,
   executiveBriefing
 } from '../../common/constants/prompts.js'
+import { initUpload } from '../helper/init-upload.js'
 
 const logger = createLogger()
 // const pump = util.promisify(pipeline)
@@ -319,10 +320,22 @@ const baseUploadCompleteController = {
                 .filter((upload) => upload.userId === userId)
                 .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
               logger.info(`User uploads: ${JSON.stringify(userUploads)}`)
+              // computing new action secure upload url
+              const redirectForSecureUpload = '/Uploader/complete' // <-- Use relative URI as required by the uploader
+              const s3BucketForSecureUpload = config.get('aws.s3BucketName')
+
+              const secureUpload = await initUpload({
+                redirectForSecureUpload,
+                s3BucketForSecureUpload
+              })
+              logger.info(
+                `Secure upload response from /complete controller: ${JSON.stringify(secureUpload)}`
+              )
               return h.view('cdp-uploader/views/basic-upload-form', {
                 isAuthenticated: true,
                 user,
                 status: 'success',
+                action: secureUpload.uploadUrl,
                 message: 'File uploaded successfully. Analysis in progress.',
                 model,
                 analysisType,
