@@ -293,7 +293,7 @@ const baseUploadCompleteController = {
               const requestId = response.data.requestId
               logger.info(`Request ID: ${requestId}`)
 
-              // Add to upload queue instead of redirecting
+              // Add to upload queue with initial processing status
               const user = request.auth.credentials.user
               const uploadRequest = {
                 id: `upload_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
@@ -301,34 +301,32 @@ const baseUploadCompleteController = {
                 filename: headerresponse.Metadata['encodedfilename'],
                 analysisType,
                 model,
-                status: 'analysing',
+                status: 'processing',
                 timestamp: new Date().toISOString(),
-                requestId
+                requestId,
+                s3Bucket,
+                s3Key
               }
 
               // Store in persistent queue
               uploadQueue.set(uploadRequest.id, uploadRequest)
               saveQueue()
 
+              // Update status to analysing after API call
+              setTimeout(() => {
+                const upload = uploadQueue.get(uploadRequest.id)
+                if (upload) {
+                  upload.status = 'analysing'
+                  uploadQueue.set(uploadRequest.id, upload)
+                  saveQueue()
+                }
+              }, 1000)
+
               // Start SNS-like background polling
               startSNSPolling(uploadRequest.id, requestId)
 
-              // Get updated uploads list including the new one
-              const userId = user?.id || user?.email || 'anonymous'
-              const userUploads = Array.from(uploadQueue.values())
-                .filter((upload) => upload.userId === userId)
-                .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
-              logger.info(`User uploads: ${JSON.stringify(userUploads)}`)
-              return h.view('cdp-uploader/views/basic-upload-form', {
-                isAuthenticated: true,
-                user,
-                status: 'success',
-                message: 'File uploaded successfully. Analysis in progress.',
-                model,
-                analysisType,
-                requestId,
-                uploads: userUploads
-              })
+              // Redirect back to uploader page after processing
+              return h.redirect('/Uploader?uploaded=true')
             } catch (apiError) {
               logger.error(`Backend API error: ${apiError.message}`)
               if (apiError.status) {
@@ -338,30 +336,14 @@ const baseUploadCompleteController = {
                 logger.error(`Error details: ${JSON.stringify(apiError.error)}`)
               }
 
-              // Return the view with just the markdown content
-              return h.view('cdp-uploader/views/basic-upload-form', {
-                isAuthenticated: true,
-                user: request.auth.credentials.user,
-                status: 'success',
-                markdownContent:
-                  'Unable to generate summary. Using raw document content instead.',
-                filename: headerresponse.Metadata['encodedfilename'],
-                model,
-                analysisType
-              })
+              // Redirect back to uploader page on API error
+              return h.redirect('/Uploader')
             }
           }
         } catch (error) {
           logger.error(`Error while parsing PDF: ${error}`)
           logger.error(`JSON Error while parsing PDF: ${JSON.stringify(error)}`)
-          return h.view('cdp-uploader/views/basic-upload-form', {
-            isAuthenticated: true,
-            user: request.auth.credentials.user,
-            status: 'error',
-            message: 'Error processing PDF: ' + error.message,
-            model,
-            analysisType
-          })
+          return h.redirect('/Uploader')
         }
 
         await new Promise((resolve) => setTimeout(resolve, delayMs))
@@ -456,8 +438,147 @@ const cdpUploaderBackController = {
   }
 }
 
+const cdpUploaderCompareController = {
+  options: { auth: { strategy: 'login', mode: 'required' } },
+  handler: async (request, h) => {
+    try {
+      const { payload } = request
+      const { analysisType, compareS3Bucket, compareS3Key } = payload
+      const file = payload.policyPdf
+      
+      if (!file || !compareS3Bucket || !compareS3Key) {
+        return h.response({ success: false, error: 'Missing required data' }).code(400)
+      }
+
+      const user = request.auth.credentials.user
+      const model = 'model1'
+      
+      const streamToBuffer = async (stream) => {
+        const chunks = []
+        for await (const chunk of stream) {
+          chunks.push(chunk)
+        }
+        return Buffer.concat(chunks)
+      }
+      
+      // Step 1: Read existing document from S3
+      const existingDoc = await s3Client.send(
+        new GetObjectCommand({
+          Bucket: compareS3Bucket,
+          Key: compareS3Key
+        })
+      )
+      const existingBuffer = await streamToBuffer(existingDoc.Body)
+      
+      // Step 2: Read new uploaded file
+      const newBuffer = await streamToBuffer(file)
+      
+      // Step 3: Parse both documents
+      const uploadDir = path.join(process.cwd(), 'uploads')
+      if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir)
+      
+      // Parse existing document
+      const existingFilepath = path.join(uploadDir, `existing_${Date.now()}.pdf`)
+      await fs.promises.writeFile(existingFilepath, existingBuffer)
+      const existingPdfText = await parsePdfToJson(existingFilepath)
+      fs.unlinkSync(existingFilepath)
+      
+      // Parse new document
+      const newFilepath = path.join(uploadDir, `new_${Date.now()}_${file.hapi.filename}`)
+      await fs.promises.writeFile(newFilepath, newBuffer)
+      const newPdfText = await parsePdfToJson(newFilepath)
+      fs.unlinkSync(newFilepath)
+      
+      // Step 4: Combine both documents for processing
+      const existingContent = existingPdfText.map(page => page.content).join('\n\n')
+      const newContent = newPdfText.map(page => page.content).join('\n\n')
+      const combinedContent = `Document 1:\n${existingContent}\n\nDocument 2:\n${newContent}`
+      
+      // Step 5: Call backend API (same as baseUploadCompleteController)
+      try {
+        const backendApiUrl = config.get('backendApiUrl')
+        
+        let selectedPrompt
+        switch (analysisType) {
+          case 'green':
+            selectedPrompt = greenPrompt
+            break
+          case 'investment':
+            selectedPrompt = redInvestmentCommitteeBriefing
+            break
+          case 'executive':
+            selectedPrompt = executiveBriefing
+            break
+          default:
+            selectedPrompt = redPrompt
+        }
+        
+        const response = await axios.post(
+          `${backendApiUrl}/summarize`,
+          {
+            systemprompt: selectedPrompt,
+            userprompt: combinedContent,
+            modelid: model
+          },
+          {
+            headers: {
+              'Content-Type': 'text/plain'
+            }
+          }
+        )
+        
+        const requestId = response.data.requestId
+        
+        // Step 6: Store in upload queue with both S3 locations
+        const newS3Bucket = config.get('aws.s3BucketName')
+        const newS3Key = `uploads/${Date.now()}_${file.hapi.filename}`
+        
+        const uploadRequest = {
+          id: `compare_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          userId: user?.id || user?.email || 'anonymous',
+          filename: `Compare: ${file.hapi.filename}`,
+          analysisType,
+          model,
+          status: 'processing',
+          timestamp: new Date().toISOString(),
+          requestId,
+          s3Bucket: newS3Bucket,
+          s3Key: newS3Key,
+          compareS3Bucket,
+          compareS3Key
+        }
+        
+        uploadQueue.set(uploadRequest.id, uploadRequest)
+        saveQueue()
+        
+        setTimeout(() => {
+          const upload = uploadQueue.get(uploadRequest.id)
+          if (upload) {
+            upload.status = 'analysing'
+            uploadQueue.set(uploadRequest.id, upload)
+            saveQueue()
+          }
+        }, 1000)
+        
+        startSNSPolling(uploadRequest.id, requestId)
+        
+        return h.response({ success: true, requestId }).code(200)
+        
+      } catch (apiError) {
+        logger.error(`Backend API error: ${apiError.message}`)
+        return h.response({ success: false, error: apiError.message }).code(500)
+      }
+      
+    } catch (error) {
+      logger.error(`Compare operation error: ${error.message}`)
+      return h.response({ success: false, error: error.message }).code(500)
+    }
+  }
+}
+
 export {
   baseUploadCompleteController,
   cdpUploaderCompleteController,
-  cdpUploaderBackController
+  cdpUploaderBackController,
+  cdpUploaderCompareController
 }

@@ -2,7 +2,8 @@ import { basicUploadFormController } from '../../server/cdp-uploader/controllers
 import {
   baseUploadCompleteController,
   cdpUploaderCompleteController,
-  cdpUploaderBackController
+  cdpUploaderBackController,
+  cdpUploaderCompareController
 } from '../../server/cdp-uploader/controllers/basic-upload-complete.js'
 
 const cdpUploader = {
@@ -33,6 +34,20 @@ const cdpUploader = {
           path: '/Uploader/back',
           options: { auth: { strategy: 'login', mode: 'required' } },
           ...cdpUploaderBackController
+        },
+        {
+          method: 'POST',
+          path: '/Uploader/compare',
+          options: {
+            auth: { strategy: 'login', mode: 'required' },
+            payload: {
+              output: 'stream',
+              parse: true,
+              multipart: true,
+              maxBytes: 50 * 1024 * 1024
+            }
+          },
+          ...cdpUploaderCompareController
         }
       ])
     }

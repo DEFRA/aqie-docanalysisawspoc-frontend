@@ -28,6 +28,7 @@
     </div>
   </div>
   {{ govukButton({ text: "Summarise", attributes: { type: "submit", id: "submitButton" } }) }}
+  {{ govukButton({ text: "Compare", classes: "govuk-button--secondary", attributes: { type: "button", id: "compareButton" } }) }}
   <div id="loadingMessage" class="govuk-inset-text" style="display: none;">
     <div class="spinner" style="display: inline-block; margin-right: 10px;"></div>
     Processing PDF... Please wait...
@@ -60,11 +61,12 @@
         <th class="govuk-table__header">Status</th>
         <th class="govuk-table__header">Timestamp</th>
         <th class="govuk-table__header">Action</th>
+        <th class="govuk-table__header" style="text-align: center; width: 60px;">Select</th>
       </tr>
     </thead>
     <tbody class="govuk-table__body" id="uploadHistoryBody">
       {% for upload in uploads %}
-      <tr class="govuk-table__row">
+      <tr class="govuk-table__row" data-s3-bucket="{{ upload.s3Bucket }}" data-s3-key="{{ upload.s3Key }}">
         <td class="govuk-table__cell">{{ upload.filename }}</td>
         <td class="govuk-table__cell">{{ upload.analysisType }}</td>
         <td class="govuk-table__cell">
@@ -80,6 +82,11 @@
           <span class="govuk-hint">Processing...</span>
           {% endif %}
         </td>
+        <td class="govuk-table__cell" style="text-align: center;">
+          <input type="radio" name="selectedUpload" value="{{ upload.id }}" class="govuk-radios__input">
+        </td>
+        <input type="hidden" name="s3Bucket_{{ upload.id }}" value="{{ upload.s3Bucket }}">
+        <input type="hidden" name="s3Key_{{ upload.id }}" value="{{ upload.s3Key }}">
       </tr>
       {% endfor %}
     </tbody>
@@ -110,9 +117,10 @@
   display: inline-block;
 }
 .status-analysing { background: #ff9800; color: white; animation: pulse 2s infinite;}
-.status-processing { background: #2196f3; color: white; }
+.status-processing { background: #2196f3; color: white; animation: pulse 2s infinite; }
 .status-completed { background: #00703c; color: white; }
 .status-failed { background: #f44336; color: white; }
+.status-uploading { background: #9c27b0; color: white; animation: pulse 1.5s infinite; }
 @keyframes pulse {
   0% { opacity: 1; }
   50% { opacity: 0.7; }
@@ -133,6 +141,34 @@ document.addEventListener('DOMContentLoaded', function() {
   let allUploads = [];
   let currentPage = 1;
   let pageSize = 10;
+  
+  // Check if redirected from complete action and show success message
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get('uploaded') === 'true') {
+    // Remove the parameter from URL without page reload
+    window.history.replaceState({}, document.title, window.location.pathname);
+    
+    // Show success message
+    const successDiv = document.createElement('div');
+    successDiv.className = 'govuk-notification-banner govuk-notification-banner--success';
+    successDiv.innerHTML = `
+      <div class="govuk-notification-banner__header">
+        <h2 class="govuk-notification-banner__title">Success</h2>
+      </div>
+      <div class="govuk-notification-banner__content">
+        <p class="govuk-notification-banner__heading">File uploaded successfully. Analysis in progress.</p>
+      </div>
+    `;
+    document.querySelector('h1').after(successDiv);
+    
+    // Immediately update upload history to show new upload
+    updateUploadHistory();
+    
+    // Auto-hide after 5 seconds
+    setTimeout(() => {
+      successDiv.remove();
+    }, 5000);
+  }
   
   const pageSizeSelect = document.getElementById('pageSize');
   const prevBtn = document.getElementById('prevBtn');
@@ -159,11 +195,82 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   });
 
+  // Compare button functionality
+  document.getElementById('compareButton').addEventListener('click', function() {
+    const selectedRadio = document.querySelector('input[name="selectedUpload"]:checked');
+    const fileInput = document.getElementById('policyPdf');
+    const analysisType = document.getElementById('analysisType').value;
+    
+    if (!selectedRadio) {
+      alert('Please select a document from the table to compare with.');
+      return;
+    }
+    
+    if (!fileInput.files[0]) {
+      alert('Please select a PDF file to upload for comparison.');
+      return;
+    }
+    
+    if (!analysisType) {
+      alert('Please select an analysis type.');
+      return;
+    }
+    
+    // Get s3 data from selected row
+    const selectedRow = selectedRadio.closest('tr');
+    const s3Bucket = selectedRow.getAttribute('data-s3-bucket');
+    const s3Key = selectedRow.getAttribute('data-s3-key');
+    
+    if (!s3Bucket || !s3Key) {
+      alert('Selected document missing S3 information.');
+      return;
+    }
+    
+    // Create form data for comparison
+    const formData = new FormData();
+    formData.append('policyPdf', fileInput.files[0]);
+    formData.append('analysisType', analysisType);
+    formData.append('compareS3Bucket', s3Bucket);
+    formData.append('compareS3Key', s3Key);
+    formData.append('compareUploadId', selectedRadio.value);
+    
+    // Show loading
+    document.getElementById('compareButton').disabled = true;
+    document.getElementById('loadingMessage').style.display = 'block';
+    
+    // Submit to compare endpoint
+    fetch('/Uploader/compare', {
+      method: 'POST',
+      body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        // Refresh upload history
+        updateUploadHistory();
+        // Clear form
+        fileInput.value = '';
+        document.getElementById('fileInfo').style.display = 'none';
+      } else {
+        alert('Comparison failed: ' + (data.error || 'Unknown error'));
+      }
+    })
+    .catch(error => {
+      console.error('Comparison error:', error);
+      alert('Comparison failed: ' + error.message);
+    })
+    .finally(() => {
+      document.getElementById('compareButton').disabled = false;
+      document.getElementById('loadingMessage').style.display = 'none';
+    });
+  });
+
 
   // Initial load
   updateUploadHistory();
   
-  setInterval(updateUploadHistory, 10000);
+  // More frequent updates for real-time status
+  setInterval(updateUploadHistory, 3000);
   
   async function updateUploadHistory() {
     try {
@@ -216,7 +323,16 @@ document.addEventListener('DOMContentLoaded', function() {
         </td>
         <td class="govuk-table__cell">${timestamp}</td>
         <td class="govuk-table__cell">${actionCell}</td>
+        <td class="govuk-table__cell" style="text-align: center;">
+          <input type="radio" name="selectedUpload" value="${upload.id}" class="govuk-radios__input">
+        </td>
+        <input type="hidden" name="s3Bucket_${upload.id}" value="${upload.s3Bucket || ''}">
+        <input type="hidden" name="s3Key_${upload.id}" value="${upload.s3Key || ''}">
       `;
+      
+      // Add s3 data attributes
+      row.setAttribute('data-s3-bucket', upload.s3Bucket || '');
+      row.setAttribute('data-s3-key', upload.s3Key || '');
       tbody.appendChild(row);
     });
     
