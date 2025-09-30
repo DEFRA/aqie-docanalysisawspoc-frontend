@@ -83,7 +83,7 @@
           {% endif %}
         </td>
         <td class="govuk-table__cell" style="text-align: center;">
-          <input type="radio" name="selectedUpload" value="{{ upload.id }}" class="govuk-radios__input">
+          <input type="radio" name="selectedUpload" value="{{ upload.id }}" style="width: 16px; height: 16px; cursor: pointer;">
         </td>
         <input type="hidden" name="s3Bucket_{{ upload.id }}" value="{{ upload.s3Bucket }}">
         <input type="hidden" name="s3Key_{{ upload.id }}" value="{{ upload.s3Key }}">
@@ -133,6 +133,19 @@
 .govuk-hint {
   font-size: 14px;
   color: #626a6e;
+}
+.govuk-radios__input {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  cursor: pointer;
+}
+.govuk-table__cell input[type="radio"] {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  cursor: pointer;
+  display: inline-block;
 }
 </style>
 
@@ -202,17 +215,14 @@ document.addEventListener('DOMContentLoaded', function() {
     const analysisType = document.getElementById('analysisType').value;
     
     if (!selectedRadio) {
-      alert('Please select a document from the table to compare with.');
       return;
     }
     
     if (!fileInput.files[0]) {
-      alert('Please select a PDF file to upload for comparison.');
       return;
     }
     
     if (!analysisType) {
-      alert('Please select an analysis type.');
       return;
     }
     
@@ -221,8 +231,12 @@ document.addEventListener('DOMContentLoaded', function() {
     const s3Bucket = selectedRow.getAttribute('data-s3-bucket');
     const s3Key = selectedRow.getAttribute('data-s3-key');
     
+    console.log('Selected upload ID:', selectedRadio.value);
+    console.log('S3 Bucket:', s3Bucket);
+    console.log('S3 Key:', s3Key);
+    
     if (!s3Bucket || !s3Key) {
-      alert('Selected document missing S3 information.');
+      console.error('Selected document missing S3 information. S3 Bucket:', s3Bucket, 'S3 Key:', s3Key);
       return;
     }
     
@@ -252,12 +266,11 @@ document.addEventListener('DOMContentLoaded', function() {
         fileInput.value = '';
         document.getElementById('fileInfo').style.display = 'none';
       } else {
-        alert('Comparison failed: ' + (data.error || 'Unknown error'));
+        console.error('Comparison failed:', data.error || 'Unknown error');
       }
     })
     .catch(error => {
       console.error('Comparison error:', error);
-      alert('Comparison failed: ' + error.message);
     })
     .finally(() => {
       document.getElementById('compareButton').disabled = false;
@@ -324,7 +337,7 @@ document.addEventListener('DOMContentLoaded', function() {
         <td class="govuk-table__cell">${timestamp}</td>
         <td class="govuk-table__cell">${actionCell}</td>
         <td class="govuk-table__cell" style="text-align: center;">
-          <input type="radio" name="selectedUpload" value="${upload.id}" class="govuk-radios__input">
+          <input type="radio" name="selectedUpload" value="${upload.id}" style="width: 16px; height: 16px; cursor: pointer;">
         </td>
       `;
       

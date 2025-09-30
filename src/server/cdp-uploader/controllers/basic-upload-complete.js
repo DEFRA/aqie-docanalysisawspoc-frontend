@@ -428,7 +428,13 @@ const cdpUploaderCompareController = {
       const { analysisType, compareS3Bucket, compareS3Key } = payload
       const file = payload.policyPdf
       
+      logger.info(`Compare request - Analysis Type: ${analysisType}`)
+      logger.info(`Compare request - S3 Bucket: ${compareS3Bucket}`)
+      logger.info(`Compare request - S3 Key: ${compareS3Key}`)
+      logger.info(`Compare request - File: ${file ? file.hapi.filename : 'No file'}`)
+      
       if (!file || !compareS3Bucket || !compareS3Key) {
+        logger.error('Missing required data for comparison')
         return h.response({ success: false, error: 'Missing required data' }).code(400)
       }
 
