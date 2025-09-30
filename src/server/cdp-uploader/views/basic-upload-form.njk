@@ -61,12 +61,12 @@
         <th class="govuk-table__header">Status</th>
         <th class="govuk-table__header">Timestamp</th>
         <th class="govuk-table__header">Action</th>
-        <th class="govuk-table__header" style="text-align: center; width: 60px;">Select</th>
+
       </tr>
     </thead>
     <tbody class="govuk-table__body" id="uploadHistoryBody">
       {% for upload in uploads %}
-      <tr class="govuk-table__row" data-s3-bucket="{{ upload.s3Bucket }}" data-s3-key="{{ upload.s3Key }}">
+      <tr class="govuk-table__row selectable-row" data-s3-bucket="{{ upload.s3Bucket }}" data-s3-key="{{ upload.s3Key }}" data-upload-id="{{ upload.id }}">
         <td class="govuk-table__cell">{{ upload.filename }}</td>
         <td class="govuk-table__cell">{{ upload.analysisType }}</td>
         <td class="govuk-table__cell">
@@ -82,11 +82,7 @@
           <span class="govuk-hint">Processing...</span>
           {% endif %}
         </td>
-        <td class="govuk-table__cell" style="text-align: center;">
-          <input type="radio" name="selectedUpload" value="{{ upload.id }}" style="width: 16px; height: 16px; cursor: pointer;">
-        </td>
-        <input type="hidden" name="s3Bucket_{{ upload.id }}" value="{{ upload.s3Bucket }}">
-        <input type="hidden" name="s3Key_{{ upload.id }}" value="{{ upload.s3Key }}">
+
       </tr>
       {% endfor %}
     </tbody>
@@ -140,12 +136,23 @@
   margin: 0;
   cursor: pointer;
 }
-.govuk-table__cell input[type="radio"] {
-  width: 16px;
-  height: 16px;
-  margin: 0;
+.selectable-row {
   cursor: pointer;
-  display: inline-block;
+  transition: background-color 0.2s;
+}
+.selectable-row:hover {
+  background-color: #f3f2f1;
+}
+.selectable-row.selected {
+  background-color: #1d70b8;
+  color: white;
+}
+.selectable-row.selected .status-badge {
+  border: 1px solid white;
+}
+.selectable-row.selected a {
+  color: white;
+  text-decoration: underline;
 }
 </style>
 
@@ -208,13 +215,42 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   });
 
+  let selectedRow = null;
+  let selectedUploadId = localStorage.getItem('selectedUploadId');
+  
+  // Row selection functionality
+  function handleRowSelection(row) {
+    // Remove selection from previously selected row
+    if (selectedRow) {
+      selectedRow.classList.remove('selected');
+    }
+    
+    // Select new row
+    selectedRow = row;
+    selectedRow.classList.add('selected');
+    
+    // Store selection in localStorage
+    selectedUploadId = row.getAttribute('data-upload-id');
+    localStorage.setItem('selectedUploadId', selectedUploadId);
+  }
+  
+  // Restore selection after table render
+  function restoreSelection() {
+    if (selectedUploadId) {
+      const rowToSelect = document.querySelector(`[data-upload-id="${selectedUploadId}"]`);
+      if (rowToSelect) {
+        selectedRow = rowToSelect;
+        selectedRow.classList.add('selected');
+      }
+    }
+  }
+  
   // Compare button functionality
   document.getElementById('compareButton').addEventListener('click', function() {
-    const selectedRadio = document.querySelector('input[name="selectedUpload"]:checked');
     const fileInput = document.getElementById('policyPdf');
     const analysisType = document.getElementById('analysisType').value;
     
-    if (!selectedRadio) {
+    if (!selectedRow) {
       return;
     }
     
@@ -227,11 +263,11 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Get s3 data from selected row
-    const selectedRow = selectedRadio.closest('tr');
     const s3Bucket = selectedRow.getAttribute('data-s3-bucket');
     const s3Key = selectedRow.getAttribute('data-s3-key');
+    const uploadId = selectedRow.getAttribute('data-upload-id');
     
-    console.log('Selected upload ID:', selectedRadio.value);
+    console.log('Selected upload ID:', uploadId);
     console.log('S3 Bucket:', s3Bucket);
     console.log('S3 Key:', s3Key);
     
@@ -246,7 +282,7 @@ document.addEventListener('DOMContentLoaded', function() {
     formData.append('analysisType', analysisType);
     formData.append('compareS3Bucket', s3Bucket);
     formData.append('compareS3Key', s3Key);
-    formData.append('compareUploadId', selectedRadio.value);
+    formData.append('compareUploadId', uploadId);
     
     // Show loading
     document.getElementById('compareButton').disabled = true;
@@ -260,11 +296,11 @@ document.addEventListener('DOMContentLoaded', function() {
     .then(response => response.json())
     .then(data => {
       if (data.success) {
-        // Refresh upload history
-        updateUploadHistory();
-        // Clear form
+        // Clear form but keep selection
         fileInput.value = '';
         document.getElementById('fileInfo').style.display = 'none';
+        // Refresh upload history
+        updateUploadHistory();
       } else {
         console.error('Comparison failed:', data.error || 'Unknown error');
       }
@@ -282,8 +318,22 @@ document.addEventListener('DOMContentLoaded', function() {
   // Initial load
   updateUploadHistory();
   
-  // More frequent updates for real-time status
-  setInterval(updateUploadHistory, 3000);
+  // Smart polling - only refresh when there are non-completed uploads
+  function startSmartPolling() {
+    const hasProcessingUploads = allUploads.some(upload => 
+      upload.status === 'processing' || upload.status === 'analysing'
+    );
+    
+    if (hasProcessingUploads) {
+      setTimeout(() => {
+        updateUploadHistory();
+        startSmartPolling();
+      }, 3000);
+    }
+    // Stop polling when all uploads are completed
+  }
+  
+  startSmartPolling();
   
   async function updateUploadHistory() {
     try {
@@ -307,7 +357,7 @@ document.addEventListener('DOMContentLoaded', function() {
     tbody.innerHTML = '';
     pageUploads.forEach(upload => {
       const row = document.createElement('tr');
-      row.className = 'govuk-table__row';
+      row.className = 'govuk-table__row selectable-row';
       
       const actionCell = upload.status === 'completed'
         ? `<a href="/status/${upload.requestId}" class="govuk-link">View Results</a>`
@@ -336,31 +386,36 @@ document.addEventListener('DOMContentLoaded', function() {
         </td>
         <td class="govuk-table__cell">${timestamp}</td>
         <td class="govuk-table__cell">${actionCell}</td>
-        <td class="govuk-table__cell" style="text-align: center;">
-          <input type="radio" name="selectedUpload" value="${upload.id}" style="width: 16px; height: 16px; cursor: pointer;">
-        </td>
       `;
-      
-      // Add hidden fields after setting innerHTML
-      const hiddenS3Bucket = document.createElement('input');
-      hiddenS3Bucket.type = 'hidden';
-      hiddenS3Bucket.name = `s3Bucket_${upload.id}`;
-      hiddenS3Bucket.value = upload.s3Bucket || '';
-      row.appendChild(hiddenS3Bucket);
-      
-      const hiddenS3Key = document.createElement('input');
-      hiddenS3Key.type = 'hidden';
-      hiddenS3Key.name = `s3Key_${upload.id}`;
-      hiddenS3Key.value = upload.s3Key || '';
-      row.appendChild(hiddenS3Key);
       
       // Add s3 data attributes
       row.setAttribute('data-s3-bucket', upload.s3Bucket || '');
       row.setAttribute('data-s3-key', upload.s3Key || '');
+      row.setAttribute('data-upload-id', upload.id);
+      
+      // Add click event for row selection
+      row.addEventListener('click', function(e) {
+        // Don't select row if clicking on a link
+        if (e.target.tagName === 'A') return;
+        handleRowSelection(row);
+      });
+      
       tbody.appendChild(row);
     });
     
     updatePagination();
+    
+    // Restore selection after table render
+    restoreSelection();
+    
+    // Add click handlers to static rows
+    document.querySelectorAll('.selectable-row').forEach(row => {
+      row.addEventListener('click', function(e) {
+        // Don't select row if clicking on a link
+        if (e.target.tagName === 'A') return;
+        handleRowSelection(row);
+      });
+    });
   }
   
   function updatePagination() {
