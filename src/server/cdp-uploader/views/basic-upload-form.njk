@@ -216,7 +216,6 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 
   let selectedRow = null;
-  let selectedUploadId = localStorage.getItem('selectedUploadId');
   
   // Row selection functionality
   function handleRowSelection(row) {
@@ -228,21 +227,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // Select new row
     selectedRow = row;
     selectedRow.classList.add('selected');
-    
-    // Store selection in localStorage
-    selectedUploadId = row.getAttribute('data-upload-id');
-    localStorage.setItem('selectedUploadId', selectedUploadId);
-  }
-  
-  // Restore selection after table render
-  function restoreSelection() {
-    if (selectedUploadId) {
-      const rowToSelect = document.querySelector(`[data-upload-id="${selectedUploadId}"]`);
-      if (rowToSelect) {
-        selectedRow = rowToSelect;
-        selectedRow.classList.add('selected');
-      }
-    }
   }
   
   // Compare button functionality
@@ -318,22 +302,16 @@ document.addEventListener('DOMContentLoaded', function() {
   // Initial load
   updateUploadHistory();
   
-  // Smart polling - only refresh when there are non-completed uploads
-  function startSmartPolling() {
+  // Continuous polling every 3 seconds
+  setInterval(() => {
     const hasProcessingUploads = allUploads.some(upload => 
       upload.status === 'processing' || upload.status === 'analysing'
     );
     
     if (hasProcessingUploads) {
-      setTimeout(() => {
-        updateUploadHistory();
-        startSmartPolling();
-      }, 3000);
+      updateUploadHistory();
     }
-    // Stop polling when all uploads are completed
-  }
-  
-  startSmartPolling();
+  }, 3000);
   
   async function updateUploadHistory() {
     try {
@@ -404,9 +382,6 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     updatePagination();
-    
-    // Restore selection after table render
-    restoreSelection();
     
     // Add click handlers to static rows
     document.querySelectorAll('.selectable-row').forEach(row => {
