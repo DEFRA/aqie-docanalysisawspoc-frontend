@@ -28,7 +28,7 @@ const basicUploadFormController = {
     request.yar.set('basic-upload', { statusUrl: secureUpload.statusUrl })
     request.yar.set('model', { model: request.query.model || 'model1' })
     request.yar.set('analysisType', {
-      analysisType: payload?.analysisType || 'green'
+      analysisType: payload?.analysisType || ''
     })
     logger.info(`Model: ${request.query.model || 'model1'}`)
     logger.info(`Analysis Type: ${payload?.analysisType || 'green'}`)
@@ -65,7 +65,7 @@ const basicUploadFormController = {
       isAuthenticated: true,
       user: request.auth.credentials.user,
       action: secureUpload.uploadUrl,
-      analysisType: payload?.analysisType || 'green',
+      analysisType: payload?.analysisType || '',
       model: request.query.model || 'model1',
       uploads: userUploads
     })

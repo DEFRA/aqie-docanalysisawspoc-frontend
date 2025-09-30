@@ -77,7 +77,7 @@
         </td>
         <td class="govuk-table__cell">
           {% if upload.status == 'completed' %}
-          <a href="/status/{{ upload.requestId }}" target="_blank" class="govuk-link">View Results</a>
+          <a href="/status/{{ upload.requestId }}" class="govuk-link">View Results</a>
           {% else %}
           <span class="govuk-hint">Processing...</span>
           {% endif %}
@@ -297,7 +297,7 @@ document.addEventListener('DOMContentLoaded', function() {
       row.className = 'govuk-table__row';
       
       const actionCell = upload.status === 'completed'
-        ? `<a href="/status/${upload.requestId}" target="_blank" class="govuk-link">View Results</a>`
+        ? `<a href="/status/${upload.requestId}" class="govuk-link">View Results</a>`
         : '<span class="govuk-hint">Processing...</span>';
       
       const timestamp = new Date(upload.timestamp).toLocaleString('en-GB', {
@@ -326,9 +326,20 @@ document.addEventListener('DOMContentLoaded', function() {
         <td class="govuk-table__cell" style="text-align: center;">
           <input type="radio" name="selectedUpload" value="${upload.id}" class="govuk-radios__input">
         </td>
-        <input type="hidden" name="s3Bucket_${upload.id}" value="${upload.s3Bucket || ''}">
-        <input type="hidden" name="s3Key_${upload.id}" value="${upload.s3Key || ''}">
       `;
+      
+      // Add hidden fields after setting innerHTML
+      const hiddenS3Bucket = document.createElement('input');
+      hiddenS3Bucket.type = 'hidden';
+      hiddenS3Bucket.name = `s3Bucket_${upload.id}`;
+      hiddenS3Bucket.value = upload.s3Bucket || '';
+      row.appendChild(hiddenS3Bucket);
+      
+      const hiddenS3Key = document.createElement('input');
+      hiddenS3Key.type = 'hidden';
+      hiddenS3Key.name = `s3Key_${upload.id}`;
+      hiddenS3Key.value = upload.s3Key || '';
+      row.appendChild(hiddenS3Key);
       
       // Add s3 data attributes
       row.setAttribute('data-s3-bucket', upload.s3Bucket || '');

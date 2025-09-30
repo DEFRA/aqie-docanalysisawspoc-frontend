@@ -100,13 +100,11 @@ const baseUploadCompleteController = {
 
     const { statusUrl } = request.yar.get('basic-upload')
     const { model } = request.yar.get('model')
-    const { analysisType } = request.yar.get('analysisType')
     logger.info(
       `'Status URL from session its from complete comtroller:',
       ${statusUrl}`
     )
     logger.info(`Model inside the complete controller: ${model}`)
-    logger.info(`Analysis Type inside the complete controller: ${analysisType}`)
     // You'll likely want to handle the statusUrl not being set more gracefully than this!
 
     const response = await fetch(statusUrl, {
@@ -114,6 +112,10 @@ const baseUploadCompleteController = {
       headers: { 'Content-Type': 'application/json' }
     })
     const status = await response.json()
+    
+    // Get analysisType from the form data returned by CDP uploader
+    const analysisType = status.form.analysisType || request.yar.get('analysisType')?.analysisType || 'green'
+    logger.info(`Analysis Type inside the complete controller: ${analysisType}`)
     logger.info(
       `'Status response from cdp-uploader:', ${JSON.stringify(status)}`
     )
@@ -416,27 +418,7 @@ const cdpUploaderCompleteController = {
   }
 }
 
-const cdpUploaderBackController = {
-  options: { auth: { strategy: 'login', mode: 'required' } },
-  handler: (request, h) => {
-    const user = request.auth.credentials.user
-    const model = request.query.model || 'model1'
 
-    // Get user's uploads
-    const userId = user?.id || user?.email || 'anonymous'
-    const userUploads = Array.from(uploadQueue.values())
-      .filter((upload) => upload.userId === userId)
-      .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
-
-    return h.view('cdp-uploader/views/basic-upload-form', {
-      isAuthenticated: true,
-      user,
-      status: null,
-      model,
-      uploads: userUploads
-    })
-  }
-}
 
 const cdpUploaderCompareController = {
   options: { auth: { strategy: 'login', mode: 'required' } },
@@ -579,6 +561,5 @@ const cdpUploaderCompareController = {
 export {
   baseUploadCompleteController,
   cdpUploaderCompleteController,
-  cdpUploaderBackController,
   cdpUploaderCompareController
 }
