@@ -39,24 +39,25 @@ const basicUploadFormController = {
     
     // Store comparison data in session if this is a compare operation
     if (isCompare) {
-      const selectedFilename = payload?.selectedFilename
+      const concatenatedFilename = payload?.concatenatedFilename
       
       logger.info(`DEBUG: Form received compare data:`)
       logger.info(`DEBUG: isCompare = ${isCompare}`)
-      logger.info(`DEBUG: selectedFilename = ${selectedFilename}`)
+      logger.info(`DEBUG: concatenatedFilename = '${concatenatedFilename}'`)
       logger.info(`DEBUG: compareS3Bucket = ${payload?.compareS3Bucket}`)
       logger.info(`DEBUG: compareS3Key = ${payload?.compareS3Key}`)
       logger.info(`DEBUG: compareUploadId = ${payload?.compareUploadId}`)
       
-      if (!selectedFilename) {
-        logger.error('DEBUG: selectedFilename is missing from payload!')
+      if (!concatenatedFilename || concatenatedFilename.trim() === '') {
+        logger.error('DEBUG: concatenatedFilename is missing or empty from payload!')
+        logger.error('DEBUG: This will prevent proper filename display')
       }
       
       const compareData = {
         s3Bucket: payload?.compareS3Bucket,
         s3Key: payload?.compareS3Key,
         uploadId: payload?.compareUploadId,
-        selectedFilename: selectedFilename,
+        concatenatedFilename: concatenatedFilename?.trim(),
         isCompare: true
       }
       

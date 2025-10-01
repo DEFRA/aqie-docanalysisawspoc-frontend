@@ -107,12 +107,9 @@ const baseUploadCompleteController = {
     logger.info(`DEBUG: Is Compare operation: ${isCompare}`)
     logger.info(`DEBUG: compareData exists: ${!!compareData}`)
     
-    if (compareData) {
-      logger.info(`DEBUG: Compare data details: ${JSON.stringify(compareData)}`)
-      logger.info(`DEBUG: selectedFilename in compareData: ${compareData.selectedFilename}`)
-    } else {
-      logger.info('DEBUG: No compareData found in session')
-    }
+    
+    // Store compareData in a variable that won't be affected by session clearing
+    const storedCompareData = compareData ? JSON.parse(JSON.stringify(compareData)) : null
 
     // The user is redirected to this page after their upload has completed, but possibly before scanning has finished.
     // Virus scanning takes about 1-2 seconds on small files up to about 10 seconds on large (100 meg) files.
@@ -279,11 +276,11 @@ const baseUploadCompleteController = {
 
             // Handle comparison logic if this is a compare operation
             let existingContent = ''
-            if (isCompare && compareData) {
-              // Get comparison data from session
-              const compareS3Bucket = compareData.s3Bucket
-              const compareS3Key = compareData.s3Key
-              const compareUploadId = compareData.uploadId
+            if (isCompare && storedCompareData) {
+              // Get comparison data from stored session data
+              const compareS3Bucket = storedCompareData.s3Bucket
+              const compareS3Key = storedCompareData.s3Key
+              const compareUploadId = storedCompareData.uploadId
               
               logger.info(`Compare S3 Bucket: ${compareS3Bucket}`)
               logger.info(`Compare S3 Key: ${compareS3Key}`)
@@ -389,22 +386,14 @@ const baseUploadCompleteController = {
               // Add to upload queue with initial processing status
               const user = request.auth.credentials.user
               
-              // Create concatenated filename for compare operations
+              // Use concatenated filename for compare operations, otherwise use regular filename
               let finalFilename = headerresponse.Metadata?.['encodedfilename'] || 'unknown.pdf'
               
-              if (isCompare && compareData && compareData.selectedFilename) {
-                const selectedFilename = compareData.selectedFilename
-                const newFilename = headerresponse.Metadata?.['encodedfilename'] || 'unknown.pdf'
-                finalFilename = `${selectedFilename} vs ${newFilename}`
-                
-                logger.info(`DEBUG: Compare operation - Selected filename: ${selectedFilename}`)
-                logger.info(`DEBUG: Compare operation - New filename: ${newFilename}`)
-                logger.info(`DEBUG: Compare operation - Final concatenated filename: ${finalFilename}`)
+              if (isCompare && storedCompareData?.concatenatedFilename) {
+                finalFilename = storedCompareData.concatenatedFilename
+                logger.info(`DEBUG: Using concatenated filename: '${finalFilename}'`)
               } else {
-                logger.info(`DEBUG: Regular upload - Using filename: ${finalFilename}`)
-                if (isCompare) {
-                  logger.warn(`DEBUG: Compare operation but missing selectedFilename in compareData: ${JSON.stringify(compareData)}`)
-                }
+                logger.info(`DEBUG: Using regular filename: '${finalFilename}'`)
               }
               
               const uploadRequest = {
@@ -421,10 +410,10 @@ const baseUploadCompleteController = {
               }
               
               // Add comparison data if this is a compare operation
-              if (isCompare && compareData) {
-                uploadRequest.compareS3Bucket = compareData.s3Bucket
-                uploadRequest.compareS3Key = compareData.s3Key
-                uploadRequest.compareUploadId = compareData.uploadId
+              if (isCompare && storedCompareData) {
+                uploadRequest.compareS3Bucket = storedCompareData.s3Bucket
+                uploadRequest.compareS3Key = storedCompareData.s3Key
+                uploadRequest.compareUploadId = storedCompareData.uploadId
               }
               
               // Clear comparison data from session after use

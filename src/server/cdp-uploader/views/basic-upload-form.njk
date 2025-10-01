@@ -319,18 +319,20 @@ document.addEventListener('DOMContentLoaded', function() {
     const selectedS3Key = selectedRow.getAttribute('data-s3-key');
     const selectedUploadId = selectedRow.getAttribute('data-upload-id');
     
-    console.log('DEBUG Frontend - Selected row:', selectedRow);
-    console.log('DEBUG Frontend - Filename cell:', filenameCell);
     console.log('DEBUG Frontend - Selected filename:', selectedFilename);
     console.log('DEBUG Frontend - Selected S3 bucket:', selectedS3Bucket);
     console.log('DEBUG Frontend - Selected S3 key:', selectedS3Key);
-    console.log('DEBUG Frontend - Selected upload ID:', selectedUploadId);
     
     if (!selectedFilename) {
       console.error('DEBUG Frontend - Failed to extract filename from selected row!');
       showNotification('Failed to extract filename from selected document.');
       return;
     }
+    
+    // Get the new filename from file input and create concatenated filename
+    const newFilename = fileInput.files[0].name;
+    const concatenatedFilename = `${selectedFilename} vs ${newFilename}`;
+    console.log('DEBUG Frontend - Concatenated filename:', concatenatedFilename);
     
     // Add hidden inputs to the form for comparison data
     const form = document.getElementById('uploadForm');
@@ -358,14 +360,14 @@ document.addEventListener('DOMContentLoaded', function() {
     compareUploadIdInput.value = selectedUploadId;
     form.appendChild(compareUploadIdInput);
     
-    const selectedFilenameInput = document.createElement('input');
-    selectedFilenameInput.type = 'hidden';
-    selectedFilenameInput.name = 'selectedFilename';
-    selectedFilenameInput.value = selectedFilename;
-    form.appendChild(selectedFilenameInput);
+    // Send the concatenated filename directly
+    const concatenatedFilenameInput = document.createElement('input');
+    concatenatedFilenameInput.type = 'hidden';
+    concatenatedFilenameInput.name = 'concatenatedFilename';
+    concatenatedFilenameInput.value = concatenatedFilename;
+    form.appendChild(concatenatedFilenameInput);
     
-    console.log('DEBUG Frontend - Added selectedFilename input with value:', selectedFilename);
-    console.log('DEBUG Frontend - Input element:', selectedFilenameInput);
+    console.log('DEBUG Frontend - Added concatenatedFilename input:', concatenatedFilename);
     
     // Add compare flag to form
     const compareFlag = document.createElement('input');
