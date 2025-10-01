@@ -35,6 +35,8 @@ const basicUploadFormController = {
     // Store comparison data in session if this is a compare operation
     if (isCompare) {
       logger.info(`Selected filename from payload: ${payload?.selectedFilename}`)
+      logger.info(`Compare S3 Bucket: ${payload?.compareS3Bucket}`)
+      logger.info(`Compare S3 Key: ${payload?.compareS3Key}`)
       request.yar.set('compareData', {
         s3Bucket: payload?.compareS3Bucket,
         s3Key: payload?.compareS3Key,

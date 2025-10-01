@@ -295,10 +295,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const s3Bucket = selectedRow.getAttribute('data-s3-bucket');
     const s3Key = selectedRow.getAttribute('data-s3-key');
     const uploadId = selectedRow.getAttribute('data-upload-id');
-    const selectedFilename = selectedRow.querySelector('.govuk-table__cell').textContent.trim();
-    
-    console.log('Selected filename:', selectedFilename);
-    console.log('New file:', fileInput.files[0].name);
+    const selectedFilename = selectedRow.querySelector('.govuk-table__cell:first-child').textContent.trim();
     
     if (!s3Bucket || !s3Key) {
       showNotification('Selected document missing S3 information.');
@@ -337,12 +334,7 @@ document.addEventListener('DOMContentLoaded', function() {
     selectedFilenameInput.value = selectedFilename;
     form.appendChild(selectedFilenameInput);
     
-    console.log('Form data being sent:', {
-      selectedFilename: selectedFilename,
-      newFile: fileInput.files[0].name,
-      s3Bucket: s3Bucket,
-      s3Key: s3Key
-    });
+
     
     // Add compare flag to form
     const compareFlag = document.createElement('input');

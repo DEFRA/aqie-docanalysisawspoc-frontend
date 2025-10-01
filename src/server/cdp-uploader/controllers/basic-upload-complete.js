@@ -367,6 +367,8 @@ const baseUploadCompleteController = {
               const user = request.auth.credentials.user
               const finalFilename = isCompare ? `${compareData.selectedFilename || 'Unknown'} vs ${headerresponse.Metadata['encodedfilename']}` : headerresponse.Metadata['encodedfilename']
               
+              logger.info(`Is Compare: ${isCompare}`)
+              logger.info(`Compare Data: ${JSON.stringify(compareData)}`)
               logger.info(`Creating upload request with filename: ${finalFilename}`)
               if (isCompare) {
                 logger.info(`Selected filename: ${compareData.selectedFilename}`)
@@ -401,6 +403,9 @@ const baseUploadCompleteController = {
               // Store in persistent queue
               uploadQueue.set(uploadRequest.id, uploadRequest)
               saveQueue()
+              
+              logger.info(`Upload saved to queue with ID: ${uploadRequest.id}`)
+              logger.info(`Queue now contains ${uploadQueue.size} items`)
 
               // Update status to analysing after API call
               setTimeout(() => {
@@ -501,7 +506,9 @@ const cdpUploaderCompleteController = {
     const userUploads = Array.from(uploadQueue.values())
       .filter((upload) => upload.userId === userId)
       .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
-    logger.info(`User uploads: ${JSON.stringify(userUploads)}`)
+    logger.info(`Total uploads in queue: ${uploadQueue.size}`)
+    logger.info(`User uploads count: ${userUploads.length}`)
+    logger.info(`User uploads: ${JSON.stringify(userUploads, null, 2)}`)
     return h.response(userUploads)
   }
 }
