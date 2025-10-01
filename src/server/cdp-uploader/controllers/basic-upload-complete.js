@@ -368,7 +368,7 @@ const baseUploadCompleteController = {
               const uploadRequest = {
                 id: isCompare ? `compare_${Date.now()}_${Math.random().toString(36).substr(2, 9)}` : `upload_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
                 userId: user?.id || user?.email || 'anonymous',
-                filename: isCompare ? `Compare: ${headerresponse.Metadata['encodedfilename']}` : headerresponse.Metadata['encodedfilename'],
+                filename: isCompare ? `${compareData.selectedFilename} vs ${headerresponse.Metadata['encodedfilename']}` : headerresponse.Metadata['encodedfilename'],
                 analysisType,
                 model,
                 status: 'processing',

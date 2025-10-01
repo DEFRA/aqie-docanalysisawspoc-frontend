@@ -38,6 +38,7 @@ const basicUploadFormController = {
         s3Bucket: payload?.compareS3Bucket,
         s3Key: payload?.compareS3Key,
         uploadId: payload?.compareUploadId,
+        selectedFilename: payload?.selectedFilename,
         isCompare: true
       })
     }

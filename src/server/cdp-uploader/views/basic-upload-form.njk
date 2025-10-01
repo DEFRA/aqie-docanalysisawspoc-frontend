@@ -289,11 +289,12 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Get s3 data from selected row (only for comparison)
-    let s3Bucket, s3Key, uploadId;
+    let s3Bucket, s3Key, uploadId, selectedFilename;
     if (analysisType === 'comparingTwoDocuments') {
       s3Bucket = selectedRow.getAttribute('data-s3-bucket');
       s3Key = selectedRow.getAttribute('data-s3-key');
       uploadId = selectedRow.getAttribute('data-upload-id');
+      selectedFilename = selectedRow.querySelector('.govuk-table__cell').textContent;
       
       if (!s3Bucket || !s3Key) {
         showNotification('Selected document missing S3 information.');
@@ -331,6 +332,12 @@ document.addEventListener('DOMContentLoaded', function() {
     compareUploadIdInput.name = 'compareUploadId';
     compareUploadIdInput.value = uploadId;
     form.appendChild(compareUploadIdInput);
+    
+    const selectedFilenameInput = document.createElement('input');
+    selectedFilenameInput.type = 'hidden';
+    selectedFilenameInput.name = 'selectedFilename';
+    selectedFilenameInput.value = selectedFilename;
+    form.appendChild(selectedFilenameInput);
     
     // Add compare flag to form
     const compareFlag = document.createElement('input');
