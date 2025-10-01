@@ -332,7 +332,10 @@ document.addEventListener('DOMContentLoaded', function() {
     // Get the new filename from file input and create concatenated filename
     const newFilename = fileInput.files[0].name;
     const concatenatedFilename = `${selectedFilename} vs ${newFilename}`;
-    console.log('DEBUG Frontend - Concatenated filename:', concatenatedFilename);
+    console.log('DEBUG Frontend - Creating concatenated filename:');
+    console.log('  Selected:', selectedFilename);
+    console.log('  New:', newFilename);
+    console.log('  Concatenated:', concatenatedFilename);
     
     // Add hidden inputs to the form for comparison data
     const form = document.getElementById('uploadForm');
@@ -367,7 +370,9 @@ document.addEventListener('DOMContentLoaded', function() {
     concatenatedFilenameInput.value = concatenatedFilename;
     form.appendChild(concatenatedFilenameInput);
     
-    console.log('DEBUG Frontend - Added concatenatedFilename input:', concatenatedFilename);
+    console.log('DEBUG Frontend - Added concatenatedFilename input with value:', concatenatedFilename);
+    console.log('DEBUG Frontend - Input element name:', concatenatedFilenameInput.name);
+    console.log('DEBUG Frontend - Input element value:', concatenatedFilenameInput.value);
     
     // Add compare flag to form
     const compareFlag = document.createElement('input');

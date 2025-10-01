@@ -51,15 +51,13 @@ const basicUploadFormController = {
       if (!concatenatedFilename || concatenatedFilename.trim() === '') {
         logger.error('DEBUG: concatenatedFilename is missing or empty from payload!')
         logger.error('DEBUG: This will prevent proper filename display')
-        // Don't store compareData if concatenatedFilename is invalid
-        return h.redirect('/Uploader')
       }
       
       const compareData = {
         s3Bucket: payload?.compareS3Bucket,
         s3Key: payload?.compareS3Key,
         uploadId: payload?.compareUploadId,
-        concatenatedFilename: concatenatedFilename.trim(),
+        concatenatedFilename: concatenatedFilename?.trim() || 'Unknown vs Unknown',
         isCompare: true
       }
       

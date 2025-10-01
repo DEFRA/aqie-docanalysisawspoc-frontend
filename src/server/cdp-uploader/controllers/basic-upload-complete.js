@@ -386,24 +386,14 @@ const baseUploadCompleteController = {
               // Add to upload queue with initial processing status
               const user = request.auth.credentials.user
               
-              // Create filename - concatenate for compare operations
-              const newFilename = headerresponse.Metadata?.['encodedfilename'] || 'unknown.pdf'
-              let finalFilename = newFilename
+              // Use concatenated filename from frontend or regular filename
+              let finalFilename = headerresponse.Metadata?.['encodedfilename'] || 'unknown.pdf'
               
-              if (isCompare && storedCompareData) {
-                // Get selected filename from upload queue using compareUploadId
-                const selectedUpload = uploadQueue.get(storedCompareData.uploadId)
-                if (!selectedUpload) {
-                  logger.error(`DEBUG: Selected upload not found for ID: ${storedCompareData.uploadId}`)
-                  finalFilename = `Unknown vs ${newFilename}`
-                } else {
-                  const selectedFilename = selectedUpload.filename || 'Unknown'
-                  finalFilename = `${selectedFilename} vs ${newFilename}`
-                  logger.info(`DEBUG: Compare operation - Selected: '${selectedFilename}', New: '${newFilename}'`)
-                }
-                logger.info(`DEBUG: Compare operation - Final concatenated: '${finalFilename}'`)
+              if (isCompare && storedCompareData?.concatenatedFilename) {
+                finalFilename = storedCompareData.concatenatedFilename
+                logger.info(`DEBUG: Using concatenated filename from frontend: '${finalFilename}'`)
               } else {
-                logger.info(`DEBUG: Regular upload - Using: '${finalFilename}'`)
+                logger.info(`DEBUG: Using regular filename: '${finalFilename}'`)
               }
               
               const uploadRequest = {
