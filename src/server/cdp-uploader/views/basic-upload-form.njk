@@ -218,6 +218,30 @@ document.addEventListener('DOMContentLoaded', function() {
 
   let selectedRow = null;
   
+  // Function to show notification banner
+  function showNotification(message, type = 'error') {
+    // Remove existing notifications
+    const existing = document.querySelector('.validation-notification');
+    if (existing) existing.remove();
+    
+    const notificationDiv = document.createElement('div');
+    notificationDiv.className = `govuk-notification-banner validation-notification ${type === 'error' ? 'govuk-notification-banner--error' : ''}`;
+    notificationDiv.innerHTML = `
+      <div class="govuk-notification-banner__header">
+        <h2 class="govuk-notification-banner__title">${type === 'error' ? 'Error' : 'Information'}</h2>
+      </div>
+      <div class="govuk-notification-banner__content">
+        <p class="govuk-notification-banner__heading">${message}</p>
+      </div>
+    `;
+    document.querySelector('h1').after(notificationDiv);
+    
+    // Auto-hide after 5 seconds
+    setTimeout(() => {
+      notificationDiv.remove();
+    }, 5000);
+  }
+  
   // Row selection functionality
   function handleRowSelection(row) {
     // Remove selection from previously selected row
@@ -235,22 +259,47 @@ document.addEventListener('DOMContentLoaded', function() {
     const fileInput = document.getElementById('policyPdf');
     const analysisType = document.getElementById('analysisType').value;
     
-    if (!selectedRow) {
-      return;
-    }
-    
     if (!fileInput.files[0]) {
+      showNotification('Please select a file to upload.');
       return;
     }
     
     if (!analysisType) {
+      showNotification('Please select an analysis type.');
       return;
     }
     
-    // Get s3 data from selected row
-    const s3Bucket = selectedRow.getAttribute('data-s3-bucket');
-    const s3Key = selectedRow.getAttribute('data-s3-key');
-    const uploadId = selectedRow.getAttribute('data-upload-id');
+    if (analysisType === 'comparingTwoDocuments') {
+      const completedUploads = allUploads.filter(upload => upload.status === 'completed');
+      if (completedUploads.length === 0) {
+        showNotification('No completed documents available for comparison. Please upload and complete at least one document first.');
+        return;
+      }
+      
+      if (!selectedRow) {
+        showNotification('Please select a completed document from the table to compare with.');
+        return;
+      }
+      
+      const selectedStatus = selectedRow.querySelector('.status-badge').textContent;
+      if (selectedStatus !== 'completed') {
+        showNotification('Please select a document with "completed" status for comparison.');
+        return;
+      }
+    }
+    
+    // Get s3 data from selected row (only for comparison)
+    let s3Bucket, s3Key, uploadId;
+    if (analysisType === 'comparingTwoDocuments') {
+      s3Bucket = selectedRow.getAttribute('data-s3-bucket');
+      s3Key = selectedRow.getAttribute('data-s3-key');
+      uploadId = selectedRow.getAttribute('data-upload-id');
+      
+      if (!s3Bucket || !s3Key) {
+        showNotification('Selected document missing S3 information.');
+        return;
+      }
+    }
     
     if (!s3Bucket || !s3Key) {
       console.error('Selected document missing S3 information');
