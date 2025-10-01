@@ -331,7 +331,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Get the new filename from file input and create concatenated filename
     const newFilename = fileInput.files[0].name;
-    const concatenatedFilename = `${selectedFilename} vs ${newFilename}`;
+    const concatenatedFilename = `${selectedFilename} -> ${newFilename}`;
     console.log('DEBUG Frontend - Creating concatenated filename:');
     console.log('  Selected:', selectedFilename);
     console.log('  New:', newFilename);

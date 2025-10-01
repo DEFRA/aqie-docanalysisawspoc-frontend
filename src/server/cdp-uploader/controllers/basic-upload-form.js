@@ -15,12 +15,27 @@ const basicUploadFormController = {
     const redirect = '/Uploader/complete' // <-- Use relative URI as required by the uploader
     logger.info(`DEBUG: Processing upload request - isCompare: ${isCompare}`)
     logger.info(`DEBUG: isCompare flag: ${isCompare} (from payload.isCompare: ${payload?.isCompare})`)
-    const s3Bucket = config.get('aws.s3BucketName')
+    let s3Bucket
+    try {
+      s3Bucket = config.get('aws.s3BucketName')
+      if (!s3Bucket) {
+        throw new Error('S3 bucket name not configured')
+      }
+    } catch (error) {
+      logger.error('Failed to get S3 bucket configuration:', error)
+      return h.response({ error: 'Configuration error' }).code(500)
+    }
 
-    const secureUpload = await initUpload({
-      redirect,
-      s3Bucket
-    })
+    let secureUpload
+    try {
+      secureUpload = await initUpload({
+        redirect,
+        s3Bucket
+      })
+    } catch (error) {
+      logger.error('Failed to initialize upload:', error)
+      return h.response({ error: 'Upload initialization failed' }).code(500)
+    }
     logger.info(`Secure upload response: ${JSON.stringify(secureUpload)}`)
     // The payload from initiate contains two urls:
     // uploadUrl - we will use this URL in the form we're about to render. The content of this form will be sent to
