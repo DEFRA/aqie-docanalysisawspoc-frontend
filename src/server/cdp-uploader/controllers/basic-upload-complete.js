@@ -89,9 +89,13 @@ function startSNSPolling(uploadId, requestId) {
 const baseUploadCompleteController = {
   options: {},
   handler: async (request, h) => {
-    // Check if this is a compare operation
-    const isCompare = request.query.compare === 'true'
+    // Check if this is a compare operation from session data
+    const compareData = request.yar.get('compareData')
+    const isCompare = compareData?.isCompare === true
     logger.info(`Is Compare operation: ${isCompare}`)
+    if (compareData) {
+      logger.info(`Compare data: ${JSON.stringify(compareData)}`)
+    }
 
     // The user is redirected to this page after their upload has completed, but possibly before scanning has finished.
     // Virus scanning takes about 1-2 seconds on small files up to about 10 seconds on large (100 meg) files.
@@ -252,11 +256,11 @@ const baseUploadCompleteController = {
 
             // Handle comparison logic if this is a compare operation
             let existingContent = ''
-            if (isCompare) {
-              // Get comparison data from form payload
-              const compareS3Bucket = status.form.compareS3Bucket
-              const compareS3Key = status.form.compareS3Key
-              const compareUploadId = status.form.compareUploadId
+            if (isCompare && compareData) {
+              // Get comparison data from session
+              const compareS3Bucket = compareData.s3Bucket
+              const compareS3Key = compareData.s3Key
+              const compareUploadId = compareData.uploadId
               
               logger.info(`Compare S3 Bucket: ${compareS3Bucket}`)
               logger.info(`Compare S3 Key: ${compareS3Key}`)
@@ -375,10 +379,15 @@ const baseUploadCompleteController = {
               }
               
               // Add comparison data if this is a compare operation
-              if (isCompare && status.form.compareS3Bucket && status.form.compareS3Key) {
-                uploadRequest.compareS3Bucket = status.form.compareS3Bucket
-                uploadRequest.compareS3Key = status.form.compareS3Key
-                uploadRequest.compareUploadId = status.form.compareUploadId
+              if (isCompare && compareData) {
+                uploadRequest.compareS3Bucket = compareData.s3Bucket
+                uploadRequest.compareS3Key = compareData.s3Key
+                uploadRequest.compareUploadId = compareData.uploadId
+              }
+              
+              // Clear comparison data from session after use
+              if (isCompare) {
+                request.yar.clear('compareData')
               }
 
               // Store in persistent queue

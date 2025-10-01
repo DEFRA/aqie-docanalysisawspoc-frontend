@@ -332,15 +332,19 @@ document.addEventListener('DOMContentLoaded', function() {
     compareUploadIdInput.value = uploadId;
     form.appendChild(compareUploadIdInput);
     
-    // Set form action to compare endpoint and submit through cdp-uploader
-    form.action = '/Uploader/complete?compare=true';
+    // Add compare flag to form
+    const compareFlag = document.createElement('input');
+    compareFlag.type = 'hidden';
+    compareFlag.name = 'isCompare';
+    compareFlag.value = 'true';
+    form.appendChild(compareFlag);
     
     // Show loading
     document.getElementById('compareButton').disabled = true;
     document.getElementById('submitButton').disabled = true;
     document.getElementById('loadingMessage').style.display = 'block';
     
-    // Submit form
+    // Submit form to cdp-uploader (same as Summarise)
     form.submit();
   });
 

@@ -11,6 +11,7 @@ const basicUploadFormController = {
     request.yar.clear('basic-upload')
     const { payload } = request
     const redirect = '/Uploader/complete' // <-- Use relative URI as required by the uploader
+    const isCompare = payload?.isCompare === 'true'
     const s3Bucket = config.get('aws.s3BucketName')
 
     const secureUpload = await initUpload({
@@ -30,6 +31,16 @@ const basicUploadFormController = {
     request.yar.set('analysisType', {
       analysisType: payload?.analysisType || ''
     })
+    
+    // Store comparison data in session if this is a compare operation
+    if (isCompare) {
+      request.yar.set('compareData', {
+        s3Bucket: payload?.compareS3Bucket,
+        s3Key: payload?.compareS3Key,
+        uploadId: payload?.compareUploadId,
+        isCompare: true
+      })
+    }
     logger.info(`Model: ${request.query.model || 'model1'}`)
     logger.info(`Analysis Type: ${payload?.analysisType || 'green'}`)
     logger.info(`Upload URL: ${secureUpload.uploadUrl}`)
