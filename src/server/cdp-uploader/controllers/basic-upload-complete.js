@@ -89,6 +89,10 @@ function startSNSPolling(uploadId, requestId) {
 const baseUploadCompleteController = {
   options: {},
   handler: async (request, h) => {
+    // Check if this is a compare operation
+    const isCompare = request.query.compare === 'true'
+    logger.info(`Is Compare operation: ${isCompare}`)
+
     // The user is redirected to this page after their upload has completed, but possibly before scanning has finished.
     // Virus scanning takes about 1-2 seconds on small files up to about 10 seconds on large (100 meg) files.
 
@@ -231,7 +235,7 @@ const baseUploadCompleteController = {
             }
             // Convert PDF text to a string for the API call
             //value of pdf file
-            const pdfTextContent = pdfText
+            let pdfTextContent = pdfText
               .map((page) => page.content)
               .join('\n\n')
 
@@ -245,6 +249,52 @@ const baseUploadCompleteController = {
 
             logger.info(`Size of PDF text content:- ${byteSize} bytes`)
             logger.info(`Size of PDF text content:- ${sizeInKB} KB`)
+
+            // Handle comparison logic if this is a compare operation
+            let existingContent = ''
+            if (isCompare) {
+              // Get comparison data from form payload
+              const compareS3Bucket = status.form.compareS3Bucket
+              const compareS3Key = status.form.compareS3Key
+              const compareUploadId = status.form.compareUploadId
+              
+              logger.info(`Compare S3 Bucket: ${compareS3Bucket}`)
+              logger.info(`Compare S3 Key: ${compareS3Key}`)
+              logger.info(`Compare Upload ID: ${compareUploadId}`)
+              
+              if (compareS3Bucket && compareS3Key) {
+                // Read existing document from S3
+                try {
+                  const existingDoc = await s3Client.send(
+                    new GetObjectCommand({
+                      Bucket: compareS3Bucket,
+                      Key: compareS3Key
+                    })
+                  )
+                  
+                  const streamToBuffer = async (stream) => {
+                    const chunks = []
+                    for await (const chunk of stream) {
+                      chunks.push(chunk)
+                    }
+                    return Buffer.concat(chunks)
+                  }
+                  
+                  const existingBuffer = await streamToBuffer(existingDoc.Body)
+                  
+                  // Parse existing document
+                  const existingFilepath = path.join(uploadDir, `existing_${Date.now()}.pdf`)
+                  await fs.promises.writeFile(existingFilepath, existingBuffer)
+                  const existingPdfText = await parsePdfToJson(existingFilepath)
+                  fs.unlinkSync(existingFilepath)
+                  
+                  existingContent = existingPdfText.map(page => page.content).join('\n\n')
+                  logger.info(`Existing document content length: ${existingContent.length} characters`)
+                } catch (compareError) {
+                  logger.error(`Error reading comparison document: ${compareError.message}`)
+                }
+              }
+            }
 
             try {
               const backendApiUrl = config.get('backendApiUrl')
@@ -267,9 +317,19 @@ const baseUploadCompleteController = {
                   selectedPrompt = redPrompt
               }
 
+              let userprompt = pdfTextContent
+              
+              // For comparing two documents, replace placeholders with actual content
+              if (analysisType === 'comparingTwoDocuments' && existingContent) {
+                userprompt = selectedPrompt
+                  .replace('{old_document}', existingContent)
+                  .replace('{new_document}', pdfTextContent)
+                selectedPrompt = 'Compare the two documents provided.'
+              }
+
               const requestPrompt = {
                 systemprompt: selectedPrompt,
-                userprompt: pdfTextContent
+                userprompt: userprompt
               }
 
               const backendServiceStart = Date.now()
@@ -302,9 +362,9 @@ const baseUploadCompleteController = {
               // Add to upload queue with initial processing status
               const user = request.auth.credentials.user
               const uploadRequest = {
-                id: `upload_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+                id: isCompare ? `compare_${Date.now()}_${Math.random().toString(36).substr(2, 9)}` : `upload_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
                 userId: user?.id || user?.email || 'anonymous',
-                filename: headerresponse.Metadata['encodedfilename'],
+                filename: isCompare ? `Compare: ${headerresponse.Metadata['encodedfilename']}` : headerresponse.Metadata['encodedfilename'],
                 analysisType,
                 model,
                 status: 'processing',
@@ -312,6 +372,13 @@ const baseUploadCompleteController = {
                 requestId,
                 s3Bucket,
                 s3Key
+              }
+              
+              // Add comparison data if this is a compare operation
+              if (isCompare && status.form.compareS3Bucket && status.form.compareS3Key) {
+                uploadRequest.compareS3Bucket = status.form.compareS3Bucket
+                uploadRequest.compareS3Key = status.form.compareS3Key
+                uploadRequest.compareUploadId = status.form.compareUploadId
               }
 
               // Store in persistent queue
@@ -422,166 +489,9 @@ const cdpUploaderCompleteController = {
   }
 }
 
-const cdpUploaderCompareController = {
-  options: { auth: { strategy: 'login', mode: 'required' } },
-  handler: async (request, h) => {
-    try {
-      const { payload } = request
-      const { analysisType, compareS3Bucket, compareS3Key } = payload
-      const file = payload.policyPdf
 
-      logger.info(`Compare request - Analysis Type: ${analysisType}`)
-      logger.info(`Compare request - S3 Bucket: ${compareS3Bucket}`)
-      logger.info(`Compare request - S3 Key: ${compareS3Key}`)
-      logger.info(`Compare request - File: ${file ? file.hapi.filename : 'No file'}`)
-
-      if (!file || !compareS3Bucket || !compareS3Key) {
-        logger.error('Missing required data for comparison')
-        return h.response({ success: false, error: 'Missing required data' }).code(400)
-      }
-
-      const user = request.auth.credentials.user
-      const model = 'model1'
-
-      const streamToBuffer = async (stream) => {
-        const chunks = []
-        for await (const chunk of stream) {
-          chunks.push(chunk)
-        }
-        return Buffer.concat(chunks)
-      }
-
-      // Step 1: Read existing document from S3
-      const existingDoc = await s3Client.send(
-        new GetObjectCommand({
-          Bucket: compareS3Bucket,
-          Key: compareS3Key
-        })
-      )
-      const existingBuffer = await streamToBuffer(existingDoc.Body)
-
-      // Step 2: Read new uploaded file
-      const newBuffer = await streamToBuffer(file)
-
-      // Step 3: Parse both documents
-      const uploadDir = path.join(process.cwd(), 'uploads')
-      if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir)
-
-      // Parse existing document
-      const existingFilepath = path.join(uploadDir, `existing_${Date.now()}.pdf`)
-      await fs.promises.writeFile(existingFilepath, existingBuffer)
-      const existingPdfText = await parsePdfToJson(existingFilepath)
-      fs.unlinkSync(existingFilepath)
-
-      // Parse new document
-      const newFilepath = path.join(uploadDir, `new_${Date.now()}_${file.hapi.filename}`)
-      await fs.promises.writeFile(newFilepath, newBuffer)
-      const newPdfText = await parsePdfToJson(newFilepath)
-      fs.unlinkSync(newFilepath)
-
-      // Step 4: Combine both documents for processing
-      const existingContent = existingPdfText.map(page => page.content).join('\n\n')
-      const newContent = newPdfText.map(page => page.content).join('\n\n')
-
-       const combinedContent = `Document 1:\n${existingContent}\n\nDocument 2:\n${newContent}`
-     
-      // Step 5: Call backend API (same as baseUploadCompleteController)
-      try {
-        const backendApiUrl = config.get('backendApiUrl')
-
-        let selectedPrompt
-        switch (analysisType) {
-          case 'green':
-            selectedPrompt = greenPrompt
-            break
-          case 'investment':
-            selectedPrompt = redInvestmentCommitteeBriefing
-            break
-          case 'executive':
-            selectedPrompt = executiveBriefing
-            break
-          case 'comparingTwoDocuments':
-            selectedPrompt = comparingTwoDocuments
-            break
-          default:
-            selectedPrompt = redPrompt
-        }
-
-        let userprompt = combinedContent
-        
-        // For comparing two documents, replace placeholders with actual content
-        if (analysisType === 'comparingTwoDocuments') {
-          userprompt = selectedPrompt
-            .replace('{old_document}', existingContent)
-            .replace('{new_document}', newContent)
-          selectedPrompt = 'Compare the two documents provided.'
-        }
-
-        const response = await axios.post(
-          `${backendApiUrl}/summarize`,
-          {
-            systemprompt: selectedPrompt,
-            userprompt: userprompt,
-            modelid: model
-          },
-          {
-            headers: {
-              'Content-Type': 'text/plain'
-            }
-          }
-        )
-
-        const requestId = response.data.requestId
-
-        // Step 6: Store in upload queue with both S3 locations
-        const newS3Bucket = config.get('aws.s3BucketName')
-        const newS3Key = `uploads/${Date.now()}_${file.hapi.filename}`
-
-        const uploadRequest = {
-          id: `compare_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-          userId: user?.id || user?.email || 'anonymous',
-          filename: `Compare: ${file.hapi.filename}`,
-          analysisType,
-          model,
-          status: 'processing',
-          timestamp: new Date().toISOString(),
-          requestId,
-          s3Bucket: newS3Bucket,
-          s3Key: newS3Key,
-          compareS3Bucket,
-          compareS3Key
-        }
-
-        uploadQueue.set(uploadRequest.id, uploadRequest)
-        saveQueue()
-
-        setTimeout(() => {
-          const upload = uploadQueue.get(uploadRequest.id)
-          if (upload) {
-            upload.status = 'analysing'
-            uploadQueue.set(uploadRequest.id, upload)
-            saveQueue()
-          }
-        }, 1000)
-
-        startSNSPolling(uploadRequest.id, requestId)
-
-        return h.response({ success: true, requestId }).code(200)
-
-      } catch (apiError) {
-        logger.error(`Backend API error: ${apiError.message}`)
-        return h.response({ success: false, error: apiError.message }).code(500)
-      }
-
-    } catch (error) {
-      logger.error(`Compare operation error: ${error.message}`)
-      return h.response({ success: false, error: error.message }).code(500)
-    }
-  }
-}
 
 export {
   baseUploadCompleteController,
-  cdpUploaderCompleteController,
-  cdpUploaderCompareController
+  cdpUploaderCompleteController
 }

@@ -252,51 +252,47 @@ document.addEventListener('DOMContentLoaded', function() {
     const s3Key = selectedRow.getAttribute('data-s3-key');
     const uploadId = selectedRow.getAttribute('data-upload-id');
     
-    console.log('Selected upload ID:', uploadId);
-    console.log('S3 Bucket:', s3Bucket);
-    console.log('S3 Key:', s3Key);
-    
     if (!s3Bucket || !s3Key) {
-      console.error('Selected document missing S3 information. S3 Bucket:', s3Bucket, 'S3 Key:', s3Key);
+      console.error('Selected document missing S3 information');
       return;
     }
     
-    // Create form data for comparison
-    const formData = new FormData();
-    formData.append('policyPdf', fileInput.files[0]);
-    formData.append('analysisType', analysisType);
-    formData.append('compareS3Bucket', s3Bucket);
-    formData.append('compareS3Key', s3Key);
-    formData.append('compareUploadId', uploadId);
+    // Add hidden inputs to the form for comparison data
+    const form = document.getElementById('uploadForm');
+    
+    // Remove any existing comparison inputs
+    const existingInputs = form.querySelectorAll('input[name^="compare"]');
+    existingInputs.forEach(input => input.remove());
+    
+    // Add comparison data as hidden inputs
+    const compareS3BucketInput = document.createElement('input');
+    compareS3BucketInput.type = 'hidden';
+    compareS3BucketInput.name = 'compareS3Bucket';
+    compareS3BucketInput.value = s3Bucket;
+    form.appendChild(compareS3BucketInput);
+    
+    const compareS3KeyInput = document.createElement('input');
+    compareS3KeyInput.type = 'hidden';
+    compareS3KeyInput.name = 'compareS3Key';
+    compareS3KeyInput.value = s3Key;
+    form.appendChild(compareS3KeyInput);
+    
+    const compareUploadIdInput = document.createElement('input');
+    compareUploadIdInput.type = 'hidden';
+    compareUploadIdInput.name = 'compareUploadId';
+    compareUploadIdInput.value = uploadId;
+    form.appendChild(compareUploadIdInput);
+    
+    // Set form action to compare endpoint and submit through cdp-uploader
+    form.action = '/Uploader/complete?compare=true';
     
     // Show loading
     document.getElementById('compareButton').disabled = true;
+    document.getElementById('submitButton').disabled = true;
     document.getElementById('loadingMessage').style.display = 'block';
     
-    // Submit to compare endpoint
-    fetch('/Uploader/compare', {
-      method: 'POST',
-      body: formData
-    })
-    .then(response => response.json())
-    .then(data => {
-      if (data.success) {
-        // Clear form but keep selection
-        fileInput.value = '';
-        document.getElementById('fileInfo').style.display = 'none';
-        // Refresh upload history
-        updateUploadHistory();
-      } else {
-        console.error('Comparison failed:', data.error || 'Unknown error');
-      }
-    })
-    .catch(error => {
-      console.error('Comparison error:', error);
-    })
-    .finally(() => {
-      document.getElementById('compareButton').disabled = false;
-      document.getElementById('loadingMessage').style.display = 'none';
-    });
+    // Submit form
+    form.submit();
   });
 
 
