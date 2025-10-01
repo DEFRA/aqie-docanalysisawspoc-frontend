@@ -22,6 +22,20 @@ const cdpUploader = {
           ...baseUploadCompleteController
         },
         {
+          method: 'POST',
+          path: '/Uploader/complete',
+          options: {
+            auth: { strategy: 'login', mode: 'required' },
+            payload: {
+              output: 'stream',
+              parse: true,
+              multipart: true,
+              maxBytes: 50 * 1024 * 1024
+            }
+          },
+          ...baseUploadCompleteController
+        },
+        {
           method: 'GET',
           path: '/Uploader/status',
           options: { auth: { strategy: 'login', mode: 'required' } },
