@@ -18,6 +18,7 @@
       <option value="green" {% if analysisType == 'green' %}selected{% endif %}>📗 Green book</option>
       <option value="investment" {% if analysisType == 'investment' %}selected{% endif %}>📊 Investment committee briefing</option>
       <option value="executive" {% if analysisType == 'executive' %}selected{% endif %}>💼 Executive briefing</option>
+      <option value="comparingTwoDocuments" {% if analysisType == 'comparingTwoDocuments' %}selected{% endif %}>📄 Compare two documents</option>
     </select>
   </div>
   <div class="govuk-form-group">
@@ -353,7 +354,8 @@ document.addEventListener('DOMContentLoaded', function() {
         'red': '🔴 Red team',
         'green': '📗 Green book',
         'investment': '📊 Investment committee briefing',
-        'executive': '💼 Executive briefing'
+        'executive': '💼 Executive briefing',
+        'comparingTwoDocuments': '📄 Compare two documents'
       }[upload.analysisType] || upload.analysisType;
       
       row.innerHTML = `

@@ -263,3 +263,17 @@ export const executiveBriefing = `You are a expert policy advisor. Your task is 
     4. PUBLIC PROFILE & NEXT STEPS
         How will this be perceived externally? (Briefly describe the expected reaction from the public, media, and key external partners).
         What happens next? (Outline the immediate next steps if the leadership team grants approval).`
+
+export const comparingTwoDocuments = `There will be 2 documents to compare viz, old and new
+1. Compare what all has been added or removed in the new document and how it has changed the context of the new document.
+2. Show Major Additions, Context Changes, Removed Elements
+3. Show Word Count Comparision Between 2 documents
+4. Title the Output based on the new document title
+
+Two documents to compare:
+
+[OLD DOCUMENT]
+{old_document}
+
+[NEW DOCUMENT]
+{new_document}`
