@@ -64,6 +64,7 @@ function startSNSPolling(uploadId, requestId) {
         response.data.getS3result &&
         response.data.getS3result.status === 'completed'
       ) {
+        // Only update status, preserve all other properties including filename
         upload.status = 'completed'
         uploadQueue.set(uploadId, upload)
         saveQueue()
@@ -90,7 +91,7 @@ const baseUploadCompleteController = {
   options: {},
   handler: async (request, h) => {
     logger.info('DEBUG: Complete controller started')
-    
+
     // Log all session data
     const allSessionData = {
       basicUpload: request.yar.get('basic-upload'),
@@ -99,21 +100,21 @@ const baseUploadCompleteController = {
       compareData: request.yar.get('compareData')
     }
     logger.info(`DEBUG: All session data: ${JSON.stringify(allSessionData)}`)
-    
+
     // Check if this is a compare operation from session data
     const compareData = request.yar.get('compareData')
     const isCompare = compareData?.isCompare === true
-    
+
     logger.info(`DEBUG: Is Compare operation: ${isCompare}`)
     logger.info(`DEBUG: compareData exists: ${!!compareData}`)
-    
-    
+
+
     // Store compareData in a variable that won't be affected by session clearing
     const storedCompareData = compareData ? JSON.parse(JSON.stringify(compareData)) : null
 
     // The user is redirected to this page after their upload has completed, but possibly before scanning has finished.
     // Virus scanning takes about 1-2 seconds on small files up to about 10 seconds on large (100 meg) files.
-    
+
     logger.info('DEBUG: Starting upload processing...')
 
     // To find out if the file is ready we need to call the cdp-uploader /status api with the upload id.
@@ -127,7 +128,7 @@ const baseUploadCompleteController = {
     const modelData = request.yar.get('model')
     const { statusUrl } = basicUploadData || {}
     const { model } = modelData || {}
-    
+
     logger.info(`DEBUG: Basic upload data: ${JSON.stringify(basicUploadData)}`)
     logger.info(`DEBUG: Model data: ${JSON.stringify(modelData)}`)
     logger.info(`DEBUG: Status URL from session: ${statusUrl}`)
@@ -143,11 +144,19 @@ const baseUploadCompleteController = {
     // Get analysisType from the form data returned by CDP uploader
     const analysisTypeData = request.yar.get('analysisType')
     const analysisType = status.form.analysisType || analysisTypeData?.analysisType || 'green'
-    
+
     logger.info(`DEBUG: Analysis type data from session: ${JSON.stringify(analysisTypeData)}`)
     logger.info(`DEBUG: Analysis type from form: ${status.form.analysisType}`)
     logger.info(`DEBUG: Final analysis type: ${analysisType}`)
     logger.info(`DEBUG: Status response from cdp-uploader: ${JSON.stringify(status)}`)
+    logger.info(`DEBUG: Form data from CDP uploader: ${JSON.stringify(status.form)}`)
+
+    // Check if concatenated filename was passed through CDP uploader
+    if (status.form.concatenatedFilename) {
+      logger.info(`DEBUG: Found concatenatedFilename in CDP form data: '${status.form.concatenatedFilename}'`)
+    } else {
+      logger.info(`DEBUG: No concatenatedFilename found in CDP form data`)
+    }
     // 1. Check uploadStatus. UploadStatus can either be 'pending' (i.e. file is still being scanned) or 'ready'
     if (status.uploadStatus !== 'ready') {
       // If its not ready show the holding page. The holding page shows a please wait message and auto-reloads
@@ -281,11 +290,11 @@ const baseUploadCompleteController = {
               const compareS3Bucket = storedCompareData.s3Bucket
               const compareS3Key = storedCompareData.s3Key
               const compareUploadId = storedCompareData.uploadId
-              
+
               logger.info(`Compare S3 Bucket: ${compareS3Bucket}`)
               logger.info(`Compare S3 Key: ${compareS3Key}`)
               logger.info(`Compare Upload ID: ${compareUploadId}`)
-              
+
               if (compareS3Bucket && compareS3Key) {
                 // Read existing document from S3
                 try {
@@ -295,7 +304,7 @@ const baseUploadCompleteController = {
                       Key: compareS3Key
                     })
                   )
-                  
+
                   const streamToBuffer = async (stream) => {
                     const chunks = []
                     for await (const chunk of stream) {
@@ -303,15 +312,15 @@ const baseUploadCompleteController = {
                     }
                     return Buffer.concat(chunks)
                   }
-                  
+
                   const existingBuffer = await streamToBuffer(existingDoc.Body)
-                  
+
                   // Parse existing document
                   const existingFilepath = path.join(uploadDir, `existing_${Date.now()}.pdf`)
                   await fs.promises.writeFile(existingFilepath, existingBuffer)
                   const existingPdfText = await parsePdfToJson(existingFilepath)
                   fs.unlinkSync(existingFilepath)
-                  
+
                   existingContent = existingPdfText.map(page => page.content).join('\n\n')
                   logger.info(`Existing document content length: ${existingContent.length} characters`)
                 } catch (compareError) {
@@ -342,7 +351,7 @@ const baseUploadCompleteController = {
               }
 
               let userprompt = pdfTextContent
-              
+
               // For comparing two documents, replace placeholders with actual content
               if (analysisType === 'comparingTwoDocuments' && existingContent) {
                 userprompt = selectedPrompt
@@ -385,21 +394,30 @@ const baseUploadCompleteController = {
 
               // Add to upload queue with initial processing status
               const user = request.auth.credentials.user
-              
-              // Use concatenated filename from frontend or regular filename
-              let finalFilename = headerresponse.Metadata?.['encodedfilename'] || 'unknown.pdf'
-              
-              if (isCompare && storedCompareData?.concatenatedFilename) {
-                finalFilename = storedCompareData.concatenatedFilename
-                logger.info(`DEBUG: Using concatenated filename from frontend: '${finalFilename}'`)
-              } else {
-                logger.info(`DEBUG: Using regular filename: '${finalFilename}'`)
+
+              // Use concatenated filename from CDP form data, session, or regular filename
+              let finalFilename
+
+              // Priority 1: Check if concatenated filename came through CDP uploader form data
+              if (status.form.concatenatedFilename) {
+                finalFilename = status.form.concatenatedFilename
+                logger.info(`DEBUG: Using concatenated filename from CDP form: '${finalFilename}'`)
               }
-              
+              // Priority 2: Check session data for compare operations
+              else if (isCompare && storedCompareData?.concatenatedFilename) {
+                finalFilename = storedCompareData.concatenatedFilename
+                logger.info(`DEBUG: Using concatenated filename from session: '${finalFilename}'`)
+              }
+              // Priority 3: Use regular filename from S3 metadata
+              else {
+                finalFilename = headerresponse.Metadata?.['encodedfilename'] || 'unknown.pdf'
+                logger.info(`DEBUG: Using regular filename from S3: '${finalFilename}'`)
+              }
+
               const uploadRequest = {
                 id: isCompare ? `compare_${Date.now()}_${Math.random().toString(36).substring(2, 11)}` : `upload_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`,
                 userId: user?.id || user?.email || 'anonymous',
-                filename: finalFilename || 'unknown.pdf',
+                filename: finalFilename,
                 analysisType: analysisType || 'green',
                 model: model || 'model1',
                 status: 'processing',
@@ -408,14 +426,14 @@ const baseUploadCompleteController = {
                 s3Bucket,
                 s3Key
               }
-              
+
               // Add comparison data if this is a compare operation
               if (isCompare && storedCompareData) {
                 uploadRequest.compareS3Bucket = storedCompareData.s3Bucket
                 uploadRequest.compareS3Key = storedCompareData.s3Key
                 uploadRequest.compareUploadId = storedCompareData.uploadId
               }
-              
+
               // Clear comparison data from session after use
               if (isCompare) {
                 logger.info('DEBUG: Clearing compareData from session after use')
@@ -425,7 +443,7 @@ const baseUploadCompleteController = {
               // Store in persistent queue
               uploadQueue.set(uploadRequest.id, uploadRequest)
               saveQueue()
-              
+
               logger.info(`DEBUG: Upload saved to queue with ID: ${uploadRequest.id}`)
               logger.info(`DEBUG: Upload request details: ${JSON.stringify(uploadRequest)}`)
               logger.info(`DEBUG: Queue now contains ${uploadQueue.size} items`)
@@ -434,6 +452,7 @@ const baseUploadCompleteController = {
               setTimeout(() => {
                 const upload = uploadQueue.get(uploadRequest.id)
                 if (upload) {
+                  // Only update status, preserve all other properties including filename
                   upload.status = 'analysing'
                   uploadQueue.set(uploadRequest.id, upload)
                   saveQueue()
