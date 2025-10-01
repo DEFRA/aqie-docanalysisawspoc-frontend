@@ -269,41 +269,39 @@ document.addEventListener('DOMContentLoaded', function() {
       return;
     }
     
-    if (analysisType === 'comparingTwoDocuments') {
-      const completedUploads = allUploads.filter(upload => upload.status === 'completed');
-      if (completedUploads.length === 0) {
-        showNotification('No completed documents available for comparison. Please upload and complete at least one document first.');
-        return;
-      }
-      
-      if (!selectedRow) {
-        showNotification('Please select a completed document from the table to compare with.');
-        return;
-      }
-      
-      const selectedStatus = selectedRow.querySelector('.status-badge').textContent;
-      if (selectedStatus !== 'completed') {
-        showNotification('Please select a document with "completed" status for comparison.');
-        return;
-      }
+    if (analysisType !== 'comparingTwoDocuments') {
+      showNotification('Please select "Compare two documents" analysis type to use the Compare button.');
+      return;
     }
     
-    // Get s3 data from selected row (only for comparison)
-    let s3Bucket, s3Key, uploadId, selectedFilename;
-    if (analysisType === 'comparingTwoDocuments') {
-      s3Bucket = selectedRow.getAttribute('data-s3-bucket');
-      s3Key = selectedRow.getAttribute('data-s3-key');
-      uploadId = selectedRow.getAttribute('data-upload-id');
-      selectedFilename = selectedRow.querySelector('.govuk-table__cell').textContent;
-      
-      if (!s3Bucket || !s3Key) {
-        showNotification('Selected document missing S3 information.');
-        return;
-      }
+    const completedUploads = allUploads.filter(upload => upload.status === 'completed');
+    if (completedUploads.length === 0) {
+      showNotification('No completed documents available for comparison. Please upload and complete at least one document first.');
+      return;
     }
+    
+    if (!selectedRow) {
+      showNotification('Please select a completed document from the table to compare with.');
+      return;
+    }
+    
+    const selectedStatus = selectedRow.querySelector('.status-badge').textContent;
+    if (selectedStatus !== 'completed') {
+      showNotification('Please select a document with "completed" status for comparison.');
+      return;
+    }
+    
+    // Get s3 data from selected row
+    const s3Bucket = selectedRow.getAttribute('data-s3-bucket');
+    const s3Key = selectedRow.getAttribute('data-s3-key');
+    const uploadId = selectedRow.getAttribute('data-upload-id');
+    const selectedFilename = selectedRow.querySelector('.govuk-table__cell').textContent.trim();
+    
+    console.log('Selected filename:', selectedFilename);
+    console.log('New file:', fileInput.files[0].name);
     
     if (!s3Bucket || !s3Key) {
-      console.error('Selected document missing S3 information');
+      showNotification('Selected document missing S3 information.');
       return;
     }
     
@@ -338,6 +336,13 @@ document.addEventListener('DOMContentLoaded', function() {
     selectedFilenameInput.name = 'selectedFilename';
     selectedFilenameInput.value = selectedFilename;
     form.appendChild(selectedFilenameInput);
+    
+    console.log('Form data being sent:', {
+      selectedFilename: selectedFilename,
+      newFile: fileInput.files[0].name,
+      s3Bucket: s3Bucket,
+      s3Key: s3Key
+    });
     
     // Add compare flag to form
     const compareFlag = document.createElement('input');

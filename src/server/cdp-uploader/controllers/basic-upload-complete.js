@@ -365,10 +365,18 @@ const baseUploadCompleteController = {
 
               // Add to upload queue with initial processing status
               const user = request.auth.credentials.user
+              const finalFilename = isCompare ? `${compareData.selectedFilename || 'Unknown'} vs ${headerresponse.Metadata['encodedfilename']}` : headerresponse.Metadata['encodedfilename']
+              
+              logger.info(`Creating upload request with filename: ${finalFilename}`)
+              if (isCompare) {
+                logger.info(`Selected filename: ${compareData.selectedFilename}`)
+                logger.info(`New filename: ${headerresponse.Metadata['encodedfilename']}`)
+              }
+              
               const uploadRequest = {
                 id: isCompare ? `compare_${Date.now()}_${Math.random().toString(36).substr(2, 9)}` : `upload_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
                 userId: user?.id || user?.email || 'anonymous',
-                filename: isCompare ? `${compareData.selectedFilename} vs ${headerresponse.Metadata['encodedfilename']}` : headerresponse.Metadata['encodedfilename'],
+                filename: finalFilename,
                 analysisType,
                 model,
                 status: 'processing',
