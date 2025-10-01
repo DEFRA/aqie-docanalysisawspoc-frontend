@@ -365,15 +365,16 @@ const baseUploadCompleteController = {
 
               // Add to upload queue with initial processing status
               const user = request.auth.credentials.user
-              const finalFilename = isCompare ? `${compareData.selectedFilename || 'Unknown'} vs ${headerresponse.Metadata['encodedfilename']}` : headerresponse.Metadata['encodedfilename']
+              
+              // Use concatenated filename from form data if available, otherwise create it
+              let finalFilename = headerresponse.Metadata['encodedfilename']
+              if (isCompare && compareData) {
+                finalFilename = compareData.concatenatedFilename || `${compareData.selectedFilename || 'Unknown'} vs ${headerresponse.Metadata['encodedfilename']}`
+              }
               
               logger.info(`Is Compare: ${isCompare}`)
               logger.info(`Compare Data: ${JSON.stringify(compareData)}`)
               logger.info(`Creating upload request with filename: ${finalFilename}`)
-              if (isCompare) {
-                logger.info(`Selected filename: ${compareData.selectedFilename}`)
-                logger.info(`New filename: ${headerresponse.Metadata['encodedfilename']}`)
-              }
               
               const uploadRequest = {
                 id: isCompare ? `compare_${Date.now()}_${Math.random().toString(36).substr(2, 9)}` : `upload_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
