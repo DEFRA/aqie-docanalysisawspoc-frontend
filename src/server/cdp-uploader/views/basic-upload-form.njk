@@ -279,8 +279,22 @@ document.addEventListener('DOMContentLoaded', function() {
     selectedRow.classList.add('selected');
     
     // Store selected data in localStorage
+    const filenameCell = row.querySelector('.govuk-table__cell:first-child');
+    let filename = 'Unknown';
+    
+    if (filenameCell) {
+      // Get text content and clean it
+      filename = filenameCell.textContent.trim();
+      // If still empty, try getting from innerHTML and strip HTML
+      if (!filename) {
+        filename = filenameCell.innerHTML.replace(/<[^>]*>/g, '').trim();
+      }
+    }
+    
+    console.log('Selected filename:', filename); // Debug: verify filename extraction
+    
     const selectedData = {
-      filename: row.querySelector('.govuk-table__cell:first-child').textContent.trim(),
+      filename: filename,
       s3Bucket: row.getAttribute('data-s3-bucket'),
       s3Key: row.getAttribute('data-s3-key'),
       uploadId: row.getAttribute('data-upload-id')
@@ -312,6 +326,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Store concatenated filename in localStorage for backend to use
     const concatenatedFilename = `${selectedData.filename} vs ${newFilename}`;
+    console.log('Concatenated filename:', concatenatedFilename); // Debug: verify concatenation
     localStorage.setItem('concatenatedFilename', concatenatedFilename);
     
     // Add hidden inputs to the form for comparison data
@@ -438,6 +453,8 @@ document.addEventListener('DOMContentLoaded', function() {
         <td class="govuk-table__cell">${actionCell}</td>
       `;
       
+
+      
       // Add s3 data attributes
       row.setAttribute('data-s3-bucket', upload.s3Bucket || '');
       row.setAttribute('data-s3-key', upload.s3Key || '');
@@ -454,16 +471,21 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     updatePagination();
-    updateCompareButtonState();
     
-    // Add click handlers to static rows
-    document.querySelectorAll('.selectable-row').forEach(row => {
-      row.addEventListener('click', function(e) {
-        // Don't select row if clicking on a link
-        if (e.target.tagName === 'A') return;
-        handleRowSelection(row);
+    // Restore selected row if it exists in localStorage
+    const selectedDataStr = localStorage.getItem('selectedRowData');
+    if (selectedDataStr) {
+      const selectedData = JSON.parse(selectedDataStr);
+      const rowToSelect = Array.from(tbody.querySelectorAll('.selectable-row')).find(row => {
+        return row.getAttribute('data-upload-id') === selectedData.uploadId;
       });
-    });
+      if (rowToSelect) {
+        selectedRow = rowToSelect;
+        selectedRow.classList.add('selected');
+      }
+    }
+    
+    updateCompareButtonState();
   }
   
   function updatePagination() {

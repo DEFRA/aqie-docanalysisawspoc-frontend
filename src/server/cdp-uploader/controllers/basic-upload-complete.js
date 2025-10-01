@@ -370,11 +370,8 @@ const baseUploadCompleteController = {
               let finalFilename = headerresponse.Metadata['encodedfilename']
               if (isCompare && compareData) {
                 finalFilename = compareData.concatenatedFilename || `${compareData.selectedFilename || 'Unknown'} vs ${headerresponse.Metadata['encodedfilename']}`
+                logger.info(`Final filename for upload queue: ${finalFilename}`) // Debug
               }
-              
-              logger.info(`Is Compare: ${isCompare}`)
-              logger.info(`Compare Data: ${JSON.stringify(compareData)}`)
-              logger.info(`Creating upload request with filename: ${finalFilename}`)
               
               const uploadRequest = {
                 id: isCompare ? `compare_${Date.now()}_${Math.random().toString(36).substr(2, 9)}` : `upload_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
@@ -507,9 +504,6 @@ const cdpUploaderCompleteController = {
     const userUploads = Array.from(uploadQueue.values())
       .filter((upload) => upload.userId === userId)
       .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
-    logger.info(`Total uploads in queue: ${uploadQueue.size}`)
-    logger.info(`User uploads count: ${userUploads.length}`)
-    logger.info(`User uploads: ${JSON.stringify(userUploads, null, 2)}`)
     return h.response(userUploads)
   }
 }
