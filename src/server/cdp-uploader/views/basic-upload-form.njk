@@ -233,10 +233,18 @@ document.addEventListener('DOMContentLoaded', function() {
     // Check if selected row has completed status
     let hasCompletedStatus = false;
     if (selectedRow) {
-      hasCompletedStatus = selectedRow.querySelector('.status-badge').textContent === 'completed';
+      const statusBadge = selectedRow.querySelector('.status-badge');
+      hasCompletedStatus = statusBadge && statusBadge.textContent === 'completed';
     }
     
-    compareButton.disabled = !(selectedRow && hasCompletedStatus && isCompareAnalysis);
+    const shouldEnable = selectedRow && hasCompletedStatus && isCompareAnalysis;
+    compareButton.disabled = !shouldEnable;
+    
+    console.log('DEBUG Frontend - Compare button state update:');
+    console.log('  Selected row:', !!selectedRow);
+    console.log('  Has completed status:', hasCompletedStatus);
+    console.log('  Is compare analysis:', isCompareAnalysis);
+    console.log('  Button enabled:', shouldEnable);
   }
   
   // Function to show notification banner
@@ -265,6 +273,8 @@ document.addEventListener('DOMContentLoaded', function() {
   
   // Row selection functionality
   function handleRowSelection(row) {
+    console.log('DEBUG Frontend - Row selection:', row);
+    
     // Remove selection from previously selected row
     if (selectedRow) {
       selectedRow.classList.remove('selected');
@@ -274,29 +284,53 @@ document.addEventListener('DOMContentLoaded', function() {
     selectedRow = row;
     selectedRow.classList.add('selected');
     
+    // Log selected row data
+    const filenameCell = selectedRow.querySelector('.govuk-table__cell:first-child');
+    const filename = filenameCell ? filenameCell.textContent.trim() : 'Unknown';
+    console.log('DEBUG Frontend - Selected filename:', filename);
+    
     updateCompareButtonState();
   }
   
   // Compare button functionality
   document.getElementById('compareButton').addEventListener('click', function() {
+    console.log('DEBUG Frontend - Compare button clicked');
     const fileInput = document.getElementById('policyPdf');
     
+    console.log('DEBUG Frontend - Selected row:', selectedRow);
+    console.log('DEBUG Frontend - File input:', fileInput.files[0]);
+    
     if (!selectedRow) {
+      console.log('DEBUG Frontend - No row selected');
       showNotification('Please select a completed document from the table to compare with.');
       return;
     }
     
     if (!fileInput.files[0]) {
+      console.log('DEBUG Frontend - No file selected');
       showNotification('Please select a file to upload.');
       return;
     }
     
     // Get data directly from selected row
     const filenameCell = selectedRow.querySelector('.govuk-table__cell:first-child');
-    const selectedFilename = filenameCell ? filenameCell.textContent.trim() : 'Unknown';
+    const selectedFilename = filenameCell ? filenameCell.textContent.trim() : null;
     const selectedS3Bucket = selectedRow.getAttribute('data-s3-bucket');
     const selectedS3Key = selectedRow.getAttribute('data-s3-key');
     const selectedUploadId = selectedRow.getAttribute('data-upload-id');
+    
+    console.log('DEBUG Frontend - Selected row:', selectedRow);
+    console.log('DEBUG Frontend - Filename cell:', filenameCell);
+    console.log('DEBUG Frontend - Selected filename:', selectedFilename);
+    console.log('DEBUG Frontend - Selected S3 bucket:', selectedS3Bucket);
+    console.log('DEBUG Frontend - Selected S3 key:', selectedS3Key);
+    console.log('DEBUG Frontend - Selected upload ID:', selectedUploadId);
+    
+    if (!selectedFilename) {
+      console.error('DEBUG Frontend - Failed to extract filename from selected row!');
+      showNotification('Failed to extract filename from selected document.');
+      return;
+    }
     
     // Add hidden inputs to the form for comparison data
     const form = document.getElementById('uploadForm');
@@ -330,12 +364,24 @@ document.addEventListener('DOMContentLoaded', function() {
     selectedFilenameInput.value = selectedFilename;
     form.appendChild(selectedFilenameInput);
     
+    console.log('DEBUG Frontend - Added selectedFilename input with value:', selectedFilename);
+    console.log('DEBUG Frontend - Input element:', selectedFilenameInput);
+    
     // Add compare flag to form
     const compareFlag = document.createElement('input');
     compareFlag.type = 'hidden';
     compareFlag.name = 'isCompare';
     compareFlag.value = 'true';
     form.appendChild(compareFlag);
+    
+    // Log all form data before submission
+    const formData = new FormData(form);
+    console.log('DEBUG Frontend - All form data before submission:');
+    for (let [key, value] of formData.entries()) {
+      console.log(`  ${key}: ${value}`);
+    }
+    
+    console.log('DEBUG Frontend - Form inputs added, submitting...');
     
     // Show loading
     document.getElementById('compareButton').disabled = true;

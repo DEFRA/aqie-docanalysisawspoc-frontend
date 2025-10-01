@@ -89,16 +89,35 @@ function startSNSPolling(uploadId, requestId) {
 const baseUploadCompleteController = {
   options: {},
   handler: async (request, h) => {
+    logger.info('DEBUG: Complete controller started')
+    
+    // Log all session data
+    const allSessionData = {
+      basicUpload: request.yar.get('basic-upload'),
+      model: request.yar.get('model'),
+      analysisType: request.yar.get('analysisType'),
+      compareData: request.yar.get('compareData')
+    }
+    logger.info(`DEBUG: All session data: ${JSON.stringify(allSessionData)}`)
+    
     // Check if this is a compare operation from session data
     const compareData = request.yar.get('compareData')
     const isCompare = compareData?.isCompare === true
-    logger.info(`Is Compare operation: ${isCompare}`)
+    
+    logger.info(`DEBUG: Is Compare operation: ${isCompare}`)
+    logger.info(`DEBUG: compareData exists: ${!!compareData}`)
+    
     if (compareData) {
-      logger.info(`Compare data: ${JSON.stringify(compareData)}`)
+      logger.info(`DEBUG: Compare data details: ${JSON.stringify(compareData)}`)
+      logger.info(`DEBUG: selectedFilename in compareData: ${compareData.selectedFilename}`)
+    } else {
+      logger.info('DEBUG: No compareData found in session')
     }
 
     // The user is redirected to this page after their upload has completed, but possibly before scanning has finished.
     // Virus scanning takes about 1-2 seconds on small files up to about 10 seconds on large (100 meg) files.
+    
+    logger.info('DEBUG: Starting upload processing...')
 
     // To find out if the file is ready we need to call the cdp-uploader /status api with the upload id.
     //
@@ -107,13 +126,15 @@ const baseUploadCompleteController = {
     // Option 2. If you don't have a session cache etc generate it using the query param
     //           `const statusUrl = `${config.get('cdpUploaderUrl')}/status/${request.query.uploadId}`
 
-    const { statusUrl } = request.yar.get('basic-upload')
-    const { model } = request.yar.get('model')
-    logger.info(
-      `'Status URL from session its from complete comtroller:',
-      ${statusUrl}`
-    )
-    logger.info(`Model inside the complete controller: ${model}`)
+    const basicUploadData = request.yar.get('basic-upload')
+    const modelData = request.yar.get('model')
+    const { statusUrl } = basicUploadData || {}
+    const { model } = modelData || {}
+    
+    logger.info(`DEBUG: Basic upload data: ${JSON.stringify(basicUploadData)}`)
+    logger.info(`DEBUG: Model data: ${JSON.stringify(modelData)}`)
+    logger.info(`DEBUG: Status URL from session: ${statusUrl}`)
+    logger.info(`DEBUG: Model inside the complete controller: ${model}`)
     // You'll likely want to handle the statusUrl not being set more gracefully than this!
 
     const response = await fetch(statusUrl, {
@@ -123,11 +144,13 @@ const baseUploadCompleteController = {
     const status = await response.json()
 
     // Get analysisType from the form data returned by CDP uploader
-    const analysisType = status.form.analysisType || request.yar.get('analysisType')?.analysisType || 'green'
-    logger.info(`Analysis Type inside the complete controller: ${analysisType}`)
-    logger.info(
-      `'Status response from cdp-uploader:', ${JSON.stringify(status)}`
-    )
+    const analysisTypeData = request.yar.get('analysisType')
+    const analysisType = status.form.analysisType || analysisTypeData?.analysisType || 'green'
+    
+    logger.info(`DEBUG: Analysis type data from session: ${JSON.stringify(analysisTypeData)}`)
+    logger.info(`DEBUG: Analysis type from form: ${status.form.analysisType}`)
+    logger.info(`DEBUG: Final analysis type: ${analysisType}`)
+    logger.info(`DEBUG: Status response from cdp-uploader: ${JSON.stringify(status)}`)
     // 1. Check uploadStatus. UploadStatus can either be 'pending' (i.e. file is still being scanned) or 'ready'
     if (status.uploadStatus !== 'ready') {
       // If its not ready show the holding page. The holding page shows a please wait message and auto-reloads
@@ -368,10 +391,20 @@ const baseUploadCompleteController = {
               
               // Create concatenated filename for compare operations
               let finalFilename = headerresponse.Metadata['encodedfilename']
-              if (isCompare && compareData) {
-                const selectedFilename = compareData.selectedFilename || 'Unknown'
+              
+              if (isCompare && compareData && compareData.selectedFilename) {
+                const selectedFilename = compareData.selectedFilename
                 const newFilename = headerresponse.Metadata['encodedfilename']
                 finalFilename = `${selectedFilename} vs ${newFilename}`
+                
+                logger.info(`DEBUG: Compare operation - Selected filename: ${selectedFilename}`)
+                logger.info(`DEBUG: Compare operation - New filename: ${newFilename}`)
+                logger.info(`DEBUG: Compare operation - Final concatenated filename: ${finalFilename}`)
+              } else {
+                logger.info(`DEBUG: Regular upload - Using filename: ${finalFilename}`)
+                if (isCompare) {
+                  logger.warn(`DEBUG: Compare operation but missing selectedFilename in compareData: ${JSON.stringify(compareData)}`)
+                }
               }
               
               const uploadRequest = {
@@ -396,6 +429,7 @@ const baseUploadCompleteController = {
               
               // Clear comparison data from session after use
               if (isCompare) {
+                logger.info('DEBUG: Clearing compareData from session after use')
                 request.yar.clear('compareData')
               }
 
@@ -403,8 +437,9 @@ const baseUploadCompleteController = {
               uploadQueue.set(uploadRequest.id, uploadRequest)
               saveQueue()
               
-              logger.info(`Upload saved to queue with ID: ${uploadRequest.id}`)
-              logger.info(`Queue now contains ${uploadQueue.size} items`)
+              logger.info(`DEBUG: Upload saved to queue with ID: ${uploadRequest.id}`)
+              logger.info(`DEBUG: Upload request details: ${JSON.stringify(uploadRequest)}`)
+              logger.info(`DEBUG: Queue now contains ${uploadQueue.size} items`)
 
               // Update status to analysing after API call
               setTimeout(() => {

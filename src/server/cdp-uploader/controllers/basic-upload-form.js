@@ -9,9 +9,12 @@ const basicUploadFormController = {
   handler: async (request, h) => {
     // Clear any session data.
     request.yar.clear('basic-upload')
+    logger.info('DEBUG: Cleared basic-upload session data')
     const { payload } = request
     const redirect = '/Uploader/complete' // <-- Use relative URI as required by the uploader
+    logger.info(`DEBUG: Processing upload request - isCompare: ${isCompare}`)
     const isCompare = payload?.isCompare === 'true'
+    logger.info(`DEBUG: isCompare flag: ${isCompare} (from payload.isCompare: ${payload?.isCompare})`)
     const s3Bucket = config.get('aws.s3BucketName')
 
     const secureUpload = await initUpload({
@@ -32,20 +35,39 @@ const basicUploadFormController = {
       analysisType: payload?.analysisType || ''
     })
     
+    logger.info(`DEBUG: Set analysisType in session: ${payload?.analysisType || ''}`)
+    
     // Store comparison data in session if this is a compare operation
     if (isCompare) {
-      request.yar.set('compareData', {
+      const selectedFilename = payload?.selectedFilename
+      
+      logger.info(`DEBUG: Form received compare data:`)
+      logger.info(`DEBUG: isCompare = ${isCompare}`)
+      logger.info(`DEBUG: selectedFilename = ${selectedFilename}`)
+      logger.info(`DEBUG: compareS3Bucket = ${payload?.compareS3Bucket}`)
+      logger.info(`DEBUG: compareS3Key = ${payload?.compareS3Key}`)
+      logger.info(`DEBUG: compareUploadId = ${payload?.compareUploadId}`)
+      
+      if (!selectedFilename) {
+        logger.error('DEBUG: selectedFilename is missing from payload!')
+      }
+      
+      const compareData = {
         s3Bucket: payload?.compareS3Bucket,
         s3Key: payload?.compareS3Key,
         uploadId: payload?.compareUploadId,
-        selectedFilename: payload?.selectedFilename,
+        selectedFilename: selectedFilename,
         isCompare: true
-      })
+      }
+      
+      request.yar.set('compareData', compareData)
+      logger.info(`DEBUG: Stored compareData in session: ${JSON.stringify(compareData)}`)
     }
     logger.info(`Model: ${request.query.model || 'model1'}`)
     logger.info(`Analysis Type: ${payload?.analysisType || 'green'}`)
     logger.info(`Upload URL: ${secureUpload.uploadUrl}`)
     logger.info(`Status URL: ${secureUpload.statusUrl}`)
+    logger.info(`DEBUG: Full payload received: ${JSON.stringify(payload)}`)
 
     // Get user's uploads for display
     const user = request.auth.credentials.user
