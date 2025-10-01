@@ -192,11 +192,11 @@ const baseUploadCompleteController = {
             )
             logger.info(
               'Custom ContentType:',
-              headerresponse.Metadata['contenttype']
+              headerresponse.Metadata?.['contenttype'] || 'unknown'
             )
             logger.info(
               'Encoded Filename:',
-              headerresponse.Metadata['encodedfilename']
+              headerresponse.Metadata?.['encodedfilename'] || 'unknown.pdf'
             )
             // Step 2: Convert stream to buffer
             const streamToBuffer = async (stream) => {
@@ -229,11 +229,11 @@ const baseUploadCompleteController = {
             const uploadDir = path.join(process.cwd(), 'uploads')
             if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir)
             // const filename = `${Date.now()}-${path.basename(s3Key)}`
-            const filename = `${Date.now()}-${headerresponse.Metadata['encodedfilename']}`
+            const filename = `${Date.now()}-${headerresponse.Metadata?.['encodedfilename'] || 'unknown.pdf'}`
             logger.info(
               `Original Filename from S3 Key: ${path.basename(s3Key)}`
             )
-            const encodedFilename = `${Date.now()}-${headerresponse.Metadata['encodedfilename']}`
+            const encodedFilename = `${Date.now()}-${headerresponse.Metadata?.['encodedfilename'] || 'unknown.pdf'}`
             logger.info(`Encoded Filename from Metadata: ${encodedFilename}`)
             const filepath = path.join(uploadDir, filename)
             const uploadStart = Date.now()
@@ -390,11 +390,11 @@ const baseUploadCompleteController = {
               const user = request.auth.credentials.user
               
               // Create concatenated filename for compare operations
-              let finalFilename = headerresponse.Metadata['encodedfilename']
+              let finalFilename = headerresponse.Metadata?.['encodedfilename'] || 'unknown.pdf'
               
               if (isCompare && compareData && compareData.selectedFilename) {
                 const selectedFilename = compareData.selectedFilename
-                const newFilename = headerresponse.Metadata['encodedfilename']
+                const newFilename = headerresponse.Metadata?.['encodedfilename'] || 'unknown.pdf'
                 finalFilename = `${selectedFilename} vs ${newFilename}`
                 
                 logger.info(`DEBUG: Compare operation - Selected filename: ${selectedFilename}`)
@@ -408,11 +408,11 @@ const baseUploadCompleteController = {
               }
               
               const uploadRequest = {
-                id: isCompare ? `compare_${Date.now()}_${Math.random().toString(36).substr(2, 9)}` : `upload_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+                id: isCompare ? `compare_${Date.now()}_${Math.random().toString(36).substring(2, 11)}` : `upload_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`,
                 userId: user?.id || user?.email || 'anonymous',
-                filename: finalFilename,
-                analysisType,
-                model,
+                filename: finalFilename || 'unknown.pdf',
+                analysisType: analysisType || 'green',
+                model: model || 'model1',
                 status: 'processing',
                 timestamp: new Date().toISOString(),
                 requestId,

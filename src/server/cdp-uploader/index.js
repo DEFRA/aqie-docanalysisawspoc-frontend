@@ -16,20 +16,23 @@ const cdpUploader = {
           ...basicUploadFormController
         },
         {
+          method: 'POST',
+          path: '/Uploader',
+          options: { auth: { strategy: 'login', mode: 'required' } },
+          ...basicUploadFormController
+        },
+        {
           method: 'GET',
           path: '/Uploader/complete',
           options: { auth: { strategy: 'login', mode: 'required' } },
           ...baseUploadCompleteController
         },
-
         {
           method: 'GET',
           path: '/Uploader/status',
           options: { auth: { strategy: 'login', mode: 'required' } },
           ...cdpUploaderCompleteController
-        },
-
-
+        }
       ])
     }
   }

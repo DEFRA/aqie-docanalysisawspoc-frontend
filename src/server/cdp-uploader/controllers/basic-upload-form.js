@@ -11,9 +11,9 @@ const basicUploadFormController = {
     request.yar.clear('basic-upload')
     logger.info('DEBUG: Cleared basic-upload session data')
     const { payload } = request
+    const isCompare = payload?.isCompare === 'true'
     const redirect = '/Uploader/complete' // <-- Use relative URI as required by the uploader
     logger.info(`DEBUG: Processing upload request - isCompare: ${isCompare}`)
-    const isCompare = payload?.isCompare === 'true'
     logger.info(`DEBUG: isCompare flag: ${isCompare} (from payload.isCompare: ${payload?.isCompare})`)
     const s3Bucket = config.get('aws.s3BucketName')
 
