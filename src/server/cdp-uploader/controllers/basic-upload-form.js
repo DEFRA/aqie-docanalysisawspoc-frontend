@@ -34,13 +34,11 @@ const basicUploadFormController = {
     
     // Store comparison data in session if this is a compare operation
     if (isCompare) {
-      logger.info(`Backend received - selectedFilename: ${payload?.selectedFilename}, concatenatedFilename: ${payload?.concatenatedFilename}`) // Debug
       request.yar.set('compareData', {
         s3Bucket: payload?.compareS3Bucket,
         s3Key: payload?.compareS3Key,
         uploadId: payload?.compareUploadId,
         selectedFilename: payload?.selectedFilename,
-        concatenatedFilename: payload?.concatenatedFilename,
         isCompare: true
       })
     }

@@ -366,11 +366,12 @@ const baseUploadCompleteController = {
               // Add to upload queue with initial processing status
               const user = request.auth.credentials.user
               
-              // Use concatenated filename from form data if available, otherwise create it
+              // Create concatenated filename for compare operations
               let finalFilename = headerresponse.Metadata['encodedfilename']
               if (isCompare && compareData) {
-                finalFilename = compareData.concatenatedFilename || `${compareData.selectedFilename || 'Unknown'} vs ${headerresponse.Metadata['encodedfilename']}`
-                logger.info(`Final filename for upload queue: ${finalFilename}`) // Debug
+                const selectedFilename = compareData.selectedFilename || 'Unknown'
+                const newFilename = headerresponse.Metadata['encodedfilename']
+                finalFilename = `${selectedFilename} vs ${newFilename}`
               }
               
               const uploadRequest = {

@@ -169,9 +169,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Remove the parameter from URL without page reload
     window.history.replaceState({}, document.title, window.location.pathname);
     
-    // Clear localStorage after successful upload
-    localStorage.removeItem('selectedRowData');
-    localStorage.removeItem('concatenatedFilename');
+
     
     // Show success message
     const successDiv = document.createElement('div');
@@ -230,17 +228,15 @@ document.addEventListener('DOMContentLoaded', function() {
   function updateCompareButtonState() {
     const compareButton = document.getElementById('compareButton');
     const analysisType = document.getElementById('analysisType').value;
-    const selectedDataStr = localStorage.getItem('selectedRowData');
-    const hasSelectedData = selectedDataStr !== null;
     const isCompareAnalysis = analysisType === 'comparingTwoDocuments';
     
     // Check if selected row has completed status
     let hasCompletedStatus = false;
-    if (hasSelectedData && selectedRow) {
+    if (selectedRow) {
       hasCompletedStatus = selectedRow.querySelector('.status-badge').textContent === 'completed';
     }
     
-    compareButton.disabled = !(hasSelectedData && hasCompletedStatus && isCompareAnalysis);
+    compareButton.disabled = !(selectedRow && hasCompletedStatus && isCompareAnalysis);
   }
   
   // Function to show notification banner
@@ -278,56 +274,29 @@ document.addEventListener('DOMContentLoaded', function() {
     selectedRow = row;
     selectedRow.classList.add('selected');
     
-    // Store selected data in localStorage
-    const filenameCell = row.querySelector('.govuk-table__cell:first-child');
-    let filename = 'Unknown';
-    
-    if (filenameCell) {
-      // Get text content and clean it
-      filename = filenameCell.textContent.trim();
-      // If still empty, try getting from innerHTML and strip HTML
-      if (!filename) {
-        filename = filenameCell.innerHTML.replace(/<[^>]*>/g, '').trim();
-      }
-    }
-    
-    console.log('Selected filename:', filename); // Debug: verify filename extraction
-    
-    const selectedData = {
-      filename: filename,
-      s3Bucket: row.getAttribute('data-s3-bucket'),
-      s3Key: row.getAttribute('data-s3-key'),
-      uploadId: row.getAttribute('data-upload-id')
-    };
-    localStorage.setItem('selectedRowData', JSON.stringify(selectedData));
-    
     updateCompareButtonState();
   }
   
   // Compare button functionality
   document.getElementById('compareButton').addEventListener('click', function() {
     const fileInput = document.getElementById('policyPdf');
-    const analysisType = document.getElementById('analysisType').value;
     
-    // Get selected data from localStorage
-    const selectedDataStr = localStorage.getItem('selectedRowData');
-    if (!selectedDataStr) {
+    if (!selectedRow) {
       showNotification('Please select a completed document from the table to compare with.');
       return;
     }
     
-    const selectedData = JSON.parse(selectedDataStr);
-    const newFilename = fileInput.files[0]?.name;
-    
-    if (!newFilename) {
+    if (!fileInput.files[0]) {
       showNotification('Please select a file to upload.');
       return;
     }
     
-    // Store concatenated filename in localStorage for backend to use
-    const concatenatedFilename = `${selectedData.filename} vs ${newFilename}`;
-    console.log('Concatenated filename:', concatenatedFilename); // Debug: verify concatenation
-    localStorage.setItem('concatenatedFilename', concatenatedFilename);
+    // Get data directly from selected row
+    const filenameCell = selectedRow.querySelector('.govuk-table__cell:first-child');
+    const selectedFilename = filenameCell ? filenameCell.textContent.trim() : 'Unknown';
+    const selectedS3Bucket = selectedRow.getAttribute('data-s3-bucket');
+    const selectedS3Key = selectedRow.getAttribute('data-s3-key');
+    const selectedUploadId = selectedRow.getAttribute('data-upload-id');
     
     // Add hidden inputs to the form for comparison data
     const form = document.getElementById('uploadForm');
@@ -340,32 +309,26 @@ document.addEventListener('DOMContentLoaded', function() {
     const compareS3BucketInput = document.createElement('input');
     compareS3BucketInput.type = 'hidden';
     compareS3BucketInput.name = 'compareS3Bucket';
-    compareS3BucketInput.value = selectedData.s3Bucket;
+    compareS3BucketInput.value = selectedS3Bucket;
     form.appendChild(compareS3BucketInput);
     
     const compareS3KeyInput = document.createElement('input');
     compareS3KeyInput.type = 'hidden';
     compareS3KeyInput.name = 'compareS3Key';
-    compareS3KeyInput.value = selectedData.s3Key;
+    compareS3KeyInput.value = selectedS3Key;
     form.appendChild(compareS3KeyInput);
     
     const compareUploadIdInput = document.createElement('input');
     compareUploadIdInput.type = 'hidden';
     compareUploadIdInput.name = 'compareUploadId';
-    compareUploadIdInput.value = selectedData.uploadId;
+    compareUploadIdInput.value = selectedUploadId;
     form.appendChild(compareUploadIdInput);
     
     const selectedFilenameInput = document.createElement('input');
     selectedFilenameInput.type = 'hidden';
     selectedFilenameInput.name = 'selectedFilename';
-    selectedFilenameInput.value = selectedData.filename;
+    selectedFilenameInput.value = selectedFilename;
     form.appendChild(selectedFilenameInput);
-    
-    const concatenatedFilenameInput = document.createElement('input');
-    concatenatedFilenameInput.type = 'hidden';
-    concatenatedFilenameInput.name = 'concatenatedFilename';
-    concatenatedFilenameInput.value = concatenatedFilename;
-    form.appendChild(concatenatedFilenameInput);
     
     // Add compare flag to form
     const compareFlag = document.createElement('input');
@@ -471,20 +434,6 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     updatePagination();
-    
-    // Restore selected row if it exists in localStorage
-    const selectedDataStr = localStorage.getItem('selectedRowData');
-    if (selectedDataStr) {
-      const selectedData = JSON.parse(selectedDataStr);
-      const rowToSelect = Array.from(tbody.querySelectorAll('.selectable-row')).find(row => {
-        return row.getAttribute('data-upload-id') === selectedData.uploadId;
-      });
-      if (rowToSelect) {
-        selectedRow = rowToSelect;
-        selectedRow.classList.add('selected');
-      }
-    }
-    
     updateCompareButtonState();
   }
   
