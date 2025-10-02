@@ -332,37 +332,32 @@ const baseUploadCompleteController = {
             try {
               const backendApiUrl = config.get('backendApiUrl')
 
-              let selectedPrompt
+              let systemPrompt;
+              let userPrompt = pdfTextContent;
+
               switch (analysisType) {
                 case 'green':
-                  selectedPrompt = greenPrompt
+                  systemPrompt = greenPrompt
                   break
                 case 'investment':
-                  selectedPrompt = redInvestmentCommitteeBriefing
+                  systemPrompt = redInvestmentCommitteeBriefing
                   break
                 case 'executive':
-                  selectedPrompt = executiveBriefing
+                  systemPrompt = executiveBriefing
                   break
                 case 'comparingTwoDocuments':
-                  selectedPrompt = comparingTwoDocuments
+                  systemPrompt = comparingTwoDocuments
+                    .replaceAll('{old_document}', existingContent)
+                  userPrompt = `[NEW DOCUMENT]
+                                ${pdfTextContent}`
                   break
                 default:
-                  selectedPrompt = redPrompt
+                  systemPrompt = redPrompt
               }
-
-              let userprompt = pdfTextContent
-
-              // For comparing two documents, replace placeholders with actual content
-              if (analysisType === 'comparingTwoDocuments' && existingContent) {
-                userprompt = selectedPrompt
-                  .replace('{old_document}', existingContent)
-                  .replace('{new_document}', pdfTextContent)
-                selectedPrompt = 'Compare the two documents provided.'
-              }
-
+              
               const requestPrompt = {
-                systemprompt: selectedPrompt,
-                userprompt: userprompt
+                systemprompt: systemPrompt,
+                userprompt: userPrompt
               }
 
               const backendServiceStart = Date.now()

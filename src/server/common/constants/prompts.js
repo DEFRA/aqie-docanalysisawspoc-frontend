@@ -267,13 +267,12 @@ export const executiveBriefing = `You are a expert policy advisor. Your task is 
 export const comparingTwoDocuments = `There will be 2 documents to compare viz, old and new
 1. Compare what all has been added or removed in the new document and how it has changed the context of the new document.
 2. Show Major Additions, Context Changes, Removed Elements
-3. Show Word Count Comparision Between 2 documents
-4. Title the Output based on the new document title
-
-Two documents to compare:
-
+3. While highlighting changes, explain how it was and how it is now
+4. Show Word Count Comparision Between 2 documents
+5. Title the Output based on the new document title 
+6. Give an overview of changes initially and go about the rest of the information below
+7. Please highlight if both the old and new are same document with no changes
+ 
+The Old Document is given below
 [OLD DOCUMENT]
-{old_document}
-
-[NEW DOCUMENT]
-{new_document}`
+{old_document}`
