@@ -390,23 +390,15 @@ const baseUploadCompleteController = {
               // Add to upload queue with initial processing status
               const user = request.auth.credentials.user
 
-              // Use concatenated filename from CDP form data, session, or regular filename
+              // Use concatenated filename from CDP form data or regular filename
               let finalFilename
 
-              // Priority 1: Check if concatenated filename came through CDP uploader form data
               if (status.form.concatenatedFilename) {
                 finalFilename = status.form.concatenatedFilename
-                logger.info(`DEBUG: Using concatenated filename from CDP form: '${finalFilename}'`)
-              }
-              // Priority 2: Check session data for compare operations
-              else if (isCompare && storedCompareData?.concatenatedFilename) {
-                finalFilename = storedCompareData.concatenatedFilename
-                logger.info(`DEBUG: Using concatenated filename from session: '${finalFilename}'`)
-              }
-              // Priority 3: Use regular filename from S3 metadata
-              else {
+                logger.info(`DEBUG: Using concatenated filename from form: '${finalFilename}'`)
+              } else {
                 finalFilename = headerresponse.Metadata?.['encodedfilename'] || 'unknown.pdf'
-                logger.info(`DEBUG: Using regular filename from S3: '${finalFilename}'`)
+                logger.info(`DEBUG: Using regular filename: '${finalFilename}'`)
               }
 
               const uploadRequest = {
@@ -423,10 +415,10 @@ const baseUploadCompleteController = {
               }
 
               // Add comparison data if this is a compare operation
-              if (isCompare && storedCompareData) {
-                uploadRequest.compareS3Bucket = storedCompareData.s3Bucket
-                uploadRequest.compareS3Key = storedCompareData.s3Key
-                uploadRequest.compareUploadId = storedCompareData.uploadId
+              if (isCompare) {
+                uploadRequest.compareS3Bucket = status.form.compareS3Bucket || ''
+                uploadRequest.compareS3Key = status.form.compareS3Key || ''
+                uploadRequest.compareUploadId = status.form.compareUploadId || ''
               }
 
               // Clear comparison data from session after use
