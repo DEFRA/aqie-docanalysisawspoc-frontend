@@ -285,15 +285,17 @@ const baseUploadCompleteController = {
 
             // Handle comparison logic if this is a compare operation
             let existingContent = ''
-            if (isCompare && storedCompareData) {
-              // Get comparison data from stored session data
-              const compareS3Bucket = storedCompareData.s3Bucket
-              const compareS3Key = storedCompareData.s3Key
-              const compareUploadId = storedCompareData.uploadId
+            if (isCompare) {
+              // Get comparison data from CDP form data
+              const compareS3Bucket = status.form.compareS3Bucket
+              const compareS3Key = status.form.compareS3Key
 
-              logger.info(`Compare S3 Bucket: ${compareS3Bucket}`)
-              logger.info(`Compare S3 Key: ${compareS3Key}`)
-              logger.info(`Compare Upload ID: ${compareUploadId}`)
+              logger.info(`Compare S3 Bucket from form: ${compareS3Bucket}`)
+              logger.info(`Compare S3 Key from form: ${compareS3Key}`)
+              
+              if (!compareS3Bucket || !compareS3Key) {
+                logger.error('DEBUG: Missing comparison S3 data from form - cannot read existing document')
+              }
 
               if (compareS3Bucket && compareS3Key) {
                 // Read existing document from S3
