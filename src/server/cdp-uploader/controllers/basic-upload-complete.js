@@ -101,9 +101,9 @@ const baseUploadCompleteController = {
     }
     logger.info(`DEBUG: All session data: ${JSON.stringify(allSessionData)}`)
 
-    // Check if this is a compare operation from session data
+    // Check if this is a compare operation (will be updated from form data after status is fetched)
     const compareData = request.yar.get('compareData')
-    const isCompare = compareData?.isCompare === true
+    let isCompare = false
 
     logger.info(`DEBUG: Is Compare operation: ${isCompare}`)
     logger.info(`DEBUG: compareData exists: ${!!compareData}`)
@@ -151,12 +151,23 @@ const baseUploadCompleteController = {
     logger.info(`DEBUG: Status response from cdp-uploader: ${JSON.stringify(status)}`)
     logger.info(`DEBUG: Form data from CDP uploader: ${JSON.stringify(status.form)}`)
 
+    // Check if this is a compare operation from form data
+    if (status.form.isCompare === 'true') {
+      isCompare = true
+      logger.info('DEBUG: Compare operation detected from form data')
+    }
+    
     // Check if concatenated filename was passed through CDP uploader
     if (status.form.concatenatedFilename) {
       logger.info(`DEBUG: Found concatenatedFilename in CDP form data: '${status.form.concatenatedFilename}'`)
     } else {
       logger.info(`DEBUG: No concatenatedFilename found in CDP form data`)
     }
+    
+    // Debug comparison data from form
+    logger.info(`DEBUG: isCompare from form: '${status.form.isCompare || 'EMPTY'}'`)
+    logger.info(`DEBUG: compareS3Bucket from form: '${status.form.compareS3Bucket || 'EMPTY'}'`)
+    logger.info(`DEBUG: compareS3Key from form: '${status.form.compareS3Key || 'EMPTY'}'`)
     // 1. Check uploadStatus. UploadStatus can either be 'pending' (i.e. file is still being scanned) or 'ready'
     if (status.uploadStatus !== 'ready') {
       // If its not ready show the holding page. The holding page shows a please wait message and auto-reloads
