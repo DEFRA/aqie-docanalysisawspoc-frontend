@@ -232,18 +232,25 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Check if selected row has completed status
     let hasCompletedStatus = false;
+    let selectedRowIsNotCompare = true;
     if (selectedRow) {
       const statusBadge = selectedRow.querySelector('.status-badge');
       hasCompletedStatus = statusBadge && statusBadge.textContent === 'completed';
+      
+      // Check if selected row's analysis type is NOT "comparingTwoDocuments"
+      const analysisTypeCell = selectedRow.querySelector('.govuk-table__cell:nth-child(2)');
+      const selectedRowAnalysisType = analysisTypeCell ? analysisTypeCell.textContent.trim() : '';
+      selectedRowIsNotCompare = !selectedRowAnalysisType.includes('Compare two documents');
     }
     
-    const shouldEnable = selectedRow && hasCompletedStatus && isCompareAnalysis;
+    const shouldEnable = selectedRow && hasCompletedStatus && isCompareAnalysis && selectedRowIsNotCompare;
     compareButton.disabled = !shouldEnable;
     
     console.log('DEBUG Frontend - Compare button state update:');
     console.log('  Selected row:', !!selectedRow);
     console.log('  Has completed status:', hasCompletedStatus);
     console.log('  Is compare analysis:', isCompareAnalysis);
+    console.log('  Selected row is not compare:', selectedRowIsNotCompare);
     console.log('  Button enabled:', shouldEnable);
   }
   
