@@ -191,28 +191,33 @@ function exportToExcel() {
   // Apply styling with color coding
   const range = XLSX.utils.decode_range(ws['!ref'] || 'A1');
   
-  // First pass: detect colors from original content
-  const cellColors = {};
-  Array.from(content.querySelectorAll('table td, table th')).forEach((cell, index) => {
-    const originalText = cell.innerText;
-    if (originalText.includes('🟢')) cellColors[index] = 'C8E6C9';
-    else if (originalText.includes('🟠')) cellColors[index] = 'FFE0B2';
-    else if (originalText.includes('🔴')) cellColors[index] = 'FFCDD2';
-  });
-  
-  let cellIndex = 0;
   for (let R = range.s.r; R <= range.e.r; ++R) {
     for (let C = range.s.c; C <= range.e.c; ++C) {
       const cell_address = XLSX.utils.encode_cell({c: C, r: R});
       if (!ws[cell_address]) continue;
       
+      const cellValue = ws[cell_address].v || '';
       const isHeader = R === 0 || (data[R] && data[R].length > 1 && R > 0 && data[R-1] && data[R-1][0] === '');
       let fillColor = 'FFFFFF';
       
       if (isHeader) {
         fillColor = 'E8F4FD';
-      } else if (cellColors[cellIndex]) {
-        fillColor = cellColors[cellIndex];
+      } else {
+        // Check original content for emoji colors
+        const tables = content.querySelectorAll('table');
+        for (let table of tables) {
+          const cells = table.querySelectorAll('td, th');
+          for (let cell of cells) {
+            const originalText = cell.innerText;
+            const cleanText = originalText.replace(/🟢|🟠|🔴/g, '').trim();
+            if (cleanText === cellValue) {
+              if (originalText.includes('🟢')) fillColor = 'C8E6C9';
+              else if (originalText.includes('🟠')) fillColor = 'FFE0B2';
+              else if (originalText.includes('🔴')) fillColor = 'FFCDD2';
+              break;
+            }
+          }
+        }
       }
       
       ws[cell_address].s = {
@@ -226,8 +231,6 @@ function exportToExcel() {
           right: { style: 'thin' }
         }
       };
-      
-      if (data[R] && data[R][C]) cellIndex++;
     }
   }
   
