@@ -22,6 +22,9 @@ export default {
   entry: {
     application: {
       import: ['./javascripts/application.js', './stylesheets/application.scss']
+    },
+    exports: {
+      import: './javascripts/exports.js'
     }
   },
   experiments: {

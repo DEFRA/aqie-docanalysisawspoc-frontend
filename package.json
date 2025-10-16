@@ -57,6 +57,8 @@
     "cssnano": "^5.1.0",
     "cssnano-preset-default": "^7.0.7",
     "date-fns": "^4.1.0",
+    "docx": "^9.5.1",
+    "file-saver": "^2.0.5",
     "fs-extra": "^11.3.0",
     "global-agent": "^3.0.0",
     "govuk-frontend": "^5.11.0",
@@ -77,7 +79,8 @@
     "pino": "^9.7.0",
     "pino-pretty": "^13.0.0",
     "rimraf": "^6.0.1",
-    "undici": "^7.10.0"
+    "undici": "^7.10.0",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@babel/cli": "7.27.2",

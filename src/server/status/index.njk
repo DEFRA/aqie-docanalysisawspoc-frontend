@@ -4,6 +4,7 @@
 
 {% block content %}
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script type="module" src="{{ assetPath('exports.js') }}"></script>
 <a href="/Uploader" class="govuk-back-link no-print">Back to Upload</a>
 
 <h1 class="govuk-heading-m no-print">Document Analysis Status</h1>
@@ -12,7 +13,11 @@
 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1em;">
   <h2 class="govuk-heading-m" style="margin: 0;">Analysis Results</h2>
   {% if status == 'completed' %}
-  <button id="exportPdfBtn" class="govuk-button no-print" style="background-color: #00703c; border-color: #00703c;" onclick="exportToPdf()">Export to PDF</button>
+  <div style="display: flex; gap: 10px;">
+    <button id="exportPdfBtn" class="govuk-button no-print" style="background-color: #00703c; border-color: #00703c;" onclick="exportToPdf()">Export to PDF</button>
+    <button id="exportExcelBtn" class="govuk-button no-print" style="background-color: #1d70b8; border-color: #1d70b8;" onclick="exportToExcel()">Export to Excel</button>
+    <button id="exportWordBtn" class="govuk-button no-print" style="background-color: #d4351c; border-color: #d4351c;" onclick="exportToWord()">Export to Word</button>
+  </div>
   {% endif %}
 </div>
 <div id="markdownContent" class="govuk-body markdown-content" style="margin-top: 1em; border: none;">
@@ -116,6 +121,8 @@ function exportToPdf() {
     document.head.removeChild(style);
   }, 1000);
 }
+
+
 </script>
 
 {% endblock %}
