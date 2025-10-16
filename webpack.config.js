@@ -22,9 +22,6 @@ export default {
   entry: {
     application: {
       import: ['./javascripts/application.js', './stylesheets/application.scss']
-    },
-    exports: {
-      import: './javascripts/exports.js'
     }
   },
   experiments: {
@@ -177,6 +174,18 @@ export default {
         {
           from: path.join(govukFrontendPath, 'dist/govuk/assets/rebrand'),
           to: 'assets'
+        },
+        {
+          from: 'node_modules/xlsx/dist/xlsx.full.min.js',
+          to: 'libs/xlsx.js'
+        },
+        {
+          from: 'node_modules/docx/build/index.js',
+          to: 'libs/docx.js'
+        },
+        {
+          from: 'node_modules/file-saver/dist/FileSaver.min.js',
+          to: 'libs/filesaver.js'
         }
       ]
     })

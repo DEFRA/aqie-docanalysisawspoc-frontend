@@ -4,7 +4,9 @@
 
 {% block content %}
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-<script type="module" src="{{ assetPath('exports.js') }}"></script>
+<script src="/public/libs/xlsx.js"></script>
+<script src="/public/libs/docx.js"></script>
+<script src="/public/libs/filesaver.js"></script>
 <a href="/Uploader" class="govuk-back-link no-print">Back to Upload</a>
 
 <h1 class="govuk-heading-m no-print">Document Analysis Status</h1>
@@ -123,6 +125,68 @@ function exportToPdf() {
 }
 
 
+
+function exportToExcel() {
+  const wb = XLSX.utils.book_new();
+  const content = document.getElementById('markdownRenderer');
+  
+  const tables = content.querySelectorAll('table');
+  
+  if (tables.length > 0) {
+    tables.forEach((table, index) => {
+      const ws = XLSX.utils.table_to_sheet(table);
+      const sheetName = `Table_${index + 1}`;
+      XLSX.utils.book_append_sheet(wb, ws, sheetName);
+    });
+  } else {
+    const textContent = content.innerText;
+    const ws = XLSX.utils.aoa_to_sheet([['Analysis Results'], [textContent]]);
+    XLSX.utils.book_append_sheet(wb, ws, 'Analysis');
+  }
+  
+  const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+  const filename = `document-analysis-${timestamp}.xlsx`;
+  
+  XLSX.writeFile(wb, filename);
+}
+
+function exportToWord() {
+  const content = document.getElementById('markdownRenderer');
+  const textContent = content.innerText;
+  
+  const doc = new docx.Document({
+    sections: [{
+      properties: {},
+      children: [
+        new docx.Paragraph({
+          children: [
+            new docx.TextRun({
+              text: "Document Analysis Results",
+              bold: true,
+              size: 32
+            })
+          ],
+          spacing: { after: 400 }
+        }),
+        new docx.Paragraph({
+          children: [
+            new docx.TextRun({
+              text: textContent,
+              size: 24
+            })
+          ]
+        })
+      ]
+    }]
+  });
+  
+  const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+  const filename = `document-analysis-${timestamp}.docx`;
+  
+  docx.Packer.toBlob(doc).then(blob => {
+    saveAs(blob, filename);
+  });
+}
 </script>
 
 {% endblock %}
