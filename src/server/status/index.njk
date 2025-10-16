@@ -155,9 +155,18 @@ function exportToExcel() {
           // Map cell position to color using actual Excel row/column
           const excelRow = tableStartRow + tableRowIndex;
           const cellKey = `${excelRow}_${cellIndex}`;
-          if (originalText.includes('🟢')) cellColorMap.set(cellKey, 'C8E6C9');
-          else if (originalText.includes('🟠')) cellColorMap.set(cellKey, 'FFE0B2');
-          else if (originalText.includes('🔴')) cellColorMap.set(cellKey, 'FFCDD2');
+          
+          // Handle cells that contain only emojis (like Rating column)
+          if (originalText.includes('🟢')) {
+            cellColorMap.set(cellKey, 'C8E6C9');
+            if (!cleanText) cleanText = 'Green';
+          } else if (originalText.includes('🟠')) {
+            cellColorMap.set(cellKey, 'FFE0B2');
+            if (!cleanText) cleanText = 'Amber';
+          } else if (originalText.includes('🔴')) {
+            cellColorMap.set(cellKey, 'FFCDD2');
+            if (!cleanText) cleanText = 'Red';
+          }
           
           rowData.push(cleanText);
         });
