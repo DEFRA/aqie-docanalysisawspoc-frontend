@@ -132,21 +132,37 @@ function exportToExcel() {
   const data = [];
   let rowIndex = 0;
   
-  function walkElements(element) {
+  function processElement(element) {
     if (element.tagName === 'TABLE') {
-      // Add empty row before table
-      data[rowIndex++] = [''];
-      Array.from(element.rows).forEach(tr => {
+      // Add table title if previous element was a heading
+      const prevElement = element.previousElementSibling;
+      if (prevElement && (prevElement.tagName === 'H1' || prevElement.tagName === 'H2' || prevElement.tagName === 'H3')) {
+        data[rowIndex++] = [prevElement.innerText.trim()];
+        data[rowIndex++] = [''];
+      }
+      
+      // Process table rows
+      Array.from(element.rows).forEach((tr, index) => {
         const rowData = [];
         Array.from(tr.cells).forEach(cell => {
-          rowData.push(cell.innerText);
+          let text = cell.innerText.trim();
+          // Remove emoji icons for cleaner Excel output
+          text = text.replace(/🟢|🟠|🔴/g, '').trim();
+          rowData.push(text);
         });
         data[rowIndex++] = rowData;
       });
-      // Add empty row after table
       data[rowIndex++] = [''];
-    } else if (element.tagName === 'H1' || element.tagName === 'H2' || element.tagName === 'H3' || 
-               element.tagName === 'P' || element.tagName === 'DIV') {
+    } else if (element.tagName === 'H1' || element.tagName === 'H2' || element.tagName === 'H3') {
+      // Only add heading if not followed by a table (table will handle it)
+      const nextElement = element.nextElementSibling;
+      if (!nextElement || nextElement.tagName !== 'TABLE') {
+        const text = element.innerText.trim();
+        if (text) {
+          data[rowIndex++] = [text];
+        }
+      }
+    } else if (element.tagName === 'P') {
       const text = element.innerText.trim();
       if (text) {
         data[rowIndex++] = [text];
@@ -158,37 +174,51 @@ function exportToExcel() {
           data[rowIndex++] = ['• ' + text];
         }
       });
-    } else {
-      Array.from(element.children).forEach(child => walkElements(child));
     }
   }
   
-  walkElements(content);
+  // Process direct children to maintain structure
+  Array.from(content.children).forEach(child => {
+    processElement(child);
+  });
   
   const ws = XLSX.utils.aoa_to_sheet(data);
   
-  // Set column widths
-  ws['!cols'] = [{ wch: 50 }, { wch: 30 }, { wch: 30 }, { wch: 30 }];
+  // Auto-size columns based on content
+  const maxCols = Math.max(...data.map(row => row.length));
+  ws['!cols'] = Array(maxCols).fill(0).map((_, i) => ({ wch: i === 0 ? 40 : 25 }));
   
+  // Apply styling with color coding
   const range = XLSX.utils.decode_range(ws['!ref'] || 'A1');
+  
+  // First pass: detect colors from original content
+  const cellColors = {};
+  Array.from(content.querySelectorAll('table td, table th')).forEach((cell, index) => {
+    const originalText = cell.innerText;
+    if (originalText.includes('🟢')) cellColors[index] = 'C8E6C9';
+    else if (originalText.includes('🟠')) cellColors[index] = 'FFE0B2';
+    else if (originalText.includes('🔴')) cellColors[index] = 'FFCDD2';
+  });
+  
+  let cellIndex = 0;
   for (let R = range.s.r; R <= range.e.r; ++R) {
     for (let C = range.s.c; C <= range.e.c; ++C) {
       const cell_address = XLSX.utils.encode_cell({c: C, r: R});
       if (!ws[cell_address]) continue;
       
-      const cellValue = ws[cell_address].v || '';
+      const isHeader = R === 0 || (data[R] && data[R].length > 1 && R > 0 && data[R-1] && data[R-1][0] === '');
       let fillColor = 'FFFFFF';
       
-      if (cellValue.includes('🟢')) fillColor = 'E8F5E8';
-      else if (cellValue.includes('🟠')) fillColor = 'FFF3E0';
-      else if (cellValue.includes('🔴')) fillColor = 'FFEBEE';
+      if (isHeader) {
+        fillColor = 'E8F4FD';
+      } else if (cellColors[cellIndex]) {
+        fillColor = cellColors[cellIndex];
+      }
       
       ws[cell_address].s = {
-        font: { 
-          bold: cellValue.includes('🟢') || cellValue.includes('🟠') || cellValue.includes('🔴')
-        },
-        fill: { fgColor: { rgb: fillColor } },
+        font: { bold: isHeader },
         alignment: { wrapText: true, vertical: 'top' },
+        fill: { fgColor: { rgb: fillColor } },
         border: {
           top: { style: 'thin' },
           bottom: { style: 'thin' },
@@ -196,6 +226,8 @@ function exportToExcel() {
           right: { style: 'thin' }
         }
       };
+      
+      if (data[R] && data[R][C]) cellIndex++;
     }
   }
   
