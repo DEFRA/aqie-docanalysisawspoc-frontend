@@ -134,10 +134,17 @@ function exportToExcel() {
   
   function walkElements(element) {
     if (element.tagName === 'TABLE') {
+      // Add empty row before table
+      data[rowIndex++] = [''];
       Array.from(element.rows).forEach(tr => {
-        const rowData = Array.from(tr.cells).map(cell => cell.innerText);
+        const rowData = [];
+        Array.from(tr.cells).forEach(cell => {
+          rowData.push(cell.innerText);
+        });
         data[rowIndex++] = rowData;
       });
+      // Add empty row after table
+      data[rowIndex++] = [''];
     } else if (element.tagName === 'H1' || element.tagName === 'H2' || element.tagName === 'H3' || 
                element.tagName === 'P' || element.tagName === 'DIV') {
       const text = element.innerText.trim();
@@ -148,7 +155,7 @@ function exportToExcel() {
       Array.from(element.children).forEach(li => {
         const text = li.innerText.trim();
         if (text) {
-          data[rowIndex++] = [text];
+          data[rowIndex++] = ['• ' + text];
         }
       });
     } else {
@@ -160,6 +167,9 @@ function exportToExcel() {
   
   const ws = XLSX.utils.aoa_to_sheet(data);
   
+  // Set column widths
+  ws['!cols'] = [{ wch: 50 }, { wch: 30 }, { wch: 30 }, { wch: 30 }];
+  
   const range = XLSX.utils.decode_range(ws['!ref'] || 'A1');
   for (let R = range.s.r; R <= range.e.r; ++R) {
     for (let C = range.s.c; C <= range.e.c; ++C) {
@@ -167,18 +177,24 @@ function exportToExcel() {
       if (!ws[cell_address]) continue;
       
       const cellValue = ws[cell_address].v || '';
-      let fontColor = '000000';
+      let fillColor = 'FFFFFF';
       
-      if (cellValue.includes('🟢')) fontColor = '00AA00';
-      else if (cellValue.includes('🟠')) fontColor = 'FF8800';
-      else if (cellValue.includes('🔴')) fontColor = 'FF0000';
+      if (cellValue.includes('🟢')) fillColor = 'E8F5E8';
+      else if (cellValue.includes('🟠')) fillColor = 'FFF3E0';
+      else if (cellValue.includes('🔴')) fillColor = 'FFEBEE';
       
       ws[cell_address].s = {
         font: { 
-          color: { rgb: fontColor },
           bold: cellValue.includes('🟢') || cellValue.includes('🟠') || cellValue.includes('🔴')
         },
-        alignment: { wrapText: true, vertical: 'top' }
+        fill: { fgColor: { rgb: fillColor } },
+        alignment: { wrapText: true, vertical: 'top' },
+        border: {
+          top: { style: 'thin' },
+          bottom: { style: 'thin' },
+          left: { style: 'thin' },
+          right: { style: 'thin' }
+        }
       };
     }
   }
