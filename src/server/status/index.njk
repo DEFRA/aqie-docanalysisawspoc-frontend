@@ -130,6 +130,7 @@ function exportToExcel() {
   const wb = XLSX.utils.book_new();
   const content = document.getElementById('markdownRenderer');
   const data = [];
+  const cellColorMap = new Map();
   let rowIndex = 0;
   
   function processElement(element) {
@@ -141,14 +142,24 @@ function exportToExcel() {
         data[rowIndex++] = [''];
       }
       
-      // Process table rows
-      Array.from(element.rows).forEach((tr, index) => {
+      // Store the starting row for this table
+      const tableStartRow = rowIndex;
+      
+      // Process table rows and map colors
+      Array.from(element.rows).forEach((tr, tableRowIndex) => {
         const rowData = [];
-        Array.from(tr.cells).forEach(cell => {
-          let text = cell.innerText.trim();
-          // Remove emoji icons for cleaner Excel output
-          text = text.replace(/🟢|🟠|🔴/g, '').trim();
-          rowData.push(text);
+        Array.from(tr.cells).forEach((cell, cellIndex) => {
+          const originalText = cell.innerText.trim();
+          let cleanText = originalText.replace(/🟢|🟠|🔴/g, '').trim();
+          
+          // Map cell position to color using actual Excel row/column
+          const excelRow = tableStartRow + tableRowIndex;
+          const cellKey = `${excelRow}_${cellIndex}`;
+          if (originalText.includes('🟢')) cellColorMap.set(cellKey, 'C8E6C9');
+          else if (originalText.includes('🟠')) cellColorMap.set(cellKey, 'FFE0B2');
+          else if (originalText.includes('🔴')) cellColorMap.set(cellKey, 'FFCDD2');
+          
+          rowData.push(cleanText);
         });
         data[rowIndex++] = rowData;
       });
@@ -174,6 +185,12 @@ function exportToExcel() {
           data[rowIndex++] = ['• ' + text];
         }
       });
+    } else if (element.tagName === 'DIV' || element.tagName === 'SPAN' || element.tagName === 'STRONG' || element.tagName === 'EM') {
+      // Handle other text containers
+      const text = element.innerText.trim();
+      if (text && !element.querySelector('table, h1, h2, h3, p, ul, ol')) {
+        data[rowIndex++] = [text];
+      }
     }
   }
   
@@ -196,27 +213,16 @@ function exportToExcel() {
       const cell_address = XLSX.utils.encode_cell({c: C, r: R});
       if (!ws[cell_address]) continue;
       
-      const cellValue = ws[cell_address].v || '';
       const isHeader = R === 0 || (data[R] && data[R].length > 1 && R > 0 && data[R-1] && data[R-1][0] === '');
       let fillColor = 'FFFFFF';
       
       if (isHeader) {
         fillColor = 'E8F4FD';
       } else {
-        // Check original content for emoji colors
-        const tables = content.querySelectorAll('table');
-        for (let table of tables) {
-          const cells = table.querySelectorAll('td, th');
-          for (let cell of cells) {
-            const originalText = cell.innerText;
-            const cleanText = originalText.replace(/🟢|🟠|🔴/g, '').trim();
-            if (cleanText === cellValue) {
-              if (originalText.includes('🟢')) fillColor = 'C8E6C9';
-              else if (originalText.includes('🟠')) fillColor = 'FFE0B2';
-              else if (originalText.includes('🔴')) fillColor = 'FFCDD2';
-              break;
-            }
-          }
+        // Check if this cell has a mapped color
+        const cellKey = `${R}_${C}`;
+        if (cellColorMap.has(cellKey)) {
+          fillColor = cellColorMap.get(cellKey);
         }
       }
       
