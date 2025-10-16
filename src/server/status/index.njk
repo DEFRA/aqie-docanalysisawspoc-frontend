@@ -150,25 +150,24 @@ function exportToExcel() {
         const rowData = [];
         Array.from(tr.cells).forEach((cell, cellIndex) => {
           const originalText = cell.innerText.trim();
-          let cleanText = originalText.replace(/🟢|🟠|🔴/g, '').trim();
           
           // Map cell position to color using actual Excel row/column
           const excelRow = tableStartRow + tableRowIndex;
           const cellKey = `${excelRow}_${cellIndex}`;
           
-          // Handle cells that contain only emojis (like Rating column)
+          // Keep emojis and apply background colors
           if (originalText.includes('🟢')) {
             cellColorMap.set(cellKey, 'C8E6C9');
-            if (!cleanText) cleanText = 'Green';
+            console.log('Green emoji found:', originalText);
           } else if (originalText.includes('🟠')) {
             cellColorMap.set(cellKey, 'FFE0B2');
-            if (!cleanText) cleanText = 'Amber';
+            console.log('Orange emoji found:', originalText);
           } else if (originalText.includes('🔴')) {
             cellColorMap.set(cellKey, 'FFCDD2');
-            if (!cleanText) cleanText = 'Red';
+            console.log('Red emoji found:', originalText);
           }
           
-          rowData.push(cleanText);
+          rowData.push(originalText);
         });
         data[rowIndex++] = rowData;
       });
