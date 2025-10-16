@@ -176,15 +176,15 @@ export default {
           to: 'assets'
         },
         {
-          from: 'node_modules/xlsx/dist/xlsx.full.min.js',
+          from: path.join(dirname, 'node_modules/xlsx/dist/xlsx.full.min.js'),
           to: 'libs/xlsx.js'
         },
         {
-          from: 'node_modules/docx/build/index.js',
+          from: path.join(dirname, 'node_modules/docx/dist/index.umd.cjs'),
           to: 'libs/docx.js'
         },
         {
-          from: 'node_modules/file-saver/dist/FileSaver.min.js',
+          from: path.join(dirname, 'node_modules/file-saver/dist/FileSaver.min.js'),
           to: 'libs/filesaver.js'
         }
       ]
