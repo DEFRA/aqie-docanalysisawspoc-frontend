@@ -129,20 +129,22 @@ function exportToPdf() {
 function exportToExcel() {
   const wb = XLSX.utils.book_new();
   const content = document.getElementById('markdownRenderer');
+  const ws = XLSX.utils.table_to_sheet(content, {raw: true});
   
-  const tables = content.querySelectorAll('table');
-  
-  if (tables.length > 0) {
-    tables.forEach((table, index) => {
-      const ws = XLSX.utils.table_to_sheet(table);
-      const sheetName = `Table_${index + 1}`;
-      XLSX.utils.book_append_sheet(wb, ws, sheetName);
-    });
-  } else {
-    const textContent = content.innerText;
-    const ws = XLSX.utils.aoa_to_sheet([['Analysis Results'], [textContent]]);
-    XLSX.utils.book_append_sheet(wb, ws, 'Analysis');
+  // Preserve colors and formatting
+  const range = XLSX.utils.decode_range(ws['!ref']);
+  for (let R = range.s.r; R <= range.e.r; ++R) {
+    for (let C = range.s.c; C <= range.e.c; ++C) {
+      const cell_address = XLSX.utils.encode_cell({c: C, r: R});
+      if (!ws[cell_address]) continue;
+      ws[cell_address].s = {
+        font: { color: { rgb: "000000" } },
+        fill: { fgColor: { rgb: "FFFFFF" } }
+      };
+    }
   }
+  
+  XLSX.utils.book_append_sheet(wb, ws, 'Analysis Results');
   
   const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
   const filename = `document-analysis-${timestamp}.xlsx`;
@@ -152,33 +154,36 @@ function exportToExcel() {
 
 function exportToWord() {
   const content = document.getElementById('markdownRenderer');
-  const textContent = content.innerText;
+  const children = [];
   
-  const doc = new docx.Document({
-    sections: [{
-      properties: {},
-      children: [
-        new docx.Paragraph({
-          children: [
-            new docx.TextRun({
-              text: "Document Analysis Results",
-              bold: true,
-              size: 32
+  // Add title
+  children.push(new docx.Paragraph({
+    children: [new docx.TextRun({ text: "Document Analysis Results", bold: true, size: 32 })],
+    spacing: { after: 400 }
+  }));
+  
+  // Process all content including tables
+  const elements = content.children;
+  for (let element of elements) {
+    if (element.tagName === 'TABLE') {
+      const rows = Array.from(element.rows).map(row => 
+        new docx.TableRow({
+          children: Array.from(row.cells).map(cell => 
+            new docx.TableCell({
+              children: [new docx.Paragraph({ children: [new docx.TextRun(cell.innerText)] })]
             })
-          ],
-          spacing: { after: 400 }
-        }),
-        new docx.Paragraph({
-          children: [
-            new docx.TextRun({
-              text: textContent,
-              size: 24
-            })
-          ]
+          )
         })
-      ]
-    }]
-  });
+      );
+      children.push(new docx.Table({ rows }));
+    } else {
+      children.push(new docx.Paragraph({
+        children: [new docx.TextRun({ text: element.innerText, size: 24 })]
+      }));
+    }
+  }
+  
+  const doc = new docx.Document({ sections: [{ properties: {}, children }] });
   
   const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
   const filename = `document-analysis-${timestamp}.docx`;
