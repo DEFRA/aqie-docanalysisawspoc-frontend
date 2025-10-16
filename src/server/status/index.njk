@@ -129,17 +129,56 @@ function exportToPdf() {
 function exportToExcel() {
   const wb = XLSX.utils.book_new();
   const content = document.getElementById('markdownRenderer');
-  const ws = XLSX.utils.table_to_sheet(content, {raw: true});
+  const data = [];
+  let rowIndex = 0;
   
-  // Preserve colors and formatting
-  const range = XLSX.utils.decode_range(ws['!ref']);
+  function walkElements(element) {
+    if (element.tagName === 'TABLE') {
+      Array.from(element.rows).forEach(tr => {
+        const rowData = Array.from(tr.cells).map(cell => cell.innerText);
+        data[rowIndex++] = rowData;
+      });
+    } else if (element.tagName === 'H1' || element.tagName === 'H2' || element.tagName === 'H3' || 
+               element.tagName === 'P' || element.tagName === 'DIV') {
+      const text = element.innerText.trim();
+      if (text) {
+        data[rowIndex++] = [text];
+      }
+    } else if (element.tagName === 'UL' || element.tagName === 'OL') {
+      Array.from(element.children).forEach(li => {
+        const text = li.innerText.trim();
+        if (text) {
+          data[rowIndex++] = [text];
+        }
+      });
+    } else {
+      Array.from(element.children).forEach(child => walkElements(child));
+    }
+  }
+  
+  walkElements(content);
+  
+  const ws = XLSX.utils.aoa_to_sheet(data);
+  
+  const range = XLSX.utils.decode_range(ws['!ref'] || 'A1');
   for (let R = range.s.r; R <= range.e.r; ++R) {
     for (let C = range.s.c; C <= range.e.c; ++C) {
       const cell_address = XLSX.utils.encode_cell({c: C, r: R});
       if (!ws[cell_address]) continue;
+      
+      const cellValue = ws[cell_address].v || '';
+      let fontColor = '000000';
+      
+      if (cellValue.includes('🟢')) fontColor = '00AA00';
+      else if (cellValue.includes('🟠')) fontColor = 'FF8800';
+      else if (cellValue.includes('🔴')) fontColor = 'FF0000';
+      
       ws[cell_address].s = {
-        font: { color: { rgb: "000000" } },
-        fill: { fgColor: { rgb: "FFFFFF" } }
+        font: { 
+          color: { rgb: fontColor },
+          bold: cellValue.includes('🟢') || cellValue.includes('🟠') || cellValue.includes('🔴')
+        },
+        alignment: { wrapText: true, vertical: 'top' }
       };
     }
   }
