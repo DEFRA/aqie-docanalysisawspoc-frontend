@@ -1,4 +1,4 @@
-import { loginController, authController } from './controller.js'
+import { loginController } from './controller.js'
 
 const login = {
   plugin: {
@@ -13,16 +13,21 @@ const login = {
           options: { auth: { strategy: 'login', mode: 'try' } } //access login page without cookie set , hapi will try to authenticate the user, if fails, the reoute can still be accessed
         },
         {
-          method: 'POST',
-          path: '/',
-          ...authController,
-          options: { auth: { strategy: 'login', mode: 'try' } }
-        },
-        {
           method: 'GET',
           path: '/logout',
+          options: { auth: false },
           handler: (request, h) => {
-            request.cookieAuth.clear()
+            // Ensure both cookie auth and server-side session are cleared
+            try {
+              request.cookieAuth.clear()
+            } catch (e) {
+              // ignore if not present
+            }
+            try {
+              request.yar && request.yar.clear()
+            } catch (e) {
+              // ignore
+            }
             return h.redirect('/')
           }
         }

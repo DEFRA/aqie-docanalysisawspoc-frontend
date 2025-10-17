@@ -1,3 +1,4 @@
+import dotenv from 'dotenv'
 import convict from 'convict'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -5,6 +6,9 @@ import { fileURLToPath } from 'node:url'
 import convictFormatWithValidator from 'convict-format-with-validator'
 
 const dirname = path.dirname(fileURLToPath(import.meta.url))
+
+dotenv.config({ path: path.resolve(dirname, '../../.env') })
+convict.addFormats(convictFormatWithValidator)
 
 const fourHoursMs = 14400000
 const oneWeekMs = 604800000
@@ -282,6 +286,33 @@ export const config = convict({
       format: String,
       default: 'dev-aqie-docanalysis-c63f2',
       env: 'AWS_S3_BUCKET_NAME'
+    }
+  },
+  azure: {
+    clientId: {
+      doc: 'Azure AD Application Client ID',
+      format: String,
+      default: '',
+      env: 'AZURE_CLIENT_ID'
+    },
+    clientSecret: {
+      doc: 'Azure AD Application Client Secret',
+      format: String,
+      sensitive: true,
+      default: '',
+      env: 'AZURE_CLIENT_SECRET'
+    },
+    tenantId: {
+      doc: 'Azure AD Tenant ID',
+      format: String,
+      default: '',
+      env: 'AZURE_TENANT_ID'
+    },
+    redirectUri: {
+      doc: 'Application redirect URI after login',
+      format: String,
+      default: 'https://localhost:6677/auth/logged-out/',
+      env: 'AZURE_REDIRECT_URI'
     }
   }
 })

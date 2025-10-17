@@ -56,11 +56,14 @@ const basicUploadFormController = {
     //             or use the statusId query param from the redirect.
 
     // Optional: remember the status URL in the session for later
-    request.yar.set('basic-upload', { statusUrl: secureUpload.statusUrl })
-    request.yar.set('model', { model: request.query.model || 'model1' })
-    request.yar.set('analysisType', {
-      analysisType: payload?.analysisType || ''
-    })
+    // Only write to the session for authenticated users to avoid creating session cookies for anonymous guests
+    if (request.auth && request.auth.isAuthenticated) {
+      request.yar.set('basic-upload', { statusUrl: secureUpload.statusUrl })
+      request.yar.set('model', { model: request.query.model || 'model1' })
+      request.yar.set('analysisType', {
+        analysisType: payload?.analysisType || ''
+      })
+    }
     
     logger.info(`DEBUG: Set analysisType in session: ${payload?.analysisType || ''}`)
     
@@ -88,7 +91,9 @@ const basicUploadFormController = {
         isCompare: true
       }
       
-      request.yar.set('compareData', compareData)
+      if (request.auth && request.auth.isAuthenticated) {
+        request.yar.set('compareData', compareData)
+      }
       logger.info(`DEBUG: Stored compareData in session: ${JSON.stringify(compareData)}`)
     }
     logger.info(`Model: ${request.query.model || 'model1'}`)

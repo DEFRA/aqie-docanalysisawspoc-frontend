@@ -13,6 +13,7 @@ import { sessionCache } from './common/helpers/session-cache/session-cache.js'
 import { getCacheEngine } from './common/helpers/session-cache/cache-engine.js'
 import { secureContext } from './common/helpers/secure-context/secure-context.js'
 import hapiCookie from '@hapi/cookie'
+import { azureAuth } from './plugins/azure-auth.js'
 
 export async function createServer() {
   setupProxy()
@@ -71,11 +72,23 @@ export async function createServer() {
     keepAlive: true,
     //to validate cookie content on each request and returns boolean(isauthenticated/not)
     validate: async (request, session) => {
-      if (session.password === sessionConfig.cookie.docPassword) {
-        return { isValid: true }
-      } else {
-        return { isValid: true }
+      // If there's no session stored in the cookie, it's not valid
+      if (!session) {
+        return { isValid: false }
       }
+
+      // Legacy password-based session
+      if (session.password && session.password === sessionConfig.cookie.docPassword) {
+        return { isValid: true, credentials: session }
+      }
+
+      // MSAL / SSO session shape: expect { user: {...}, isAuthenticated: true }
+      if (session.isAuthenticated === true && session.user) {
+        return { isValid: true, credentials: session }
+      }
+
+      // Default: invalid session
+      return { isValid: false }
     }
   })
 
@@ -89,6 +102,7 @@ export async function createServer() {
     pulse,
     sessionCache,
     nunjucksConfig,
+    azureAuth,
     router // Register all the controllers/routes defined in src/server/router.js
   ])
 

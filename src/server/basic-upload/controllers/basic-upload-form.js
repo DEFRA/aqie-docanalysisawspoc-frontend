@@ -23,7 +23,10 @@ const basicUploadFormController = {
     //             or use the statusId query param from the redirect.
 
     // Optional: remember the status URL in the session for later
-    request.yar.set('basic-upload', { statusUrl: secureUpload.statusUrl })
+    // Only write to the session for authenticated users to avoid creating session cookies for anonymous guests
+    if (request.auth && request.auth.isAuthenticated) {
+      request.yar.set('basic-upload', { statusUrl: secureUpload.statusUrl })
+    }
     logger.info(`Upload URL: ${secureUpload.uploadUrl}`)
     logger.info(`Status URL: ${secureUpload.statusUrl}`)
 
