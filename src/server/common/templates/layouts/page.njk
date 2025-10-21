@@ -45,19 +45,11 @@
         </div>
         {% else %}
       {% endif %} #}
-    {# {% if isAuthenticated %}
-      {{ govukServiceNavigation({
-        navigation: navigation
-      }) }}
-      {% endif %} #}
-      <div
-      class="govuk-width-container no-print"
-      style="display: flex; justify-content: grid; align-items: center; margin-top: -37px;"> {% if isAuthenticated %}
-        <a href="/auth/logout" class="govuk-link" style="color: white; font-weight: bold;">Sign out</a>
-      {% else %}
-        <a href="/" class="govuk-link" style="color: white; font-weight: bold;">Sign in</a>
-      {% endif %}
-    </div>
+
+
+      {% include "../../components/user-dropdown/template.njk" %}
+
+
   {% endblock %}
   {% block pageTitle %}
     {{ pageTitle }} | {{ serviceName }}
