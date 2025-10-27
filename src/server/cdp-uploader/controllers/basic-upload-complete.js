@@ -6,6 +6,7 @@ import path from 'path'
 // import { pipeline } from 'stream'
 // import util from 'util'
 import { parsePdfToJson } from '../../utils/pdfParser.js'
+import { parseDocxToJson } from '../../utils/docxParser.js'
 import { config } from '../../../config/config.js'
 import axios from 'axios'
 import {
@@ -260,39 +261,48 @@ const baseUploadCompleteController = {
               `File upload time: ${(uploadEnd - uploadStart) / 1000} seconds`
             )
             logger.info(`File saved to: ${filepath}`)
-            // Step 4: Parse PDF to JSON
+            // Step 4: Parse document to JSON based on file extension
             const parseStart = Date.now()
-            const pdfText = await parsePdfToJson(filepath)
-            // await fs.unlinkSync(filepath)
+            const fileExtension = path.extname(filename).toLowerCase()
+            let documentText
+            
+            if (fileExtension === '.pdf') {
+              documentText = await parsePdfToJson(filepath)
+            } else if (fileExtension === '.docx') {
+              documentText = await parseDocxToJson(filepath)
+            } else {
+              fs.unlinkSync(filepath)
+              logger.warn(`Unsupported file type: ${fileExtension}`)
+              return h.response({ error: 'Unsupported file type' }).code(400)
+            }
+            
             fs.unlinkSync(filepath)
             const parseEnd = Date.now()
             logger.info(
-              `PDF parsing time: ${(parseEnd - parseStart) / 1000} seconds`
+              `Document parsing time: ${(parseEnd - parseStart) / 1000} seconds`
             )
-            // logger.info(`Parsed PDF content: ${JSON.stringify(pdfText)}`)
-            logger.info(`Parsed PDF content: ${pdfText.length}`)
-            if (!pdfText || pdfText.length === 0) {
-              logger.warn(`No text extracted from PDF: ${s3Key}`)
+            logger.info(`Parsed document content: ${documentText.length}`)
+            if (!documentText || documentText.length === 0) {
+              logger.warn(`No text extracted from document: ${s3Key}`)
               return h
-                .response({ error: 'No text extracted from PDF' })
+                .response({ error: 'No text extracted from document' })
                 .code(400)
             }
-            // Convert PDF text to a string for the API call
-            //value of pdf file
-            let pdfTextContent = pdfText
+            // Convert document text to a string for the API call
+            let documentTextContent = documentText
               .map((page) => page.content)
               .join('\n\n')
 
             logger.info(
-              `Size of PDF text content: ${pdfTextContent.length} characters`
+              `Size of document text content: ${documentTextContent.length} characters`
             )
             const encoder = new TextEncoder()
-            const byteSize = encoder.encode(pdfTextContent).length
+            const byteSize = encoder.encode(documentTextContent).length
 
             const sizeInKB = (byteSize / 1024).toFixed(2)
 
-            logger.info(`Size of PDF text content:- ${byteSize} bytes`)
-            logger.info(`Size of PDF text content:- ${sizeInKB} KB`)
+            logger.info(`Size of document text content:- ${byteSize} bytes`)
+            logger.info(`Size of document text content:- ${sizeInKB} KB`)
 
             // Handle comparison logic if this is a compare operation
             let existingContent = ''
@@ -328,13 +338,25 @@ const baseUploadCompleteController = {
 
                   const existingBuffer = await streamToBuffer(existingDoc.Body)
 
-                  // Parse existing document
-                  const existingFilepath = path.join(uploadDir, `existing_${Date.now()}.pdf`)
+                  // Parse existing document based on file extension
+                  const existingFileExtension = path.extname(compareS3Key).toLowerCase()
+                  const existingFilepath = path.join(uploadDir, `existing_${Date.now()}${existingFileExtension}`)
                   await fs.promises.writeFile(existingFilepath, existingBuffer)
-                  const existingPdfText = await parsePdfToJson(existingFilepath)
+                  
+                  let existingDocumentText
+                  if (existingFileExtension === '.pdf') {
+                    existingDocumentText = await parsePdfToJson(existingFilepath)
+                  } else if (existingFileExtension === '.docx') {
+                    existingDocumentText = await parseDocxToJson(existingFilepath)
+                  } else {
+                    logger.warn(`Unsupported comparison file type: ${existingFileExtension}`)
+                    fs.unlinkSync(existingFilepath)
+                    throw new Error('Unsupported comparison file type')
+                  }
+                  
                   fs.unlinkSync(existingFilepath)
 
-                  existingContent = existingPdfText.map(page => page.content).join('\n\n')
+                  existingContent = existingDocumentText.map(page => page.content).join('\n\n')
                   logger.info(`Existing document content length: ${existingContent.length} characters`)
                 } catch (compareError) {
                   logger.error(`Error reading comparison document: ${compareError.message}`)
@@ -346,7 +368,7 @@ const baseUploadCompleteController = {
               const backendApiUrl = config.get('backendApiUrl')
 
               let systemPrompt;
-              let userPrompt = pdfTextContent;
+              let userPrompt = documentTextContent;
 
               switch (analysisType) {
                 case 'green':
@@ -362,7 +384,7 @@ const baseUploadCompleteController = {
                   systemPrompt = comparingTwoDocuments
                     .replaceAll('{old_document}', existingContent)
                   userPrompt = `[NEW DOCUMENT]
-                                ${pdfTextContent}`
+                                ${documentTextContent}`
                   break
                 default:
                   systemPrompt = redPrompt
