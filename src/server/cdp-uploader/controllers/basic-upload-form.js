@@ -7,14 +7,26 @@ const basicUploadFormController = {
   options: { auth: { strategy: 'login', mode: 'required' } },
 
   handler: async (request, h) => {
+    const { payload } = request
+    const isGetRequest = request.method.toLowerCase() === 'get'
+    
+    if (isGetRequest) {
+      logger.info('DEBUG: GET request - displaying form')
+    } else {
+      logger.info('DEBUG: POST request - processing form submission')
+      logger.info(`DEBUG: Full payload received: ${JSON.stringify(payload)}`)
+    }
+    
     // Clear any session data.
     request.yar.clear('basic-upload')
     logger.info('DEBUG: Cleared basic-upload session data')
-    const { payload } = request
+    
     const isCompare = payload?.isCompare === 'true'
-    const redirect = '/Uploader/complete' // <-- Use relative URI as required by the uploader
+    const redirect = '/Uploader/complete'
     logger.info(`DEBUG: Processing upload request - isCompare: ${isCompare}`)
-    logger.info(`DEBUG: isCompare flag: ${isCompare} (from payload.isCompare: ${payload?.isCompare})`)
+    if (!isGetRequest) {
+      logger.info(`DEBUG: isCompare flag: ${isCompare} (from payload.isCompare: ${payload?.isCompare})`)
+    }
     let s3Bucket
     try {
       s3Bucket = config.get('aws.s3BucketName')
@@ -83,7 +95,10 @@ const basicUploadFormController = {
     logger.info(`Analysis Type: ${payload?.analysisType || 'green'}`)
     logger.info(`Upload URL: ${secureUpload.uploadUrl}`)
     logger.info(`Status URL: ${secureUpload.statusUrl}`)
-    logger.info(`DEBUG: Full payload received: ${JSON.stringify(payload)}`)
+    
+    if (!isGetRequest) {
+      logger.info(`DEBUG: Full payload received: ${JSON.stringify(payload)}`)
+    }
 
     // Get user's uploads for display
     const user = request.auth.credentials.user
