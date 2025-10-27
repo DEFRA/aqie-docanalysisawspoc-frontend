@@ -14,9 +14,7 @@ async function initUpload(options = {}) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       redirect,
-      s3Bucket,
-      maxFileSize: '10MB',
-      mimeTypes: ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document']
+      s3Bucket
     })
   })
   if (!response.ok) {
