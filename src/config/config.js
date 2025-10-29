@@ -314,6 +314,32 @@ export const config = convict({
       default: 'https://localhost:6677/auth/logged-out/',
       env: 'AZURE_REDIRECT_URI'
     }
+  },
+  analysisTypeMapping: {
+    red: {
+      doc: 'Red Team',
+      format: String,
+      default: '',
+      env: 'R_TEAM'
+    },
+    green: {
+      doc: 'Green Book',
+      format: String,
+      default: '',
+      env: 'G_TEAM'
+    },
+    icb: {
+      doc: 'Investment committee briefing',
+      format: String,
+      default: '',
+      env: 'ICB_TEAM'
+    },
+    eb: {
+      doc: 'Executive briefing',
+      format: String,
+      default: '',
+      env: 'EB_TEAM'
+    }
   }
 })
 

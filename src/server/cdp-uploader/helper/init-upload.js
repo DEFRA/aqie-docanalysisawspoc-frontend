@@ -34,4 +34,24 @@ async function initUpload(options = {}) {
   return await response.json()
 }
 
-export { initUpload }
+function getAllowedAnalysisTypes(userEmail, analysisTypeMapping) {
+  const allowedAnalysisTypes = []
+  if (analysisTypeMapping.red && analysisTypeMapping.red.includes(userEmail)) {
+    allowedAnalysisTypes.push({ key: 'red', label: '🔴 Red team' })
+  }
+  if (analysisTypeMapping.green && analysisTypeMapping.green.includes(userEmail)) {
+    allowedAnalysisTypes.push({ key: 'green', label: '📗 Green book' })
+  }
+  if (analysisTypeMapping.icb && analysisTypeMapping.icb.includes(userEmail)) {
+    allowedAnalysisTypes.push({ key: 'icb', label: '📊 Investment committee briefing' })
+  }
+  if (analysisTypeMapping.eb && analysisTypeMapping.eb.includes(userEmail)) {
+    allowedAnalysisTypes.push({ key: 'eb', label: '💼 Executive briefing' })
+  }
+  // Always add compare option
+  allowedAnalysisTypes.push({ key: 'compare', label: '📄 Compare two documents' })
+  
+  return allowedAnalysisTypes
+}
+
+export { initUpload, getAllowedAnalysisTypes }

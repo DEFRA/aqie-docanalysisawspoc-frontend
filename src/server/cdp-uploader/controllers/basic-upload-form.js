@@ -1,6 +1,6 @@
 import { config } from '../../../config/config.js'
 import { createLogger } from '../../common/helpers/logging/logger.js'
-import { initUpload } from '../helper/init-upload.js'
+import { getAllowedAnalysisTypes, initUpload } from '../helper/init-upload.js'
 
 const logger = createLogger()
 const basicUploadFormController = {
@@ -108,6 +108,21 @@ const basicUploadFormController = {
     // Get user's uploads for display
     const user = request.auth.credentials.user
     const userId = user?.id || user?.email || 'anonymous'
+
+    let analysisTypeMapping
+    try {
+      analysisTypeMapping = config.get('analysisTypeMapping')
+      if (!analysisTypeMapping) {
+        throw new Error('analysisTypeMapping not configured')
+      }
+    } catch (error) {
+      logger.error('Failed to get analysisTypeMapping configuration:', error)
+      return h.response({ error: 'Configuration error' }).code(500)
+    }
+
+    const userEmail = user?.email || null
+    const allowedAnalysisTypes = getAllowedAnalysisTypes(userEmail, analysisTypeMapping)
+
     
     // Load upload queue to get user uploads
     const fs = await import('fs')
@@ -137,7 +152,9 @@ const basicUploadFormController = {
       action: secureUpload.uploadUrl,
       analysisType: payload?.analysisType || '',
       model: request.query.model || 'model1',
-      uploads: userUploads
+      uploads: userUploads,
+      allowedAnalysisTypes,
+      userEmail
     })
   }
 }

@@ -12,14 +12,14 @@
     <label class="govuk-label" for="analysisType">
       Prompt analysis type
     </label>
+    
     <select class="govuk-select" id="analysisType" name="analysisType" required style="padding: 8px 12px; border: 2px solid #0b0c0c; border-radius: 4px; font-size: 16px; background: white; min-width: 200px;" oninvalid="this.setCustomValidity('Please select an analysis type')" oninput="this.setCustomValidity('')">
       <option value="">Select analysis type</option>
-      <option value="red" {% if analysisType == 'red' %}selected{% endif %}>🔴 Red team</option>
-      <option value="green" {% if analysisType == 'green' %}selected{% endif %}>📗 Green book</option>
-      <option value="investment" {% if analysisType == 'investment' %}selected{% endif %}>📊 Investment committee briefing</option>
-      <option value="executive" {% if analysisType == 'executive' %}selected{% endif %}>💼 Executive briefing</option>
-      <option value="comparingTwoDocuments" {% if analysisType == 'comparingTwoDocuments' %}selected{% endif %}>📄 Compare two documents</option>
+      {% for type in allowedAnalysisTypes %}
+        <option value="{{ type.key }}" {% if analysisType == type.key %}selected{% endif %}>{{ type.label }}</option>
+      {% endfor %}
     </select>
+  
   </div>
   <div class="govuk-form-group">
     <label class="govuk-label" for="policyPdf">Select PDF, DOCX, or Excel file</label>
