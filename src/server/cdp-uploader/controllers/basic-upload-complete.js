@@ -109,9 +109,8 @@ const baseUploadCompleteController = {
     logger.info(`DEBUG: Is Compare operation: ${isCompare}`)
     logger.info(`DEBUG: compareData exists: ${!!compareData}`)
 
-
     // Store compareData in a variable that won't be affected by session clearing
-    const storedCompareData = compareData ? JSON.parse(JSON.stringify(compareData)) : null
+    // const storedCompareData = compareData ? JSON.parse(JSON.stringify(compareData)) : null
 
     // The user is redirected to this page after their upload has completed, but possibly before scanning has finished.
     // Virus scanning takes about 1-2 seconds on small files up to about 10 seconds on large (100 meg) files.
@@ -144,31 +143,46 @@ const baseUploadCompleteController = {
 
     // Get analysisType from the form data returned by CDP uploader
     const analysisTypeData = request.yar.get('analysisType')
-    const analysisType = status.form.analysisType || analysisTypeData?.analysisType || 'green'
+    const analysisType =
+      status.form.analysisType || analysisTypeData?.analysisType || 'green'
 
-    logger.info(`DEBUG: Analysis type data from session: ${JSON.stringify(analysisTypeData)}`)
+    logger.info(
+      `DEBUG: Analysis type data from session: ${JSON.stringify(analysisTypeData)}`
+    )
     logger.info(`DEBUG: Analysis type from form: ${status.form.analysisType}`)
     logger.info(`DEBUG: Final analysis type: ${analysisType}`)
-    logger.info(`DEBUG: Status response from cdp-uploader: ${JSON.stringify(status)}`)
-    logger.info(`DEBUG: Form data from CDP uploader: ${JSON.stringify(status.form)}`)
+    logger.info(
+      `DEBUG: Status response from cdp-uploader: ${JSON.stringify(status)}`
+    )
+    logger.info(
+      `DEBUG: Form data from CDP uploader: ${JSON.stringify(status.form)}`
+    )
 
     // Check if this is a compare operation from form data
     if (status.form.isCompare === 'true') {
       isCompare = true
       logger.info('DEBUG: Compare operation detected from form data')
     }
-    
+
     // Check if concatenated filename was passed through CDP uploader
     if (status.form.concatenatedFilename) {
-      logger.info(`DEBUG: Found concatenatedFilename in CDP form data: '${status.form.concatenatedFilename}'`)
+      logger.info(
+        `DEBUG: Found concatenatedFilename in CDP form data: '${status.form.concatenatedFilename}'`
+      )
     } else {
       logger.info(`DEBUG: No concatenatedFilename found in CDP form data`)
     }
-    
+
     // Debug comparison data from form
-    logger.info(`DEBUG: isCompare from form: '${status.form.isCompare || 'EMPTY'}'`)
-    logger.info(`DEBUG: compareS3Bucket from form: '${status.form.compareS3Bucket || 'EMPTY'}'`)
-    logger.info(`DEBUG: compareS3Key from form: '${status.form.compareS3Key || 'EMPTY'}'`)
+    logger.info(
+      `DEBUG: isCompare from form: '${status.form.isCompare || 'EMPTY'}'`
+    )
+    logger.info(
+      `DEBUG: compareS3Bucket from form: '${status.form.compareS3Bucket || 'EMPTY'}'`
+    )
+    logger.info(
+      `DEBUG: compareS3Key from form: '${status.form.compareS3Key || 'EMPTY'}'`
+    )
     // 1. Check uploadStatus. UploadStatus can either be 'pending' (i.e. file is still being scanned) or 'ready'
     if (status.uploadStatus !== 'ready') {
       // If its not ready show the holding page. The holding page shows a please wait message and auto-reloads
@@ -265,7 +279,7 @@ const baseUploadCompleteController = {
             const parseStart = Date.now()
             const fileExtension = path.extname(filename).toLowerCase()
             let documentText
-            
+
             if (fileExtension === '.pdf') {
               documentText = await parsePdfToJson(filepath)
             } else if (fileExtension === '.docx') {
@@ -275,7 +289,7 @@ const baseUploadCompleteController = {
               logger.warn(`Unsupported file type: ${fileExtension}`)
               return h.response({ error: 'Unsupported file type' }).code(400)
             }
-            
+
             fs.unlinkSync(filepath)
             const parseEnd = Date.now()
             logger.info(
@@ -289,7 +303,7 @@ const baseUploadCompleteController = {
                 .code(400)
             }
             // Convert document text to a string for the API call
-            let documentTextContent = documentText
+            const documentTextContent = documentText
               .map((page) => page.content)
               .join('\n\n')
 
@@ -313,9 +327,11 @@ const baseUploadCompleteController = {
 
               logger.info(`Compare S3 Bucket from form: ${compareS3Bucket}`)
               logger.info(`Compare S3 Key from form: ${compareS3Key}`)
-              
+
               if (!compareS3Bucket || !compareS3Key) {
-                logger.error('DEBUG: Missing comparison S3 data from form - cannot read existing document')
+                logger.error(
+                  'DEBUG: Missing comparison S3 data from form - cannot read existing document'
+                )
               }
 
               if (compareS3Bucket && compareS3Key) {
@@ -339,27 +355,42 @@ const baseUploadCompleteController = {
                   const existingBuffer = await streamToBuffer(existingDoc.Body)
 
                   // Parse existing document based on file extension
-                  const existingFileExtension = path.extname(compareS3Key).toLowerCase()
-                  const existingFilepath = path.join(uploadDir, `existing_${Date.now()}${existingFileExtension}`)
+                  const existingFileExtension = path
+                    .extname(compareS3Key)
+                    .toLowerCase()
+                  const existingFilepath = path.join(
+                    uploadDir,
+                    `existing_${Date.now()}${existingFileExtension}`
+                  )
                   await fs.promises.writeFile(existingFilepath, existingBuffer)
-                  
+
                   let existingDocumentText
                   if (existingFileExtension === '.pdf') {
-                    existingDocumentText = await parsePdfToJson(existingFilepath)
+                    existingDocumentText =
+                      await parsePdfToJson(existingFilepath)
                   } else if (existingFileExtension === '.docx') {
-                    existingDocumentText = await parseDocxToJson(existingFilepath)
+                    existingDocumentText =
+                      await parseDocxToJson(existingFilepath)
                   } else {
-                    logger.warn(`Unsupported comparison file type: ${existingFileExtension}`)
+                    logger.warn(
+                      `Unsupported comparison file type: ${existingFileExtension}`
+                    )
                     fs.unlinkSync(existingFilepath)
                     throw new Error('Unsupported comparison file type')
                   }
-                  
+
                   fs.unlinkSync(existingFilepath)
 
-                  existingContent = existingDocumentText.map(page => page.content).join('\n\n')
-                  logger.info(`Existing document content length: ${existingContent.length} characters`)
+                  existingContent = existingDocumentText
+                    .map((page) => page.content)
+                    .join('\n\n')
+                  logger.info(
+                    `Existing document content length: ${existingContent.length} characters`
+                  )
                 } catch (compareError) {
-                  logger.error(`Error reading comparison document: ${compareError.message}`)
+                  logger.error(
+                    `Error reading comparison document: ${compareError.message}`
+                  )
                 }
               }
             }
@@ -367,8 +398,8 @@ const baseUploadCompleteController = {
             try {
               const backendApiUrl = config.get('backendApiUrl')
 
-              let systemPrompt;
-              let userPrompt = documentTextContent;
+              let systemPrompt
+              let userPrompt = documentTextContent
 
               switch (analysisType) {
                 case 'green':
@@ -381,15 +412,17 @@ const baseUploadCompleteController = {
                   systemPrompt = executiveBriefing
                   break
                 case 'comparingTwoDocuments':
-                  systemPrompt = comparingTwoDocuments
-                    .replaceAll('{old_document}', existingContent)
+                  systemPrompt = comparingTwoDocuments.replaceAll(
+                    '{old_document}',
+                    existingContent
+                  )
                   userPrompt = `[NEW DOCUMENT]
                                 ${documentTextContent}`
                   break
                 default:
                   systemPrompt = redPrompt
               }
-              
+
               const requestPrompt = {
                 systemprompt: systemPrompt,
                 userprompt: userPrompt
@@ -430,14 +463,19 @@ const baseUploadCompleteController = {
 
               if (status.form.concatenatedFilename) {
                 finalFilename = status.form.concatenatedFilename
-                logger.info(`DEBUG: Using concatenated filename from form: '${finalFilename}'`)
+                logger.info(
+                  `DEBUG: Using concatenated filename from form: '${finalFilename}'`
+                )
               } else {
-                finalFilename = headerresponse.Metadata?.['encodedfilename'] || 'unknown.pdf'
+                finalFilename =
+                  headerresponse.Metadata?.['encodedfilename'] || 'unknown.pdf'
                 logger.info(`DEBUG: Using regular filename: '${finalFilename}'`)
               }
 
               const uploadRequest = {
-                id: isCompare ? `compare_${Date.now()}_${Math.random().toString(36).substring(2, 11)}` : `upload_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`,
+                id: isCompare
+                  ? `compare_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`
+                  : `upload_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`,
                 userId: user?.id || user?.email || 'anonymous',
                 filename: finalFilename,
                 analysisType: analysisType || 'green',
@@ -451,14 +489,18 @@ const baseUploadCompleteController = {
 
               // Add comparison data if this is a compare operation
               if (isCompare) {
-                uploadRequest.compareS3Bucket = status.form.compareS3Bucket || ''
+                uploadRequest.compareS3Bucket =
+                  status.form.compareS3Bucket || ''
                 uploadRequest.compareS3Key = status.form.compareS3Key || ''
-                uploadRequest.compareUploadId = status.form.compareUploadId || ''
+                uploadRequest.compareUploadId =
+                  status.form.compareUploadId || ''
               }
 
               // Clear comparison data from session after use
               if (isCompare) {
-                logger.info('DEBUG: Clearing compareData from session after use')
+                logger.info(
+                  'DEBUG: Clearing compareData from session after use'
+                )
                 request.yar.clear('compareData')
               }
 
@@ -466,8 +508,12 @@ const baseUploadCompleteController = {
               uploadQueue.set(uploadRequest.id, uploadRequest)
               saveQueue()
 
-              logger.info(`DEBUG: Upload saved to queue with ID: ${uploadRequest.id}`)
-              logger.info(`DEBUG: Upload request details: ${JSON.stringify(uploadRequest)}`)
+              logger.info(
+                `DEBUG: Upload saved to queue with ID: ${uploadRequest.id}`
+              )
+              logger.info(
+                `DEBUG: Upload request details: ${JSON.stringify(uploadRequest)}`
+              )
               logger.info(`DEBUG: Queue now contains ${uploadQueue.size} items`)
 
               // Update status to analysing after API call
@@ -574,9 +620,4 @@ const cdpUploaderCompleteController = {
   }
 }
 
-
-
-export {
-  baseUploadCompleteController,
-  cdpUploaderCompleteController
-}
+export { baseUploadCompleteController, cdpUploaderCompleteController }
