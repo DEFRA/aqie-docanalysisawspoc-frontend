@@ -14,7 +14,13 @@ async function initUpload(options = {}) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       redirect,
-      s3Bucket
+      s3Bucket,
+      mimeTypes: [
+        'application/pdf',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // .docx
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // .xlsx
+        'application/vnd.ms-excel' // .xls
+      ]
     })
   })
   if (!response.ok) {

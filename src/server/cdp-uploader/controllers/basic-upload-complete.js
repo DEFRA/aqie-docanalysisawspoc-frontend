@@ -7,6 +7,7 @@ import path from 'path'
 // import util from 'util'
 import { parsePdfToJson } from '../../utils/pdfParser.js'
 import { parseDocxToJson } from '../../utils/docxParser.js'
+import { parseXlsxToJson } from '../../utils/xlsxParser.js'
 import { config } from '../../../config/config.js'
 import axios from 'axios'
 import {
@@ -284,6 +285,8 @@ const baseUploadCompleteController = {
               documentText = await parsePdfToJson(filepath)
             } else if (fileExtension === '.docx') {
               documentText = await parseDocxToJson(filepath)
+            } else if (fileExtension === '.xlsx' || fileExtension === '.xls') {
+              documentText = await parseXlsxToJson(filepath) 
             } else {
               fs.unlinkSync(filepath)
               logger.warn(`Unsupported file type: ${fileExtension}`)
@@ -371,6 +374,9 @@ const baseUploadCompleteController = {
                   } else if (existingFileExtension === '.docx') {
                     existingDocumentText =
                       await parseDocxToJson(existingFilepath)
+                  } else if (existingFileExtension === '.xlsx' || existingFileExtension === '.xls') {
+                    existingDocumentText =
+                      await parseXlsxToJson(existingFilepath)
                   } else {
                     logger.warn(
                       `Unsupported comparison file type: ${existingFileExtension}`
