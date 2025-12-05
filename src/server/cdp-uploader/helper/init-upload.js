@@ -43,13 +43,13 @@ function getAllowedAnalysisTypes(userEmail, analysisTypeMapping) {
     allowedAnalysisTypes.push({ key: 'green', label: '📗 Green book' })
   }
   if (analysisTypeMapping.icb && analysisTypeMapping.icb.includes(userEmail)) {
-    allowedAnalysisTypes.push({ key: 'icb', label: '📊 Investment committee briefing' })
+    allowedAnalysisTypes.push({ key: 'investment', label: '📊 Investment committee briefing' })
   }
   if (analysisTypeMapping.eb && analysisTypeMapping.eb.includes(userEmail)) {
-    allowedAnalysisTypes.push({ key: 'eb', label: '💼 Executive briefing' })
+    allowedAnalysisTypes.push({ key: 'executive', label: '💼 Executive briefing' })
   }
   // Always add compare option
-  allowedAnalysisTypes.push({ key: 'compare', label: '📄 Compare two documents' })
+  allowedAnalysisTypes.push({ key: 'comparingTwoDocuments', label: '📄 Compare two documents' })
   
   return allowedAnalysisTypes
 }
