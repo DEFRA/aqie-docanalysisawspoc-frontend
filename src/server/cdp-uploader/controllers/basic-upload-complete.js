@@ -327,6 +327,7 @@ const baseUploadCompleteController = {
               // Get comparison data from CDP form data
               const compareS3Bucket = status.form.compareS3Bucket
               const compareS3Key = status.form.compareS3Key
+              const compareUploadId = status.form.compareUploadId 
 
               logger.info(`Compare S3 Bucket from form: ${compareS3Bucket}`)
               logger.info(`Compare S3 Key from form: ${compareS3Key}`)
@@ -338,6 +339,19 @@ const baseUploadCompleteController = {
               }
 
               if (compareS3Bucket && compareS3Key) {
+                // Get the filename from the upload record to determine file type
+                let existingFilename = ''
+                if (compareUploadId) {
+                  const existingUpload = uploadQueue.get(compareUploadId)
+                  if (existingUpload) {
+                    existingFilename = existingUpload.filename
+                    // For concatenated filenames, extract the first part
+                    if (existingFilename.includes(' -> ')) {
+                      existingFilename = existingFilename.split(' -> ')[0]
+                    }
+                  }
+                }
+
                 // Read existing document from S3
                 try {
                   const existingDoc = await s3Client.send(
@@ -359,7 +373,7 @@ const baseUploadCompleteController = {
 
                   // Parse existing document based on file extension
                   const existingFileExtension = path
-                    .extname(compareS3Key)
+                    .extname(existingFilename)
                     .toLowerCase()
                   const existingFilepath = path.join(
                     uploadDir,
