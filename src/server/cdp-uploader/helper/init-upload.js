@@ -34,23 +34,52 @@ async function initUpload(options = {}) {
   return await response.json()
 }
 
-function getAllowedAnalysisTypes(userEmail, analysisTypeMapping) {
+function getAllowedAnalysisTypes(userEmail, analysisTypeMapping = {}) {
   const allowedAnalysisTypes = []
-  if (analysisTypeMapping.red && analysisTypeMapping.red.includes(userEmail)) {
+
+  const normalize = (v) => (v || '').toString().trim().toLowerCase()
+
+  const makeList = (val) => {
+    if (!val) return []
+    if (Array.isArray(val)) return val.map(normalize).filter(Boolean)
+    if (typeof val === 'string') {
+      return val.split(',').map(normalize).filter(Boolean)
+    }
+    return []
+  }
+
+  const email = normalize(userEmail)
+
+  const redList = makeList(analysisTypeMapping && analysisTypeMapping.red)
+  const greenList = makeList(analysisTypeMapping && analysisTypeMapping.green)
+  const icbList = makeList(analysisTypeMapping && analysisTypeMapping.icb)
+  const ebList = makeList(analysisTypeMapping && analysisTypeMapping.eb)
+
+  if (redList.includes(email)) {
     allowedAnalysisTypes.push({ key: 'red', label: '🔴 Red team' })
   }
-  if (analysisTypeMapping.green && analysisTypeMapping.green.includes(userEmail)) {
+  if (greenList.includes(email)) {
     allowedAnalysisTypes.push({ key: 'green', label: '📗 Green book' })
   }
-  if (analysisTypeMapping.icb && analysisTypeMapping.icb.includes(userEmail)) {
-    allowedAnalysisTypes.push({ key: 'investment', label: '📊 Investment committee briefing' })
+  if (icbList.includes(email)) {
+    allowedAnalysisTypes.push({
+      key: 'investment',
+      label: '📊 Investment committee briefing'
+    })
   }
-  if (analysisTypeMapping.eb && analysisTypeMapping.eb.includes(userEmail)) {
-    allowedAnalysisTypes.push({ key: 'executive', label: '💼 Executive briefing' })
+  if (ebList.includes(email)) {
+    allowedAnalysisTypes.push({
+      key: 'executive',
+      label: '💼 Executive briefing'
+    })
   }
+
   // Always add compare option
-  allowedAnalysisTypes.push({ key: 'comparingTwoDocuments', label: '📄 Compare two documents' })
-  
+  allowedAnalysisTypes.push({
+    key: 'comparingTwoDocuments',
+    label: '📄 Compare two documents'
+  })
+
   return allowedAnalysisTypes
 }
 
